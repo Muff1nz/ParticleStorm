@@ -13,6 +13,7 @@
 #include "SDL_Circles.h"
 #include <iostream>
 #include <thread>
+#include <queue>
 
 //=============Environment=============
 //=============Environment=============
@@ -29,6 +30,9 @@ SDL_Color circleColor = SDL_Color();
 
 glm::vec2 circlePos[circleCount];
 glm::vec2 circleVel[circleCount];
+
+std::queue<glm::vec2> explosions;
+
 
 //=============Physics Engine=============
 //=============Physics Engine=============
@@ -82,12 +86,26 @@ void physicsThreadRun(SDL_bool* done, int* physicsUpdates){
 	Uint64 NOW = SDL_GetPerformanceCounter();
 	Uint64 LAST = NOW;
 	float deltaTime;
+	float const explosionForce = 250.0f;
 
 	while (!(*done)) {
 		NOW = SDL_GetPerformanceCounter();
 		deltaTime = float((NOW - LAST) * 1000 / float(SDL_GetPerformanceFrequency()));
 		if (deltaTime > 1000 / maxPhysicsUpdatesPerSecond) {
 			LAST = NOW;
+
+			while(!explosions.empty()) {
+				std::cout << "Applying boom!\n";
+				glm::vec2 impactPoint = explosions.front();
+				for (int i = 0; i < circleCount; i++) {
+					glm::vec2 lineBetween = circlePos[i] - impactPoint;
+					float distance = length(lineBetween);
+					lineBetween /= distance;
+					circleVel[i] += lineBetween / distance * explosionForce;
+				}
+				explosions.pop();
+
+			}
 
 			for (int i = 0; i < circleCount; i++) {
 				circleVel[i] += gravity * deltaTime;
@@ -168,10 +186,17 @@ int main(int argc, char* args[]) {
 				}
 
 				while (SDL_PollEvent(&event)) {
-					if (event.type == SDL_QUIT) {
-						done = SDL_TRUE;
+					switch (event.type) {
+						case SDL_QUIT:
+							done = SDL_TRUE;
+							break;
+						case SDL_MOUSEBUTTONDOWN:
+							if (event.button.button == SDL_BUTTON_LEFT) {
+								explosions.push(glm::vec2(event.button.x, SCREEN_HEIGHT - event.button.y));
+								std::cout << "BOOM! At x: " + std::to_string(event.button.x) + " y:" + std::to_string(event.button.y) + "\n";
+							}
+							break;
 					}
-					LAST = SDL_GetPerformanceCounter();
 				}
 			}
 			physicsThread.join();
