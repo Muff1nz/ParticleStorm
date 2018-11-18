@@ -1,9 +1,12 @@
 #include "Environment.h"
 
+Environment::Environment() {
+	circleColor.g = 140;
+	circleColor.a = 255;
 
+	circlePos = new glm::vec2[circleCount];
+	circleVel = new glm::vec2[circleCount];
+};
 
-Environment::Environment() = default;
 Environment::~Environment() = default;
 
-SDL_Renderer* Environment::renderer = nullptr;
-SDL_Window* Environment::window = nullptr;

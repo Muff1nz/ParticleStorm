@@ -39,7 +39,7 @@ void SDL_Circles::render_line(const glm::vec2 start, const glm::vec2 end) {
 	//--- 
 	int ret =
 		SDL_RenderDrawLine(
-			Environment::renderer, // SDL_Renderer* renderer: the renderer in which draw 
+			renderer, // SDL_Renderer* renderer: the renderer in which draw 
 			start.x,               // int x1: x of the starting point 
 			SCREEN_HEIGHT - start.y,          // int y1: y of the starting point 
 			end.x,                 // int x2: x of the end point 
