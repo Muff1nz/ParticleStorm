@@ -76,6 +76,19 @@ void RenderEngineSDL::RenderLine(const glm::vec2 start, const glm::vec2 end) con
 }
 
 
+void RenderEngineSDL::RenderLine(const int x1, const int y1, const int x2, const int y2) const {
+	// Draw a line 
+	//--- 
+	int ret =
+		SDL_RenderDrawLine(
+			renderer, // SDL_Renderer* renderer: the renderer in which draw 
+			x1,               // int x1: x of the starting point 
+			environment->worldHeight - y1,          // int y1: y of the starting point 
+			x2,                 // int x2: x of the end point 
+			environment->worldHeight - y2);           // int y2: y of the end point 
+}
+
+
 void RenderEngineSDL::SetRenderColor(const SDL_Color& color) const {
 	int ret = SDL_SetRenderDrawColor(renderer,
 		color.r,
@@ -98,10 +111,46 @@ void RenderEngineSDL::RenderThreadRun(const SDL_bool* done, int* renderUpdates) 
 		SDL_RenderClear(renderer);
 		SDL_SetRenderDrawColor(renderer, 0, 140, 0, SDL_ALPHA_OPAQUE);
 		const auto circles = environment->circlePos;
+
 		for (int i = 0; i < environment->circleCount; ++i) {
 			RenderCircle(circles[i], environment->circleRadius, environment->circleRadius);
 		}
+
+		environment->treeMutex.lock();
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		if (environment->tree != nullptr)
+			RenderQuadTree(environment->tree);
+		environment->treeMutex.unlock();
 		SDL_RenderPresent(renderer);
 		(*renderUpdates)++;
 	}
+}
+
+void RenderEngineSDL::RenderQuadTree(const QuadTree* tree) const {
+	if (tree->subTree == nullptr) {
+		const auto rect = tree->rect;
+		RenderLine(
+			rect.x, rect.y, 
+			rect.x + rect.w, rect.y
+		);
+		RenderLine(
+			rect.x, rect.y + rect.h,
+			rect.x + rect.w, rect.y + rect.h
+		);
+
+		RenderLine(
+			rect.x, rect.y, 
+			rect.x, rect.y + rect.h
+		);
+		RenderLine(
+			rect.x + rect.w, rect.y,
+			rect.x + rect.w, rect.y + rect.h
+		);
+
+	} else {
+		for (int i = 0; i < 4; ++i) {
+			RenderQuadTree(tree->subTree[i]);
+		}
+	}
+
 }
