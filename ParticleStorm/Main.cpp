@@ -28,10 +28,11 @@ int main(int argc, char* args[]) {
 
 		int renderUpdates = 0;
 		int physicsUpdates = 0;
+		QuadTree::Stats quadTreeStats;
 		double timer = 0;
 
 		renderEngine.Start(&done, &renderUpdates);
-		physicsEngine.Start(&done, &physicsUpdates);
+		physicsEngine.Start(&done, &physicsUpdates, &quadTreeStats);
 
 		while (!done) {
 			SDL_Event event;
@@ -43,15 +44,26 @@ int main(int argc, char* args[]) {
 			double deltaTime = (double)((NOW - LAST) * 1000 / double(SDL_GetPerformanceFrequency()));
 			timer += deltaTime;
 
-			if (timer > 1000) {
+			//if (quadTreeStats.swapCount != 0 || quadTreeStats.overflowCount != 0) {
+			//	std::cout << "==================================\n";
+			//	std::cout << quadTreeStats.ToString() + "\n";
+			//	std::cout << "==================================\n";
+			//}
+
+			if (timer > 1000 ) {
 				timer = 0;
 				std::cout << "==================================\n";
 				std::cout << "Simulating : " + std::to_string(environment.circleCount) + " particles!\n";
 				std::cout << "Physics updates last second: " + std::to_string(physicsUpdates) + "\n";
 				std::cout << "Render updates last second: " + std::to_string(renderUpdates) + "\n";
+				environment.treeMutex.lock();
+				std::cout << quadTreeStats.ToString() + "\n";
+				quadTreeStats.clear();
+				environment.treeMutex.unlock();
 				physicsUpdates = 0;
 				renderUpdates = 0;
 			}
+
 
 			while (SDL_PollEvent(&event)) {
 				switch (event.type) {
