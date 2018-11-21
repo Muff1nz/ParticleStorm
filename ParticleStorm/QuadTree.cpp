@@ -3,7 +3,9 @@
 
 QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(environment->circleRadius, 2)) {
 	this->environment = environment;
+	const int r = environment->circleRadius * 1.5f;
 	rect = rect_;
+	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h +r);
 }
 
 QuadTree::~QuadTree() {
@@ -38,10 +40,11 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 
 void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 	const auto particles = environment->circlePos;
+	overflow.clear();
 	if (parent != nullptr) {
 		start = current;
 		for (int i = parent->start; i < parent->end; i++) {
-			if (ParticleBoxCollision(particles[i], rect)) {
+			if (ParticleBoxCollision(particles[i], paddedRect)) {
 				if (i < current) {
 					overflow.push_back(i);
 				} else {
@@ -55,26 +58,37 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 		}
 
 		for (int i : parent->overflow) {
-			if (ParticleBoxCollision(particles[i], rect))
+			if (ParticleBoxCollision(particles[i], paddedRect))
 				overflow.push_back(i);
 		}
 
-		end = current - 1;
+		end = current;
 	} else {
 		start = 0;
 		end = environment->circleCount;
 	}
 
 	if (end - start >= maxParticles) {
-		subTree = new QuadTree*[4];
-		subTree[0] = new QuadTree(environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2));
-		subTree[1] = new QuadTree(environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2));
-		subTree[2] = new QuadTree(environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
-		subTree[3] = new QuadTree(environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+		if (subTree == nullptr) {
+			if (secretSubTree != nullptr) {
+				subTree = secretSubTree;
+			} else {
+				subTree = new QuadTree*[4];
+				subTree[0] = new QuadTree(environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2));
+				subTree[1] = new QuadTree(environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2));
+				subTree[2] = new QuadTree(environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+				subTree[3] = new QuadTree(environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+				secretSubTree = subTree;
+			}
+		}
 
 		int currentEnd = start;
 		for (int i = 0; i < 4; ++i) {
 			subTree[i]->Build(this, currentEnd, stats);
+		}
+	} else {
+		if (subTree != nullptr) {
+			subTree = nullptr;
 		}
 	}
 

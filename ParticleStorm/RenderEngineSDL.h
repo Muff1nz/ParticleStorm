@@ -3,6 +3,7 @@
 #include "Environment.h"
 #include <thread>
 #include "QuadTree.h"
+#include <vec3.hpp>
 
 class RenderEngineSDL {
 public:
@@ -18,6 +19,8 @@ private:
 
 	SDL_Renderer* renderer;
 	SDL_Window* window;
+
+	glm::vec2* particlesRenderCopy;
 
 	std::thread renderThead;
 

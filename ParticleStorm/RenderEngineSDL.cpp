@@ -6,6 +6,7 @@
 
 RenderEngineSDL::RenderEngineSDL(Environment* environment) {
 	this->environment = environment;
+	particlesRenderCopy = new glm::vec2[environment->circleCount];
 }
 
 RenderEngineSDL::~RenderEngineSDL() = default;
@@ -109,18 +110,23 @@ void RenderEngineSDL::RenderThreadRun(const SDL_bool* done, int* renderUpdates) 
 	while (!(*done)) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(renderer);
-		SDL_SetRenderDrawColor(renderer, 0, 140, 0, SDL_ALPHA_OPAQUE);
-		const auto circles = environment->circlePos;
+		SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+
+		environment->renderLock.lock();
+		for (int i = 0; i < environment->circleCount; ++i) {
+			particlesRenderCopy[i] = environment->circlePos[i];
+		}
+		environment->renderLock.unlock();
 
 		for (int i = 0; i < environment->circleCount; ++i) {
-			RenderCircle(circles[i], environment->circleRadius, environment->circleRadius);
+			RenderCircle(particlesRenderCopy[i], environment->circleRadius, environment->circleRadius);
 		}
 
-		environment->treeMutex.lock();
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		environment->renderLock.lock();
 		if (environment->tree != nullptr)
 			RenderQuadTree(environment->tree);
-		environment->treeMutex.unlock();
+		environment->renderLock.unlock();
 		SDL_RenderPresent(renderer);
 		(*renderUpdates)++;
 	}

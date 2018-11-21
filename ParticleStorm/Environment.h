@@ -9,11 +9,11 @@ class QuadTree;
 
 class Environment {
 public:
-	const int worldWidth = 2400;
+	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 100;
-	const int circleRadius = 32;
+	const int circleCount = 3000;
+	const int circleRadius = 10;
 
 	SDL_Color circleColor{};
 
@@ -23,6 +23,9 @@ public:
 
 	QuadTree* tree;
 	std::mutex treeMutex{};
+
+	int* renderOrder;
+	std::mutex renderLock{};
 
 	Environment();
 	~Environment();

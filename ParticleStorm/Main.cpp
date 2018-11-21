@@ -58,6 +58,7 @@ int main(int argc, char* args[]) {
 				std::cout << "Render updates last second: " + std::to_string(renderUpdates) + "\n";
 				environment.treeMutex.lock();
 				std::cout << quadTreeStats.ToString() + "\n";
+				quadTreeStats.clear();
 				environment.treeMutex.unlock();
 				physicsUpdates = 0;
 				renderUpdates = 0;

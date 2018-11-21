@@ -22,6 +22,8 @@ void PhysicsEngine::Init() const {
 			circleVel[i] = glm::vec2(rand() % (maxSpeed * 2) - maxSpeed, rand() % (maxSpeed * 2) - maxSpeed);
 		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
 	}
+
+	environment->tree = new QuadTree(environment, Rect(0, 0, environment->worldWidth, environment->worldHeight));
 }
 
 void PhysicsEngine::Join() {
@@ -165,16 +167,15 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done, int* physicsUpdates, 
 			}
 
 			int start = 0;
+			environment->renderLock.lock();
 			environment->treeMutex.lock();
-			delete environment->tree;
-			stats->clear();
-			environment->tree = new QuadTree(environment, Rect(0, 0, environment->worldWidth, environment->worldHeight));
 			environment->tree->Build(nullptr, start, *stats);
 			environment->treeMutex.unlock();
+			environment->renderLock.unlock();
 
 			for (int i = 0; i < environment->circleCount; i++) {
 				int collisionCount = BoundingBoxCollision(i) ? 1 : 0;
-				//ParticleCollision(i);
+/*				ParticleCollision(i)*/;
 			}
 
 			QuadTreeParticleCollisions(environment->tree);

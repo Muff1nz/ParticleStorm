@@ -33,27 +33,14 @@ public:
 	int start{}, end{};
 
 	void Build(QuadTree* parent, int& current, Stats& stats);
-
-
 private:
 	Environment* environment;
 	const int radiusSquared;
-	const int maxParticles = 100;
-
-	//QuadTree** subTree = nullptr;
-
-	//Rect rect;
-
+	const int maxParticles = 50;
+	Rect paddedRect;
+	QuadTree** secretSubTree;
+	
 	bool ParticleBoxCollision(const glm::vec2& center, const Rect& rect) const;
-	//void Build(int parentStart, int parentEnd, int myStart, int& outEnd, bool root);
-	//Rect
-
-	//The particles contained in the quad tree are between the start and end index in the particles arrays
-	//When building the quad tree, rearrange the big particle arrays such that particles inside one quad lay
-	//	sequentially inside the array between start and end index
-	//int start index, end index
-
-	//Particle overflow (A set of pointers pointing to particles that are also in other quads
 
 
 };

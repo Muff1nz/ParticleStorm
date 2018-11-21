@@ -7,6 +7,11 @@ Environment::Environment() {
 
 	circlePos = new glm::vec2[circleCount];
 	circleVel = new glm::vec2[circleCount];
+
+	renderOrder = new int[circleCount];
+	for (int i = 0; i < circleCount; ++i) {
+		renderOrder[i] = i;
+	}
 };
 
 Environment::~Environment() = default;
@@ -14,10 +19,15 @@ Environment::~Environment() = default;
 //Maybe optimize with XOR swapping?
 void Environment::SwapParticles(const int one, const int two) const {
 	const auto tempPos = circlePos[one];
-	const auto tempVel = circleVel[one];
 	circlePos[one] = circlePos[two];
-	circleVel[one] = circleVel[two];
 	circlePos[two] = tempPos;
+
+	const int tempi = renderOrder[one];
+	renderOrder[one] = renderOrder[two];
+	renderOrder[two] = tempi;
+
+	const auto tempVel = circleVel[one];
+	circleVel[one] = circleVel[two];
 	circleVel[two] = tempVel;
 }
 
