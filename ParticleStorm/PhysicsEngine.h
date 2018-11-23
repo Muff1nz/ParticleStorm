@@ -2,14 +2,15 @@
 #include <SDL2/SDL.h>
 #include "Environment.h"
 #include <thread>
+#include "Stats.h"
 
 class PhysicsEngine {
 public:
-	PhysicsEngine(Environment* environment);
+	PhysicsEngine(Environment* environment, Stats* stats);
 	~PhysicsEngine();
 
 	void Init() const;
-	void Start(SDL_bool* done, int* physicsUpdates, QuadTree::Stats* stats);
+	void Start(SDL_bool* done);
 	void Join();
 private:
 	const int maxPhysicsUpdatesPerSecond = 3000000;
@@ -18,6 +19,7 @@ private:
 	const float doubleRadius;
 
 	Environment* environment;
+	Stats* stats;
 
 	std::thread physicsThread;
 
@@ -28,6 +30,6 @@ private:
 	void QuadTreeParticleCollisions(QuadTree* tree) const;
 
 	bool BoundingBoxCollision(int particle) const;
-	void PhysicsThreadRun(const SDL_bool* done, int* physicsUpdate, QuadTree::Stats* statss) const;
+	void PhysicsThreadRun(const SDL_bool* done) const;
 };
 

@@ -1,4 +1,5 @@
 #include "QuadTree.h"
+#include "Stats.h"
 #include <iostream>
 
 QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(environment->circleRadius, 2)) {
@@ -50,7 +51,7 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 				} else {
 					if (i != current) {
 						environment->SwapParticles(current, i);
-						stats.swapCount++;
+						++stats.quadTreeSwapTotalLastSecond;
 					}
 					current++;
 				} 
@@ -93,7 +94,7 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 	}
 
 	if (subTree == nullptr) {
-		stats.leafQuadCount++;
-		stats.overflowCount += overflow.size();
+		++stats.quadTreeLeafTotalLastSecond;
+		stats.quadTreeOverflowTotalLastSecond += overflow.size();
 	}
 }

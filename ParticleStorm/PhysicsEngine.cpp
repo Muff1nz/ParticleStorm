@@ -4,8 +4,9 @@
 #include <thread>
 #include <iostream>
 
-PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->circleRadius * 2) {
+PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->circleRadius * 2) {
 	this->environment = environment;
+	this->stats = stats;
 }
 
 PhysicsEngine::~PhysicsEngine() = default;
@@ -30,8 +31,8 @@ void PhysicsEngine::Join() {
 	physicsThread.join();
 }
 
-void PhysicsEngine::Start(SDL_bool* done, int* physicsUpdates, QuadTree::Stats* stats) {
-	physicsThread = std::thread([=] {PhysicsThreadRun(done, physicsUpdates, stats);});
+void PhysicsEngine::Start(SDL_bool* done) {
+	physicsThread = std::thread([=] {PhysicsThreadRun(done);});
 }
 
 bool PhysicsEngine::BoundingBoxCollision(const int particle) const {
@@ -82,6 +83,7 @@ bool PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 		const float overlap = environment->circleRadius * 2 - dist;
 		circlePos[particle1] += -(positionDelta / dist) * (overlap / 2);
 		circlePos[particle2] += (positionDelta / dist) * (overlap / 2);
+		++stats->particleCollisionTotalLastSecond;
 	}
 	return collision;
 }
@@ -134,7 +136,7 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 	}
 }
 
-void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done, int* physicsUpdates, QuadTree::Stats* stats) const {
+void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
 	Uint64 NOW = SDL_GetPerformanceCounter();
 	Uint64 LAST = NOW;
 	auto const explosionForce = 250.0f;
@@ -149,7 +151,6 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done, int* physicsUpdates, 
 			LAST = NOW;
 
 			while (!environment->explosions.empty()) {
-				std::cout << "Applying boom!\n";
 				glm::vec2 impactPoint = environment->explosions.front();
 				for (int i = 0; i < environment->circleCount; i++) {
 					glm::vec2 lineBetween = circlePos[i] - impactPoint;
@@ -180,7 +181,7 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done, int* physicsUpdates, 
 
 			QuadTreeParticleCollisions(environment->tree);
 
-			(*physicsUpdates)++;
+			++stats->physicsUpdateTotalLastSecond;
 		}
 	}
 } 

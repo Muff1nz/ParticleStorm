@@ -1,11 +1,11 @@
 #include "RenderEngineSDL.h"
-#include "Environment.h"
-#include "SDL_Circles.h"
+
 
 #define _2PI 6.28f
 
-RenderEngineSDL::RenderEngineSDL(Environment* environment) {
+RenderEngineSDL::RenderEngineSDL(Environment* environment, Stats* stats) {
 	this->environment = environment;
+	this->stats = stats;
 	particlesRenderCopy = new glm::vec2[environment->circleCount];
 }
 
@@ -22,8 +22,8 @@ bool RenderEngineSDL::Init() {
 			&renderer) == 0;
 }
 
-void RenderEngineSDL::Start(SDL_bool* done, int* renderUpdates) {
-	renderThead = std::thread([=] {RenderThreadRun(done, renderUpdates);});
+void RenderEngineSDL::Start(SDL_bool* done) {
+	renderThead = std::thread([=] {RenderThreadRun(done);});
 }
 
 void RenderEngineSDL::Join() {
@@ -106,7 +106,7 @@ void RenderEngineSDL::GetRenderColor(SDL_Color& oldColor) const {
 		&oldColor.a);
 }
 
-void RenderEngineSDL::RenderThreadRun(const SDL_bool* done, int* renderUpdates) const {
+void RenderEngineSDL::RenderThreadRun(const SDL_bool* done) const {
 	while (!(*done)) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(renderer);
@@ -120,6 +120,7 @@ void RenderEngineSDL::RenderThreadRun(const SDL_bool* done, int* renderUpdates) 
 
 		for (int i = 0; i < environment->circleCount; ++i) {
 			RenderCircle(particlesRenderCopy[i], environment->circleRadius, environment->circleRadius);
+			++stats->particlesRenderedTotalLastSecond;
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -128,7 +129,7 @@ void RenderEngineSDL::RenderThreadRun(const SDL_bool* done, int* renderUpdates) 
 			RenderQuadTree(environment->tree);
 		environment->renderLock.unlock();
 		SDL_RenderPresent(renderer);
-		(*renderUpdates)++;
+		++stats->renderUpdateTotalLastSecond;
 	}
 }
 

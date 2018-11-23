@@ -7,7 +7,6 @@
 #include <SDL2/SDL.h>
 #include <string> 
 #include "Environment.h"
-#include "SDL_Circles.h"
 #include <iostream>
 #include <thread>
 #include <queue>
@@ -16,8 +15,9 @@
 
 int main(int argc, char* args[]) {
 	Environment environment{};
-	RenderEngineSDL renderEngine(&environment);
-	PhysicsEngine physicsEngine(&environment);
+	Stats stats{};
+	RenderEngineSDL renderEngine(&environment, &stats);
+	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
@@ -26,13 +26,11 @@ int main(int argc, char* args[]) {
 		Uint64 NOW = SDL_GetPerformanceCounter();
 		Uint64 LAST;
 
-		int renderUpdates = 0;
-		int physicsUpdates = 0;
-		QuadTree::Stats quadTreeStats;
+
 		double timer = 0;
 
-		renderEngine.Start(&done, &renderUpdates);
-		physicsEngine.Start(&done, &physicsUpdates, &quadTreeStats);
+		renderEngine.Start(&done);
+		physicsEngine.Start(&done);
 
 		while (!done) {
 			SDL_Event event;
@@ -44,24 +42,10 @@ int main(int argc, char* args[]) {
 			double deltaTime = (double)((NOW - LAST) * 1000 / double(SDL_GetPerformanceFrequency()));
 			timer += deltaTime;
 
-			//if (quadTreeStats.swapCount != 0 || quadTreeStats.overflowCount != 0) {
-			//	std::cout << "==================================\n";
-			//	std::cout << quadTreeStats.ToString() + "\n";
-			//	std::cout << "==================================\n";
-			//}
-
 			if (timer > 1000 ) {
+				stats.CompleteLastSecond();
+				std::cout << stats.LastSecondToStringConsole();
 				timer = 0;
-				std::cout << "==================================\n";
-				std::cout << "Simulating : " + std::to_string(environment.circleCount) + " particles!\n";
-				std::cout << "Physics updates last second: " + std::to_string(physicsUpdates) + "\n";
-				std::cout << "Render updates last second: " + std::to_string(renderUpdates) + "\n";
-				environment.treeMutex.lock();
-				std::cout << quadTreeStats.ToString() + "\n";
-				quadTreeStats.clear();
-				environment.treeMutex.unlock();
-				physicsUpdates = 0;
-				renderUpdates = 0;
 			}
 
 
@@ -73,7 +57,6 @@ int main(int argc, char* args[]) {
 					case SDL_MOUSEBUTTONDOWN:
 						if (event.button.button == SDL_BUTTON_LEFT) {
 							environment.explosions.push(glm::vec2(event.button.x, environment.worldHeight - event.button.y));
-							std::cout << "BOOM! At x: " + std::to_string(event.button.x) + " y:" + std::to_string(environment.worldHeight - event.button.y) + "\n";
 						}
 						break;
 				}
@@ -81,6 +64,9 @@ int main(int argc, char* args[]) {
 		}
 		physicsEngine.Join();
 		renderEngine.Join();
+		
+		stats.CompleteSession();
+		std::cout << stats.CompleteSessionToStringConsole();
 	}
 
 	renderEngine.Dispose();	
