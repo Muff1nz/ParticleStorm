@@ -7,17 +7,48 @@
 #include <SDL2/SDL.h>
 #include <string> 
 #include "Environment.h"
-#include "SDL_Circles.h"
 #include <iostream>
+#include <fstream>
 #include <thread>
 #include <queue>
 #include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
 
+const std::string shorTitle = "StatsClass";
+const std::string longTitle = "Currently making stats class for ParticleStorm";
+
+char* fileTime() {
+	char name[20];
+	time_t now = time(0);
+	struct tm buf;
+	localtime_s(&buf, &now);
+	strftime(name, sizeof(name), "%d%m%Y_%H%M%S", &buf);
+	return name;
+}
+
+void OutputStatsToFile(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment){
+	const std::string statsOutputPath = "C:/C++ Projects/ParticleStorm_Stats/PS_Stats_";
+	std::cout << statsOutputPath + fileTime() + ".txt";
+	std::ofstream statsFile(statsOutputPath + shorTitle + "_" + fileTime() + ".txt");
+	statsFile << longTitle + "\n";
+	statsFile << "Simulated " + std::to_string(environment.circleCount) + " particles with a raidus of: " + std::to_string(environment.circleRadius) + "\n";
+	statsFile << "[\n";
+	statsFile << stats.CompleteSessionToString();
+	statsFile << "]\n";
+	for (int i = 0; i < perSecondStats.size(); i++) {
+		statsFile << "{\n";
+		statsFile << std::to_string(i + 1) + "\n";
+		statsFile << perSecondStats[i];
+		statsFile << "}\n";
+	}
+	statsFile.close();
+}
+
 int main(int argc, char* args[]) {
 	Environment environment{};
-	RenderEngineSDL renderEngine(&environment);
-	PhysicsEngine physicsEngine(&environment);
+	Stats stats{};
+	RenderEngineSDL renderEngine(&environment, &stats);
+	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
@@ -26,13 +57,15 @@ int main(int argc, char* args[]) {
 		Uint64 NOW = SDL_GetPerformanceCounter();
 		Uint64 LAST;
 
-		int renderUpdates = 0;
-		int physicsUpdates = 0;
-		QuadTree::Stats quadTreeStats;
+
 		double timer = 0;
 
-		renderEngine.Start(&done, &renderUpdates);
-		physicsEngine.Start(&done, &physicsUpdates, &quadTreeStats);
+		renderEngine.Start(&done);
+		physicsEngine.Start(&done);
+
+
+		std::vector<std::string> perSecondStats;
+
 
 		while (!done) {
 			SDL_Event event;
@@ -44,24 +77,11 @@ int main(int argc, char* args[]) {
 			double deltaTime = (double)((NOW - LAST) * 1000 / double(SDL_GetPerformanceFrequency()));
 			timer += deltaTime;
 
-			//if (quadTreeStats.swapCount != 0 || quadTreeStats.overflowCount != 0) {
-			//	std::cout << "==================================\n";
-			//	std::cout << quadTreeStats.ToString() + "\n";
-			//	std::cout << "==================================\n";
-			//}
-
 			if (timer > 1000 ) {
+				stats.CompleteLastSecond();
+				std::cout << stats.LastSecondToStringConsole();
+				perSecondStats.push_back(stats.LastSecondToString());
 				timer = 0;
-				std::cout << "==================================\n";
-				std::cout << "Simulating : " + std::to_string(environment.circleCount) + " particles!\n";
-				std::cout << "Physics updates last second: " + std::to_string(physicsUpdates) + "\n";
-				std::cout << "Render updates last second: " + std::to_string(renderUpdates) + "\n";
-				environment.treeMutex.lock();
-				std::cout << quadTreeStats.ToString() + "\n";
-				quadTreeStats.clear();
-				environment.treeMutex.unlock();
-				physicsUpdates = 0;
-				renderUpdates = 0;
 			}
 
 
@@ -73,7 +93,7 @@ int main(int argc, char* args[]) {
 					case SDL_MOUSEBUTTONDOWN:
 						if (event.button.button == SDL_BUTTON_LEFT) {
 							environment.explosions.push(glm::vec2(event.button.x, environment.worldHeight - event.button.y));
-							std::cout << "BOOM! At x: " + std::to_string(event.button.x) + " y:" + std::to_string(environment.worldHeight - event.button.y) + "\n";
+							++stats.explosionTotalLastSecond;
 						}
 						break;
 				}
@@ -81,10 +101,15 @@ int main(int argc, char* args[]) {
 		}
 		physicsEngine.Join();
 		renderEngine.Join();
-	}
+		
+		stats.CompleteSession();
+		std::cout << stats.CompleteSessionToStringConsole();
 
-	renderEngine.Dispose();	
+		OutputStatsToFile(stats, perSecondStats, environment);
+	}
 	
+	renderEngine.Dispose();	
+
 	SDL_Quit();
 	return 0;
 }
