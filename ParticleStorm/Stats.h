@@ -18,10 +18,10 @@ public:
 	//Total counts for last second
 	std::atomic_int physicsUpdateTotalLastSecond = 0;
 	std::atomic_int renderUpdateTotalLastSecond = 0;
+	std::atomic_int explosionTotalLastSecond = 0;
 	std::atomic_int quadTreeSwapTotalLastSecond = 0;
 	std::atomic_int quadTreeOverflowTotalLastSecond = 0;
 	std::atomic_int quadTreeLeafTotalLastSecond = 0;
-	std::atomic_int explosionTotalLastSecond = 0;
 	std::atomic_int particleCollisionTotalLastSecond = 0;
 	std::atomic_int particlesRenderedTotalLastSecond = 0;
 
@@ -29,42 +29,40 @@ public:
 	void CompleteLastSecond() {
 		physicsUpdateLastSecondTotalShadow = physicsUpdateTotalLastSecond;
 		renderUpdateLastSecondTotalShadow = renderUpdateTotalLastSecond;
+		explosionLastSecondTotalShadow = explosionTotalLastSecond;
 		quadTreeSwapLastSecondTotalShadow = quadTreeSwapTotalLastSecond;
 		quadTreeOverflowLastSecondTotalShadow = quadTreeOverflowTotalLastSecond;
 		quadTreeLeafLastSecondTotalShadow = quadTreeLeafTotalLastSecond;
-		explosionLastSecondTotalShadow = explosionTotalLastSecond;
 		particleCollisionLastSecondTotalShadow = particleCollisionTotalLastSecond;
 		particlesRenderedLastSecondTotalShadow = particlesRenderedTotalLastSecond;
 
 		physicsUpdateTotalLastSecond = 0;
 		renderUpdateTotalLastSecond = 0;
+		explosionTotalLastSecond = 0;
 		quadTreeSwapTotalLastSecond = 0;
 		quadTreeOverflowTotalLastSecond = 0;
 		quadTreeLeafTotalLastSecond = 0;
-		explosionTotalLastSecond = 0;
 		particleCollisionTotalLastSecond = 0;
 		particlesRenderedTotalLastSecond = 0;
 
 		physicsUpdateTotal += physicsUpdateLastSecondTotalShadow;
 		renderUpdateTotal += renderUpdateLastSecondTotalShadow;
+		explosionTotal += explosionLastSecondTotalShadow;
 		quadTreeSwapTotal += quadTreeSwapLastSecondTotalShadow;
 		quadTreeOverflowTotal += quadTreeOverflowLastSecondTotalShadow;
 		quadTreeLeafTotal += quadTreeLeafLastSecondTotalShadow;
-		explosionTotal += explosionLastSecondTotalShadow;
 		particleCollisionTotal += particleCollisionLastSecondTotalShadow;
 		particlesRenderedTotal += particlesRenderedLastSecondTotalShadow;
 
 		quadTreeSwapAverageLastSecond = quadTreeSwapLastSecondTotalShadow;
 		quadTreeOverflowAverageLastSecond = quadTreeOverflowLastSecondTotalShadow;
 		quadTreeLeafAverageLastSecond = quadTreeLeafLastSecondTotalShadow;
-		explosionAverageLastSecond = explosionLastSecondTotalShadow;
 		particleCollisionAverageLastSecond = particleCollisionLastSecondTotalShadow;
 		particlesRenderedAverageLastSecond = particlesRenderedLastSecondTotalShadow;
 
 		quadTreeSwapAverageLastSecond /= float(physicsUpdateLastSecondTotalShadow);
 		quadTreeOverflowAverageLastSecond /= float(physicsUpdateLastSecondTotalShadow);
 		quadTreeLeafAverageLastSecond /= float(physicsUpdateLastSecondTotalShadow);
-		explosionAverageLastSecond /= float(physicsUpdateLastSecondTotalShadow);
 		particleCollisionAverageLastSecond /= float(physicsUpdateLastSecondTotalShadow);
 		particlesRenderedAverageLastSecond /= float(renderUpdateLastSecondTotalShadow);
 	}
@@ -74,14 +72,12 @@ public:
 		quadTreeSwapAverage = quadTreeSwapTotal;
 		quadTreeOverflowAverage = quadTreeOverflowTotal;
 		quadTreeLeafAverage = quadTreeLeafTotal;
-		explosionAverage = explosionTotal;
 		particleCollisionAverage = particleCollisionTotal;
 		particlesRenderedAverage = particlesRenderedTotal;
 
 		quadTreeSwapAverage /= float(physicsUpdateTotal);
 		quadTreeOverflowAverage /= float(physicsUpdateTotal);
 		quadTreeLeafAverage /= float(physicsUpdateTotal);
-		explosionAverage /= float(physicsUpdateTotal);
 		particleCollisionAverage /= float(physicsUpdateTotal);
 		particlesRenderedAverage /= float(renderUpdateTotal);
 	}
@@ -92,11 +88,11 @@ public:
 		str += "===============================================================\n";
 		str += "PHYSICS_UPDATE_LAST_SECOND_TOTAL: " + std::to_string(physicsUpdateLastSecondTotalShadow) + "\n";
 		str += "RENDER_UPDATE_LAST_SECOND_TOTAL: " + std::to_string(renderUpdateLastSecondTotalShadow) + "\n";
+		str += "EXPLOSION_LAST_SECOND_TOTAL: " + std::to_string(explosionLastSecondTotalShadow) + "\n";
 		str += "===============================================================\n";
 		str += "QUAD_TREE_SWAP_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeSwapAverageLastSecond) + "\n";
 		str += "QUAD_TREE_OVERFLOW_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeOverflowAverageLastSecond) + "\n";
 		str += "QUAD_TREE_LEAF_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeLeafAverageLastSecond) + "\n";
-		str += "EXPLOSION_AVERAGE_LAST_SECOND: " + std::to_string(explosionAverageLastSecond) + "\n";
 		str += "PARTICLE_COLLISION_AVERAGE_LAST_SECOND: " + std::to_string(particleCollisionAverageLastSecond) + "\n";
 		str += "PARTICLES_RENDERED_AVERAGE_LAST_SECOND: " + std::to_string(particlesRenderedAverageLastSecond) + "\n";
 		str += "===============================================================\n";
@@ -108,16 +104,15 @@ public:
 		std::string str;
 		str += "PHYSICS_UPDATE_LAST_SECOND_TOTAL: " + std::to_string(physicsUpdateLastSecondTotalShadow) + "\n";
 		str += "RENDER_UPDATE_LAST_SECOND_TOTAL: " + std::to_string(renderUpdateLastSecondTotalShadow) + "\n";
+		str += "EXPLOSION_LAST_SECOND_TOTAL: " + std::to_string(explosionLastSecondTotalShadow) + "\n";
 		str += "QUAD_TREE_SWAP_LAST_SECOND_TOTAL: " + std::to_string(quadTreeSwapLastSecondTotalShadow) + "\n";
 		str += "QUAD_TREE_OVERFLOW_LAST_SECOND_TOTAL: " + std::to_string(quadTreeOverflowLastSecondTotalShadow) + "\n";
 		str += "QUAD_TREE_LEAF_LAST_SECOND_TOTAL: " + std::to_string(quadTreeLeafLastSecondTotalShadow) + "\n";
-		str += "EXPLOSION_LAST_SECOND_TOTAL: " + std::to_string(explosionLastSecondTotalShadow) + "\n";
 		str += "PARTICLE_COLLISION_LAST_SECOND_TOTAL: " + std::to_string(particleCollisionLastSecondTotalShadow) + "\n";
 		str += "PARTICLES_RENDERED_LAST_SECOND_TOTAL: " + std::to_string(particlesRenderedLastSecondTotalShadow) + "\n";
 		str += "QUAD_TREE_SWAP_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeSwapAverageLastSecond) + "\n";
 		str += "QUAD_TREE_OVERFLOW_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeOverflowAverageLastSecond) + "\n";
 		str += "QUAD_TREE_LEAF_AVERAGE_LAST_SECOND: " + std::to_string(quadTreeLeafAverageLastSecond) + "\n";
-		str += "EXPLOSION_AVERAGE_LAST_SECOND: " + std::to_string(explosionAverageLastSecond) + "\n";
 		str += "PARTICLE_COLLISION_AVERAGE_LAST_SECOND: " + std::to_string(particleCollisionAverageLastSecond) + "\n";
 		str += "PARTICLES_RENDERED_AVERAGE_LAST_SECOND: " + std::to_string(particlesRenderedAverageLastSecond) + "\n";
 		return str;
@@ -129,17 +124,16 @@ public:
 		str += "===============================================================\n";
 		str += "PHYSICS_UPDATE_TOTAL: " + std::to_string(physicsUpdateTotal) + "\n";
 		str += "RENDER_UPDATE_TOTAL: " + std::to_string(renderUpdateTotal) + "\n";
+		str += "EXPLOSION_TOTAL: " + std::to_string(explosionTotal) + "\n";
 		str += "QUAD_TREE_SWAP_TOTAL: " + std::to_string(quadTreeSwapTotal) + "\n";
 		str += "QUAD_TREE_OVERFLOW_TOTAL: " + std::to_string(quadTreeOverflowTotal) + "\n";
 		str += "QUAD_TREE_LEAF_TOTAL: " + std::to_string(quadTreeLeafTotal) + "\n";
-		str += "EXPLOSION_TOTAL: " + std::to_string(explosionTotal) + "\n";
 		str += "PARTICLE_COLLISION_TOTAL: " + std::to_string(particleCollisionTotal) + "\n";
 		str += "PARTICLES_RENDERED_TOTAL: " + std::to_string(particlesRenderedTotal) + "\n";
 		str += "===============================================================\n";
 		str += "QUAD_TREE_SWAP_AVERAGE: " + std::to_string(quadTreeSwapAverage) + "\n";
 		str += "QUAD_TREE_OVERFLOW_AVERAGE: " + std::to_string(quadTreeOverflowAverage) + "\n";
 		str += "QUAD_TREE_LEAF_AVERAGE: " + std::to_string(quadTreeLeafAverage) + "\n";
-		str += "EXPLOSION_AVERAGE: " + std::to_string(explosionAverage) + "\n";
 		str += "PARTICLE_COLLISION_AVERAGE: " + std::to_string(particleCollisionAverage) + "\n";
 		str += "PARTICLES_RENDERED_AVERAGE: " + std::to_string(particlesRenderedAverage) + "\n";
 		str += "===============================================================\n";
@@ -151,16 +145,15 @@ public:
 		std::string str;
 		str += "PHYSICS_UPDATE_TOTAL: " + std::to_string(physicsUpdateTotal) + "\n";
 		str += "RENDER_UPDATE_TOTAL: " + std::to_string(renderUpdateTotal) + "\n";
+		str += "EXPLOSION_TOTAL: " + std::to_string(explosionTotal) + "\n";
 		str += "QUAD_TREE_SWAP_TOTAL: " + std::to_string(quadTreeSwapTotal) + "\n";
 		str += "QUAD_TREE_OVERFLOW_TOTAL: " + std::to_string(quadTreeOverflowTotal) + "\n";
 		str += "QUAD_TREE_LEAF_TOTAL: " + std::to_string(quadTreeLeafTotal) + "\n";
-		str += "EXPLOSION_TOTAL: " + std::to_string(explosionTotal) + "\n";
 		str += "PARTICLE_COLLISION_TOTAL: " + std::to_string(particleCollisionTotal) + "\n";
 		str += "PARTICLES_RENDERED_TOTAL: " + std::to_string(particlesRenderedTotal) + "\n";
 		str += "QUAD_TREE_SWAP_AVERAGE: " + std::to_string(quadTreeSwapAverage) + "\n";
 		str += "QUAD_TREE_OVERFLOW_AVERAGE: " + std::to_string(quadTreeOverflowAverage) + "\n";
 		str += "QUAD_TREE_LEAF_AVERAGE: " + std::to_string(quadTreeLeafAverage) + "\n";
-		str += "EXPLOSION_AVERAGE: " + std::to_string(explosionAverage) + "\n";
 		str += "PARTICLE_COLLISION_AVERAGE: " + std::to_string(particleCollisionAverage) + "\n";
 		str += "PARTICLES_RENDERED_AVERAGE: " + std::to_string(particlesRenderedAverage) + "\n";
 		return str;
@@ -171,38 +164,37 @@ private:
 	//Total counts for entire session (from start to program closing)
 	int physicsUpdateTotal = 0;
 	int renderUpdateTotal = 0;
+	int explosionTotal = 0;
 	int quadTreeSwapTotal = 0;
 	int quadTreeOverflowTotal = 0;
 	int quadTreeLeafTotal = 0;
-	int explosionTotal = 0;
 	int particleCollisionTotal = 0;
 	int particlesRenderedTotal = 0;
 
 	//Average per second for entire session (from start to program closing)
-	float physicsUpdateAverage = 0;
-	float renderUpdateAverage = 0;
-	float quadTreeSwapAverage = 0;
-	float quadTreeOverflowAverage = 0;
-	float quadTreeLeafAverage = 0;
-	float explosionAverage = 0;
-	float particleCollisionAverage = 0;
-	float particlesRenderedAverage = 0;
+	int physicsUpdateAverage = 0;
+	int renderUpdateAverage = 0;
+	int explosionAverage = 0;
+	int quadTreeSwapAverage = 0;
+	int quadTreeOverflowAverage = 0;
+	int quadTreeLeafAverage = 0;
+	int particleCollisionAverage = 0;
+	int particlesRenderedAverage = 0;
 
 	//Average counts for last second
 	int quadTreeSwapAverageLastSecond = 0;
 	int quadTreeOverflowAverageLastSecond = 0;
 	int quadTreeLeafAverageLastSecond = 0;
-	int explosionAverageLastSecond = 0;
 	int particleCollisionAverageLastSecond = 0;
 	int particlesRenderedAverageLastSecond = 0;
 
 	//Total counts for last second(Shadow)
 	int physicsUpdateLastSecondTotalShadow = 0;
 	int renderUpdateLastSecondTotalShadow = 0;
+	int explosionLastSecondTotalShadow = 0;
 	int quadTreeSwapLastSecondTotalShadow = 0;
 	int quadTreeOverflowLastSecondTotalShadow = 0;
 	int quadTreeLeafLastSecondTotalShadow = 0;
-	int explosionLastSecondTotalShadow = 0;
 	int particleCollisionLastSecondTotalShadow = 0;
 	int particlesRenderedLastSecondTotalShadow = 0;
 };
