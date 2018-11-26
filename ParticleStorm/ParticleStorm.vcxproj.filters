@@ -13,18 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Utils">
+      <UniqueIdentifier>{e2c622f4-acc1-4711-8b01-fa50da5bef31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utils">
+      <UniqueIdentifier>{d0deca75-ae7e-46da-8adf-68a7d9f7e36d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Misc">
+      <UniqueIdentifier>{c1d098a5-80b6-41a6-bcbd-b872547295e0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Environment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CodeGraveyard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsEngine.cpp">
@@ -33,17 +36,20 @@
     <ClCompile Include="RenderEngineSDL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QuadTree.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="CodeGraveyard.cpp">
+      <Filter>Source Files\Misc</Filter>
     </ClCompile>
     <ClCompile Include="Rect.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Test.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Environment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -53,14 +59,17 @@
     <ClInclude Include="RenderEngineSDL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="QuadTree.h">
+    <ClInclude Include="Stats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rect.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Stats.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="QuadTree.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

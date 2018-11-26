@@ -1,9 +1,3 @@
-//TODO: Create vulkan render engine
-//TODO:	Implement more then 1 thread and quad trees for physics engine
-//
-// BUG: "Particle Soup", when the particle density is high, particles fail to stack and fall into each other instead.
-// BUG: Maybe playing with gravity and friction could help. Make Gravity weaker for stationary particles.
-
 #include <SDL2/SDL.h>
 #include <string> 
 #include "Environment.h"
@@ -13,6 +7,7 @@
 #include <queue>
 #include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
+#include "Timer.h"
 
 const std::string shorTitle = "StatsClass";
 const std::string longTitle = "Currently making stats class for ParticleStorm";
@@ -54,36 +49,25 @@ int main(int argc, char* args[]) {
 
 		SDL_bool done = SDL_FALSE;
 
-		Uint64 NOW = SDL_GetPerformanceCounter();
-		Uint64 LAST;
-
-
-		double timer = 0;
-
 		renderEngine.Start(&done);
 		physicsEngine.Start(&done);
 
-
 		std::vector<std::string> perSecondStats;
 
+		Timer timer;
+		timer.Start();
 
 		while (!done) {
 			SDL_Event event;
 
 			std::this_thread::sleep_for(std::chrono::microseconds(10));
 
-			LAST = NOW;
-			NOW = SDL_GetPerformanceCounter();
-			double deltaTime = (double)((NOW - LAST) * 1000 / double(SDL_GetPerformanceFrequency()));
-			timer += deltaTime;
-
-			if (timer > 1000 ) {
+			if (timer.ElapsedMilliseconds() >= 1000) {
+				timer.Restart();
 				stats.CompleteLastSecond();
 				std::cout << stats.LastSecondToStringConsole();
 				perSecondStats.push_back(stats.LastSecondToString());
-				timer = 0;
 			}
-
 
 			while (SDL_PollEvent(&event)) {
 				switch (event.type) {
@@ -99,6 +83,7 @@ int main(int argc, char* args[]) {
 				}
 			}
 		}
+
 		physicsEngine.Join();
 		renderEngine.Join();
 		

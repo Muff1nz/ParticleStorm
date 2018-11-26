@@ -6,13 +6,13 @@ QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(env
 	this->environment = environment;
 	const int r = environment->circleRadius * 1.5f;
 	rect = rect_;
-	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h +r);
+	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
 }
 
 QuadTree::~QuadTree() {
 	if (subTree != nullptr) {
 		for (int i = 0; i < 4; ++i) {
-			delete subTree[i];
+			delete secretSubTree[i];
 		}
 	}
 	delete subTree;
@@ -20,7 +20,7 @@ QuadTree::~QuadTree() {
 
 bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const {
 	const auto radius = environment->circleRadius;
-	glm::vec2 circleDistance{};
+	glm::vec2 circleDistance;
 
 	circleDistance.x = abs(circleCenter.x - rect.centerX);
 	circleDistance.y = abs(circleCenter.y - rect.centerY);
