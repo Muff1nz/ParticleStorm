@@ -1,11 +1,15 @@
 #include "Timer.h"
+#include <chrono>
+#include <thread>
 
 Timer::Timer(float maxDeltaTime) : maxDeltaTime(maxDeltaTime) {
-	nowDeltaTime = SDL_GetPerformanceCounter();
-	lastDeltaTime = nowDeltaTime;
+	lastDeltaTime = SDL_GetPerformanceCounter();
+	last = SDL_GetPerformanceCounter();
 
+	std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+	nowDeltaTime = SDL_GetPerformanceCounter();
 	now = SDL_GetPerformanceCounter();
-	last = now;
 
 	stopWatchRunning = false;
 }
@@ -15,8 +19,8 @@ Timer::~Timer() = default;
 float Timer::DeltaTime() {
 	lastDeltaTime = nowDeltaTime;
 	nowDeltaTime = SDL_GetPerformanceCounter();
-	const auto deltaTime = TicksToMilliseconds(nowDeltaTime - lastDeltaTime);
-	const auto result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
+	const float deltaTime = TicksToMilliseconds(nowDeltaTime - lastDeltaTime);
+	const float result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
 	realTimeDifference = result / deltaTime;
 	return result;
 }

@@ -7,6 +7,7 @@
 #include <queue>
 #include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
+#include "Timer.h"
 
 const std::string shorTitle = "StatsClass";
 const std::string longTitle = "Currently making stats class for ParticleStorm";
@@ -53,26 +54,22 @@ int main(int argc, char* args[]) {
 
 		std::vector<std::string> perSecondStats;
 
-		//Timer timer;
-		//timer.Start();
+		Timer timer;
+		timer.Start();
 
 		while (!done) {
 			SDL_Event event;
 
-			//std::this_thread::sleep_for(std::chrono::microseconds(10));
+			std::this_thread::sleep_for(std::chrono::microseconds(10));
 
-			if (/*timer.ElapsedMilliseconds()*/1 >= 1000) {
-				//timer.Restart();
+			if (timer.ElapsedMilliseconds() >= 1000) {
+				timer.Restart();
 				stats.CompleteLastSecond();
 				std::cout << stats.LastSecondToStringConsole();
 				perSecondStats.push_back(stats.LastSecondToString());
 			}
 
-			std::cout << "WHAT?\n";
-			std::cout << "WHAT?\n";
-
 			while (SDL_PollEvent(&event)) {
-				std::cout << "POLL?\n";
 				switch (event.type) {
 					case SDL_QUIT:
 						done = SDL_TRUE;
@@ -85,9 +82,8 @@ int main(int argc, char* args[]) {
 						break;
 				}
 			}
-			std::cout << "WHAT?\n";
 		}
-		std::cout << "WHAT?\n";
+
 		physicsEngine.Join();
 		renderEngine.Join();
 		

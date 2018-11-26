@@ -3,6 +3,7 @@
 #include <detail/func_geometric.inl>
 #include <thread>
 #include <iostream>
+#include "Timer.h"
 
 PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->circleRadius * 2) {
 	this->environment = environment;
@@ -142,12 +143,12 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
-	//Timer timer(maxPhysicsDeltaTime);
+	Timer timer(maxPhysicsDeltaTime);
 
 	while (!*done) {
 
-		float deltaTime = maxPhysicsDeltaTime;// timer.DeltaTime();
-		//stats->physicsDeltaTimeTotalLastSecond += deltaTime;
+		float deltaTime = timer.DeltaTime();
+		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference() * 100;
 
 		while (!environment->explosions.empty()) {
 			glm::vec2 impactPoint = environment->explosions.front();
