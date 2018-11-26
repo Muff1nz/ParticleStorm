@@ -137,51 +137,50 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 }
 
 void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
-	Uint64 NOW = SDL_GetPerformanceCounter();
-	Uint64 LAST = NOW;
 	auto const explosionForce = 250.0f;
 
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
+	//Timer timer(maxPhysicsDeltaTime);
+
 	while (!*done) {
-		NOW = SDL_GetPerformanceCounter();
-		const auto deltaTime = float((NOW - LAST) * 1000 / float(SDL_GetPerformanceFrequency()));
-		if (deltaTime > 1000.0f / maxPhysicsUpdatesPerSecond) {
-			LAST = NOW;
 
-			while (!environment->explosions.empty()) {
-				glm::vec2 impactPoint = environment->explosions.front();
-				for (int i = 0; i < environment->circleCount; i++) {
-					glm::vec2 lineBetween = circlePos[i] - impactPoint;
-					const float distance = length(lineBetween);
-					lineBetween /= distance;
-					circleVel[i] += lineBetween / distance * explosionForce;
-				}
-				environment->explosions.pop();
+		float deltaTime = maxPhysicsDeltaTime;// timer.DeltaTime();
+		//stats->physicsDeltaTimeTotalLastSecond += deltaTime;
 
-			}
-
+		while (!environment->explosions.empty()) {
+			glm::vec2 impactPoint = environment->explosions.front();
 			for (int i = 0; i < environment->circleCount; i++) {
-				circleVel[i] += gravity * deltaTime;
-				circlePos[i] += circleVel[i] * deltaTime;
+				glm::vec2 lineBetween = circlePos[i] - impactPoint;
+				const float distance = length(lineBetween);
+				lineBetween /= distance;
+				circleVel[i] += lineBetween / distance * explosionForce;
 			}
+			environment->explosions.pop();
 
-			int start = 0;
-			environment->renderLock.lock();
-			environment->treeMutex.lock();
-			environment->tree->Build(nullptr, start, *stats);
-			environment->treeMutex.unlock();
-			environment->renderLock.unlock();
-
-			for (int i = 0; i < environment->circleCount; i++) {
-				int collisionCount = BoundingBoxCollision(i) ? 1 : 0;
-/*				ParticleCollision(i)*/;
-			}
-
-			QuadTreeParticleCollisions(environment->tree);
-
-			++stats->physicsUpdateTotalLastSecond;
 		}
+
+		for (int i = 0; i < environment->circleCount; i++) {
+			circleVel[i] += gravity * deltaTime;
+			circlePos[i] += circleVel[i] * deltaTime;
+		}
+
+		int start = 0;
+		environment->renderLock.lock();
+		environment->treeMutex.lock();
+		environment->tree->Build(nullptr, start, *stats);
+		environment->treeMutex.unlock();
+		environment->renderLock.unlock();
+
+		for (int i = 0; i < environment->circleCount; i++) {
+			int collisionCount = BoundingBoxCollision(i) ? 1 : 0;
+/*				ParticleCollision(i)*/;
+		}
+
+		QuadTreeParticleCollisions(environment->tree);
+
+		++stats->physicsUpdateTotalLastSecond;
+		
 	}
 } 

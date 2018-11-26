@@ -128,7 +128,7 @@
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="RenderEngineSDL.cpp" />
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h" />
@@ -137,7 +137,7 @@
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineSDL.h" />
     <ClInclude Include="Stats.h" />
-    <ClInclude Include="Test.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,7 +13,7 @@ public:
 	const int worldHeight = 1300;
 
 	const int circleCount = 3000;
-	const int circleRadius = 10;
+	const int circleRadius = 4;
 
 	SDL_Color circleColor{};
 

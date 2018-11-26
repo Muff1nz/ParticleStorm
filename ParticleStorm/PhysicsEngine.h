@@ -13,7 +13,7 @@ public:
 	void Start(SDL_bool* done);
 	void Join();
 private:
-	const int maxPhysicsUpdatesPerSecond = 3000000;
+	const float maxPhysicsDeltaTime = 1000.0f / 300.0f; //Which gives a minimum of 300 physics updates per "second"
 	const glm::vec2 gravity = glm::vec2(0, -0.001);
 	const float friction = 0.98;
 	const float doubleRadius;

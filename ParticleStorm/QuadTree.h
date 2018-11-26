@@ -9,19 +9,24 @@ class QuadTree {
 public:
 	QuadTree(Environment* environment, Rect rect_);
 	~QuadTree();
-	QuadTree** subTree = nullptr;
-	Rect rect;
-	std::vector<int> overflow;
+
 	int start{}, end{};
+	std::vector<int> overflow;
+
+	Rect rect;
+	QuadTree** subTree = nullptr;
 
 	void Build(QuadTree* parent, int& current, Stats& stats);
+
 private:
-	Environment* environment;
 	const int radiusSquared;
-	const int maxParticles = 50;
+	const int maxParticles = 100;
+
 	Rect paddedRect;
-	QuadTree** secretSubTree;
-	
+	QuadTree** secretSubTree{};
+
+	Environment* environment;
+
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
 };
 
