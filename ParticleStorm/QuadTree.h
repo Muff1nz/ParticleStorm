@@ -10,6 +10,8 @@ public:
 	QuadTree(Environment* environment, Rect rect_);
 	~QuadTree();
 
+	const int maxParticles = 100;
+
 	int start{}, end{};
 	std::vector<int> overflow;
 
@@ -20,7 +22,6 @@ public:
 
 private:
 	const int radiusSquared;
-	const int maxParticles = 100;
 
 	Rect paddedRect;
 	QuadTree** secretSubTree{};

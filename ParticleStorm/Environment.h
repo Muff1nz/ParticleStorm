@@ -31,7 +31,7 @@ public:
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed);
 	~Environment();
-
+ 
 	void Init();
 	void SwapParticles(int one, int two) const;
 };

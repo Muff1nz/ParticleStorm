@@ -37,6 +37,7 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 
 	statsFile << longTitle + "\n";
 	statsFile << "Simulated " + std::to_string(environment.circleCount) + " particles with a raidus of: " + std::to_string(environment.circleRadius) + "\n";
+	statsFile << "Quadtree max particles per quad: " + std::to_string(environment.tree->maxParticles) + "\n";
 	statsFile << "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	statsFile << "[\n";
 	statsFile << stats.CompleteSessionToString();
