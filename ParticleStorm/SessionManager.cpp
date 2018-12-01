@@ -28,7 +28,7 @@ char* SessionManager::FileTime() {
 
 void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) const {
 	const std::string fileLeadText = "PS_Stats_";
-	const std::string statsOutputFolder = statsOutputDir + fileLeadText + FileTime();
+	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
 	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
 
 	std::cout << "Results are saved to: " + statsOutputFolder + "\n";
