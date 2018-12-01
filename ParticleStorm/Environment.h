@@ -26,7 +26,6 @@ public:
 	QuadTree* tree;
 	std::mutex treeMutex{};
 
-	int* renderOrder;
 	std::mutex renderLock{};
 
 	Environment();
