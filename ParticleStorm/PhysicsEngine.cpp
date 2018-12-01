@@ -37,41 +37,34 @@ void PhysicsEngine::Start(SDL_bool* done) {
 	physicsThread = std::thread([=] {PhysicsThreadRun(done);});
 }
 
-bool PhysicsEngine::BoundingBoxCollision(const int particle) const {
-	bool collision = false;
+void PhysicsEngine::BoundingBoxCollision(const int particle) const {
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
 	if (circlePos[particle].y < environment->circleRadius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
 		circlePos[particle].y = environment->circleRadius;
-		collision = true;
 	}
 	if (circlePos[particle].y > environment->worldHeight - environment->circleRadius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
 		circlePos[particle].y = environment->worldHeight - environment->circleRadius;
-		collision = true;
 	}
 	if (circlePos[particle].x < environment->circleRadius) {
 		circleVel[particle].x = -circleVel[particle].x * friction;
 		circlePos[particle].x = environment->circleRadius;
-		collision = true;
 	}
 	if (circlePos[particle].x > environment->worldWidth - environment->circleRadius) {
 		circleVel[particle].x = -circleVel[particle].x * friction;
 		circlePos[particle].x = environment->worldWidth - environment->circleRadius;
-		collision = true;
 	}
-	return collision;
 }
 
-bool PhysicsEngine::ParticleCollision(const int particle1, const int particle2) const {
+void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) const {
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
 	const auto dist = distance(circlePos[particle1], circlePos[particle2]);
-	const auto collision = dist < doubleRadius;
-	if (collision) {
+	if (dist < doubleRadius) {
 		glm::vec2 positionDelta = circlePos[particle1] - circlePos[particle2];
 
 		glm::vec2 newVel1 = circleVel[particle1] - glm::dot(circleVel[particle1] - circleVel[particle2], positionDelta) / pow(glm::length(positionDelta), 2) * positionDelta;
@@ -87,7 +80,6 @@ bool PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 		circlePos[particle2] += (positionDelta / dist) * (overlap / 2);
 		++stats->particleCollisionTotalLastSecond;
 	}
-	return collision;
 }
 
 void PhysicsEngine::ParticleCollision(const int particle) const {
@@ -96,23 +88,18 @@ void PhysicsEngine::ParticleCollision(const int particle) const {
 	}
 }
 
-int PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
+void PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
-	auto collisionCount = 0;
-	//In scope particles
-	for (auto i = particle + 1; i < end; i++) {
-		if (ParticleCollision(particle, i)) {
-			collisionCount++;
-		}
-	}
 	//Overflow particles
-	for (int i : overflow) {
-		if (particle != i && ParticleCollision(particle, i))
-			collisionCount++;
-	}
-	return collisionCount;
+	for (int i : overflow) 
+		if (particle != i)
+			ParticleCollision(particle, i);
+
+	//In scope particles
+	for (auto i = particle + 1; i < end; i++)
+		ParticleCollision(particle, i);	
 }
 
 void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>& overflow) const {
@@ -176,8 +163,8 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
 		environment->renderLock.unlock();
 
 		for (int i = 0; i < environment->circleCount; i++) {
-			int collisionCount = BoundingBoxCollision(i) ? 1 : 0;
-/*				ParticleCollision(i)*/;
+			BoundingBoxCollision(i);
+			//ParticleCollision(i); //Non-Quadtree collisions
 		}
 
 		QuadTreeParticleCollisions(environment->tree);
