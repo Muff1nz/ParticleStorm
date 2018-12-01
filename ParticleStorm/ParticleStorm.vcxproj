@@ -83,6 +83,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\C++ Projects\Libs\glm;C:\C++ Projects\Libs\SDL2-2.0.9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\C++ Projects\Libs\SDL2-2.0.9\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -111,6 +112,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\C++ Projects\Libs\glm;C:\C++ Projects\Libs\SDL2-2.0.9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -124,20 +126,25 @@
     <ClCompile Include="CodeGraveyard.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NumberGenerator.cpp" />
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="RenderEngineSDL.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h" />
+    <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineSDL.h" />
+    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

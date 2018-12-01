@@ -13,9 +13,9 @@ public:
 	void Start();
 	void Stop();
 	void Restart();
-	float ElapsedMilliseconds();
+	float ElapsedSeconds();
 private:
-	float TicksToMilliseconds(Uint64 ticks);
+	static float TicksToSeconds(Uint64 ticks);
 
 	const float maxDeltaTime;
 	float realTimeDifference;

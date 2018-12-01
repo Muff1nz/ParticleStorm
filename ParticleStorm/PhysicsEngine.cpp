@@ -8,20 +8,21 @@
 PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->circleRadius * 2) {
 	this->environment = environment;
 	this->stats = stats;
+	rng = NumberGenerator(environment->seed);
 }
 
 PhysicsEngine::~PhysicsEngine() = default;
 
-void PhysicsEngine::Init() const {
-	const int maxSpeed = 1;
+void PhysicsEngine::Init() {
+	const int maxSpeed = 1000;
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
 	for (int i = 0; i < environment->circleCount; i++) {
-		circlePos[i] = glm::vec2(rand() % environment->worldWidth, rand() % environment->worldHeight);
+		circlePos[i] = glm::vec2(rng.GenerateFloat(0, environment->worldWidth), rng.GenerateFloat(0, environment->worldHeight));
 
 		do {
-			circleVel[i] = glm::vec2(rand() % (maxSpeed * 2) - maxSpeed, rand() % (maxSpeed * 2) - maxSpeed);
+			circleVel[i] = glm::vec2(rng.GenerateFloat(-maxSpeed, maxSpeed), rng.GenerateFloat(-maxSpeed, maxSpeed));
 		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
 	}
 
@@ -138,7 +139,7 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 }
 
 void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
-	auto const explosionForce = 250.0f;
+	auto const explosionForce = 250000.0f;
 
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
@@ -148,7 +149,7 @@ void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
 	while (!*done) {
 
 		float deltaTime = timer.DeltaTime();
-		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference() * 100;
+		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
 
 		while (!environment->explosions.empty()) {
 			glm::vec2 impactPoint = environment->explosions.front();
