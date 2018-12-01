@@ -6,9 +6,10 @@ Environment::Environment() {
 	Init();
 }
 
-Environment::Environment(int circleCount, int circleRadius) : circleCount(circleCount), circleRadius(circleRadius) {
+Environment::Environment(int circleCount, int circleRadius, int seed) : circleCount(circleCount), circleRadius(circleRadius) {
 	Init();
-};
+	this->seed = seed;
+}
 
 Environment::~Environment() = default;
 

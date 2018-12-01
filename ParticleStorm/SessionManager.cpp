@@ -3,23 +3,19 @@
 #include <vec2.hpp>
 #include <iostream>
 #include "Environment.h"
-#include "RenderEngineSDL.h"
-#include "PhysicsEngine.h"
 #include "Timer.h"
 #include <fstream>
 #include "Utils.h"
+#include <windows.h>
+#include "RenderEngineSDL.h"
+#include "PhysicsEngine.h"
 
 
-SessionManager::SessionManager() {
-}
+SessionManager::SessionManager() = default;
 
 
-SessionManager::~SessionManager() {
-}
+SessionManager::~SessionManager() = default;
 
-
-const std::string shorTitle = "Benchmark";
-const std::string longTitle = "Currently making benchmark for ParticleStorm";
 
 char* SessionManager::FileTime() {
 	char name[20];
@@ -30,10 +26,15 @@ char* SessionManager::FileTime() {
 	return name;
 }
 
-void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) {
-	const std::string statsOutputPath = "C:/C++ Projects/ParticleStorm_Stats/PS_Stats_";
-	std::cout << statsOutputPath + FileTime() + ".txt";
-	std::ofstream statsFile(statsOutputPath + shorTitle + "_" + FileTime() + ".txt");
+void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) const {
+	const std::string fileLeadText = "PS_Stats_";
+	const std::string statsOutputFolder = statsOutputDir + fileLeadText + FileTime();
+	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
+
+	std::cout << "Results are saved to: " + statsOutputFolder + "\n";
+	CreateDirectory(statsOutputFolder.c_str(), nullptr);
+	std::ofstream statsFile(statsOutputFilePath);
+
 	statsFile << longTitle + "\n";
 	statsFile << "Simulated " + std::to_string(environment.circleCount) + " particles with a raidus of: " + std::to_string(environment.circleRadius) + "\n";
 	statsFile << "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
@@ -47,9 +48,13 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 		statsFile << "}\n";
 	}
 	statsFile.close();
+
+	auto command = "python \"" + statsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
+	std::cout << command + "\n";
+	system(command.c_str());
 }
 
-void SessionManager::Sandbox() {
+void SessionManager::Sandbox() const {
 	Environment environment{};
 	Stats stats{};
 	RenderEngineSDL renderEngine(&environment, &stats);
@@ -109,8 +114,8 @@ void SessionManager::Sandbox() {
 }
 
 
-void SessionManager::Benchmark() {
-	Environment environment(4000, 8);
+void SessionManager::Benchmark() const {
+	Environment environment(4000, 8, 1337);
 	Stats stats{};
 	RenderEngineSDL renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
@@ -127,13 +132,9 @@ void SessionManager::Benchmark() {
 		int explosionIndex = 0;
 		const int explosionPointCount = 4;
 		glm::vec2 explosionPoints[explosionPointCount];
-		
-		std::cout << "\n";
 		for (int i = 0; i < explosionPointCount; ++i) {
 			explosionPoints[i] = { environment.worldWidth * (float(i) / (explosionPointCount - 1)) , environment.worldHeight };
-			std::cout << Utils::vecToString(explosionPoints[i]) + " ";
 		}
-		std::cout << "\n";
 
 		Timer sessionTimer;
 		sessionTimer.Start();
@@ -144,7 +145,7 @@ void SessionManager::Benchmark() {
 		Timer explosionTimer;
 		explosionTimer.Start();
 
-		const int benchmarkDuration = 10;
+		const int benchmarkDuration = 11;
 
 		while (sessionTimer.ElapsedSeconds() <= benchmarkDuration) {
 			std::this_thread::sleep_for(std::chrono::microseconds(10));

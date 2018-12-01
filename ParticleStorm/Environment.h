@@ -15,6 +15,8 @@ public:
 	const int circleCount = 1000;
 	const int circleRadius = 16;
 
+	int seed;
+
 	SDL_Color circleColor{};
 
 	glm::vec2* circlePos;
@@ -28,7 +30,7 @@ public:
 	std::mutex renderLock{};
 
 	Environment();
-	Environment(int circleCount, int circleRadius);
+	Environment(int circleCount, int circleRadius, int seed);
 	~Environment();
 
 	void Init();

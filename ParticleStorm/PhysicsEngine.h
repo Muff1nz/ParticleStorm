@@ -3,13 +3,14 @@
 #include "Environment.h"
 #include <thread>
 #include "Stats.h"
+#include "NumberGenerator.h"
 
 class PhysicsEngine {
 public:
 	PhysicsEngine(Environment* environment, Stats* stats);
 	~PhysicsEngine();
 
-	void Init() const;
+	void Init();
 	void Start(SDL_bool* done);
 	void Join();
 private:
@@ -17,6 +18,8 @@ private:
 	const glm::vec2 gravity = glm::vec2(0, -500);
 	const float friction = 0.98;
 	const float doubleRadius;
+
+	NumberGenerator rng;
 
 	Environment* environment;
 	Stats* stats;

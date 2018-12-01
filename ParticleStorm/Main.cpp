@@ -20,6 +20,7 @@ int main(int argc, char* args[]) {
 	do {
 		PrintMenu();
 		userInput = getchar();
+		std::cin.ignore();
 		switch (std::toupper(userInput)) {
 		case '1':
 			session.Sandbox();

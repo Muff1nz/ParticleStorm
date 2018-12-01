@@ -8,20 +8,21 @@
 PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->circleRadius * 2) {
 	this->environment = environment;
 	this->stats = stats;
+	rng = NumberGenerator(environment->seed);
 }
 
 PhysicsEngine::~PhysicsEngine() = default;
 
-void PhysicsEngine::Init() const {
+void PhysicsEngine::Init() {
 	const int maxSpeed = 1000;
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
 	for (int i = 0; i < environment->circleCount; i++) {
-		circlePos[i] = glm::vec2(rand() % environment->worldWidth, rand() % environment->worldHeight);
+		circlePos[i] = glm::vec2(rng.GenerateFloat(0, environment->worldWidth), rng.GenerateFloat(0, environment->worldHeight));
 
 		do {
-			circleVel[i] = glm::vec2(rand() % (maxSpeed * 2) - maxSpeed, rand() % (maxSpeed * 2) - maxSpeed);
+			circleVel[i] = glm::vec2(rng.GenerateFloat(-maxSpeed, maxSpeed), rng.GenerateFloat(-maxSpeed, maxSpeed));
 		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
 	}
 
