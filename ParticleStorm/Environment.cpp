@@ -1,7 +1,18 @@
 #include "Environment.h"
 #include <iostream>
 
+
 Environment::Environment() {
+	Init();
+}
+
+Environment::Environment(int circleCount, int circleRadius) : circleCount(circleCount), circleRadius(circleRadius) {
+	Init();
+};
+
+Environment::~Environment() = default;
+
+void Environment::Init() {
 	circleColor.g = 140;
 	circleColor.a = 255;
 
@@ -12,9 +23,8 @@ Environment::Environment() {
 	for (int i = 0; i < circleCount; ++i) {
 		renderOrder[i] = i;
 	}
-};
+}
 
-Environment::~Environment() = default;
 
 //Maybe optimize with XOR swapping?
 void Environment::SwapParticles(const int one, const int two) const {

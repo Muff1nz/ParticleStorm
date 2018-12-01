@@ -12,8 +12,8 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 4000;
-	const int circleRadius = 10;
+	const int circleCount = 1000;
+	const int circleRadius = 16;
 
 	SDL_Color circleColor{};
 
@@ -28,8 +28,10 @@ public:
 	std::mutex renderLock{};
 
 	Environment();
+	Environment(int circleCount, int circleRadius);
 	~Environment();
 
+	void Init();
 	void SwapParticles(int one, int two) const;
 };
 

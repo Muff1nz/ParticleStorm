@@ -14,7 +14,7 @@ public:
 	void Join();
 private:
 	const float maxPhysicsDeltaTime = 1000.0f / 450.0f; //Which gives a minimum of 300 physics updates per "second" (maybe scale with particle radius)
-	const glm::vec2 gravity = glm::vec2(0, -0.001);
+	const glm::vec2 gravity = glm::vec2(0, -500);
 	const float friction = 0.98;
 	const float doubleRadius;
 
