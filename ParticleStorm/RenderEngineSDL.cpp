@@ -22,7 +22,7 @@ bool RenderEngineSDL::Init() {
 			&renderer) == 0;
 }
 
-void RenderEngineSDL::Start(SDL_bool* done) {
+void RenderEngineSDL::Start(bool* done) {
 	renderThead = std::thread([=] {RenderThreadRun(done);});
 }
 
@@ -106,7 +106,7 @@ void RenderEngineSDL::GetRenderColor(SDL_Color& oldColor) const {
 		&oldColor.a);
 }
 
-void RenderEngineSDL::RenderThreadRun(const SDL_bool* done) const {
+void RenderEngineSDL::RenderThreadRun(const bool* done) const {
 	while (!(*done)) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(renderer);

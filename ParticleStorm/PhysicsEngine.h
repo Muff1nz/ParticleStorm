@@ -11,7 +11,7 @@ public:
 	~PhysicsEngine();
 
 	void Init();
-	void Start(SDL_bool* done);
+	void Start(bool* done);
 	void Join();
 private:
 	const float maxPhysicsDeltaTime = 1.0f / 450.0f; //Which gives a minimum of 300 physics updates per "second" (maybe scale with particle radius)
@@ -33,6 +33,6 @@ private:
 	void QuadTreeParticleCollisions(QuadTree* tree) const;
 
 	void BoundingBoxCollision(int particle) const;
-	void PhysicsThreadRun(const SDL_bool* done) const;
+	void PhysicsThreadRun(const bool* done) const;
 };
 

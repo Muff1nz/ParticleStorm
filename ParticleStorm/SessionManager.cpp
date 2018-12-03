@@ -9,6 +9,7 @@
 #include <windows.h>
 #include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
+#include "RenderEngineVulkan.h"
 
 
 SessionManager::SessionManager() = default;
@@ -63,7 +64,7 @@ void SessionManager::Sandbox() const {
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
-		SDL_bool done = SDL_FALSE;
+		bool done = false;
 
 		renderEngine.Start(&done);
 		physicsEngine.Start(&done);
@@ -88,7 +89,7 @@ void SessionManager::Sandbox() const {
 			while (SDL_PollEvent(&event)) {
 				switch (event.type) {
 				case SDL_QUIT:
-					done = SDL_TRUE;
+					done = true;
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					if (event.button.button == SDL_BUTTON_LEFT) {
@@ -123,7 +124,7 @@ void SessionManager::Benchmark() const {
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
-		SDL_bool done = SDL_FALSE;
+		bool done = false;
 
 		renderEngine.Start(&done);
 		physicsEngine.Start(&done);
@@ -166,7 +167,7 @@ void SessionManager::Benchmark() const {
 				environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
 			}
 		}
-		done = SDL_TRUE;
+		done = true;
 		physicsEngine.Join();
 		renderEngine.Join();
 
@@ -179,4 +180,24 @@ void SessionManager::Benchmark() const {
 	renderEngine.Dispose();
 
 	SDL_Quit();
+}
+
+void SessionManager::VulkanTest() const {
+	Stats stats;
+	Environment environment;
+	RenderEngineVulkan renderEngine(&environment, &stats);
+
+	bool done = false;
+	try {
+		renderEngine.Init();
+		//renderEngine.Start(&done);
+
+		while (!glfwWindowShouldClose(renderEngine.GetWindow())) {
+			glfwPollEvents();
+		}
+
+		renderEngine.Dispose();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+	}
 }

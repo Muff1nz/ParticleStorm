@@ -15,6 +15,7 @@
 #include <mat4x4.hpp>
 
 #include <iostream>
+#include "RenderEngineVulkan.h"
 
 void PrintMenu() {
 	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
@@ -72,9 +73,16 @@ void VulkanGLFWTest() {
 	glfwTerminate();
 }
 
+void RenderEngineVulkanTest() {
+	SessionManager sessionManager;
+	sessionManager.VulkanTest();
+
+}
+
 int main(int argc, char* args[]) {
 	//MainMenu();
-	VulkanGLFWTest();
+	//VulkanGLFWTest();
+	RenderEngineVulkanTest();
 	return 0;
 }
 

@@ -131,6 +131,7 @@
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="RenderEngineSDL.cpp" />
+    <ClCompile Include="RenderEngineVulkan.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
@@ -141,6 +142,7 @@
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineSDL.h" />
+    <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
     <ClInclude Include="Timer.h" />

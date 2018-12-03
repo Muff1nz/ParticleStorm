@@ -19,6 +19,7 @@ public:
 
 	void Sandbox() const;
 	void Benchmark() const;
+	void VulkanTest() const;
 
 private:
 	void OutputStatsToFile(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) const;
