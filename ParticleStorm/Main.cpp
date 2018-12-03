@@ -5,6 +5,17 @@
 #include <cctype>
 #include "SessionManager.h"
 
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <vec4.hpp>
+#include <mat4x4.hpp>
+
+#include <iostream>
+
 void PrintMenu() {
 	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 	std::cout << "ParticleStorm Main Menu:\n";	
@@ -13,7 +24,7 @@ void PrintMenu() {
 	std::cout << "Quit(X)\n";
 }
 
-int main(int argc, char* args[]) {
+void MainMenu() {
 	SessionManager session;
 
 	char userInput = 'N';
@@ -35,6 +46,35 @@ int main(int argc, char* args[]) {
 			break;
 		}
 	} while (std::toupper(userInput) != 'X');
+}
+
+void VulkanGLFWTest() {
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
+
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+	std::cout << extensionCount << " extensions supported" << std::endl;
+
+	glm::mat4 matrix;
+	glm::vec4 vec;
+	auto test = matrix * vec;
+
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+	}
+
+	glfwDestroyWindow(window);
+
+	glfwTerminate();
+}
+
+int main(int argc, char* args[]) {
+	//MainMenu();
+	VulkanGLFWTest();
 	return 0;
 }
 
