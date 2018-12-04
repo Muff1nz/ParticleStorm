@@ -92,5 +92,8 @@
     <ClInclude Include="RenderEngineVulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VulkanDebugCallbacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

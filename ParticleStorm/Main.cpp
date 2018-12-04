@@ -83,6 +83,7 @@ int main(int argc, char* args[]) {
 	//MainMenu();
 	//VulkanGLFWTest();
 	RenderEngineVulkanTest();
+	std::cin.get();
 	return 0;
 }
 
