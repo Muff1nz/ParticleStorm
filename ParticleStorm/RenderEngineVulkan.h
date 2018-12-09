@@ -26,6 +26,7 @@ public:
 	//Threading
 	void Start(bool* done);
 	void Join();
+	void DrawFrame();
 
 	//Accessors
 	GLFWwindow* GetWindow();
@@ -34,6 +35,9 @@ private:
 	Environment* environment;
 	Stats* stats;
 	glm::vec2* particlesRenderCopy;
+
+	//General
+	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	//Vulkan Debug
 	const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
@@ -60,6 +64,13 @@ private:
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
+	std::vector<VkFramebuffer> swapChainFrameBuffers;
+	VkCommandPool commandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	size_t currentFrame = 0;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -108,12 +119,16 @@ private:
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 	void CreateGraphicsPipeline();
 	void CreateRenderPass();
+	void CreateFrameBuffers();
+	void CreateCommandPool();
+	void CreateCommandBuffers();
+	void CreateSyncObjects();
 	void InitVulkan();
 
 	//Init GLFW
 	void InitWindow();
 
 	//Threading
-	void RenderThreadRun(bool* done) const;
+	void RenderThreadRun(bool* done);
 };
 
