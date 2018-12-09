@@ -57,6 +57,9 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
+	VkRenderPass renderPass;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -101,6 +104,10 @@ private:
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void CreateSwapChain();
 	void CreateImageViews();
+	static std::vector<char> ReadFile(const std::string& filename);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+	void CreateGraphicsPipeline();
+	void CreateRenderPass();
 	void InitVulkan();
 
 	//Init GLFW
