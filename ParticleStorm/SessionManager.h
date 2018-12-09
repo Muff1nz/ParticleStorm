@@ -9,8 +9,8 @@ class RenderEngineSDL;
 
 class SessionManager {
 public:
-	const std::string shorTitle = "TidyPhysicsEngine";
-	const std::string longTitle = "Tidied up physics engine (Also made overflow particles precede normal particles in collision check)";
+	const std::string shorTitle = "VulkanRenderEngine";
+	const std::string longTitle = "Making a render engine based on vulkan";
 	const std::string statsOutputDir = "C:/C++ Projects/ParticleStorm_Stats/";
 	const std::string statsGrapherDir = "C:/Python Projects/ParticleStorm_Tools/StatsGrapher.py";
 

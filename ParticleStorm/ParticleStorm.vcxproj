@@ -147,7 +147,6 @@
     <ClInclude Include="Stats.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Utils.h" />
-    <ClInclude Include="VulkanDebugCallbacks.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

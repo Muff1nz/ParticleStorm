@@ -36,10 +36,7 @@ private:
 	glm::vec2* particlesRenderCopy;
 
 	//Vulkan Debug
-	const std::vector<const char*> validationLayers = {
-		"VK_LAYER_LUNARG_standard_validation"
-	};
-
+	const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
 #ifdef NDEBUG
 	const bool enableValidationLayers = false;
 #else
@@ -48,10 +45,18 @@ private:
 	VkDebugUtilsMessengerEXT callback;
 
 	//Vulkan
+	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME	};
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
+	VkSurfaceKHR surface;
+	VkSwapchainKHR swapChain;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+	std::vector<VkImageView> swapChainImageViews;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -72,17 +77,30 @@ private:
 	//Vulkan Init
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
-
-		bool isComplete() {
-			return graphicsFamily.has_value();
+		std::optional<uint32_t> presentFamily;
+		bool IsComplete() const {
+			return graphicsFamily.has_value() && presentFamily.has_value();
 		}
+	};
+	struct SwapChainSupportDetails {
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> presentModes;
 	};
 	std::vector<const char*> GetRequiredExtensions() const;
 	void CreateInstance();
 	void PickPhysicalDevice();
-	static bool IsDeviceSuitable(VkPhysicalDevice device);
-	static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+	bool IsDeviceSuitable(VkPhysicalDevice device);
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device) const;
 	void CreateLogicalDevice();
+	void CreateSurface();
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
+	VkPresentModeKHR ChooseSwapPresentMode(std::vector<VkPresentModeKHR> availablePresentModes) const;
+	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void CreateSwapChain();
+	void CreateImageViews();
 	void InitVulkan();
 
 	//Init GLFW
