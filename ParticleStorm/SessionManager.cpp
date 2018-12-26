@@ -190,14 +190,14 @@ void SessionManager::VulkanTest() const {
 	bool done = false;
 	try {
 		renderEngine.Init();
-		//renderEngine.Start(&done);
+		renderEngine.Start(&done);
 
 		while (!glfwWindowShouldClose(renderEngine.GetWindow())) {
 			glfwPollEvents();
-			renderEngine.DrawFrame();
+/*			renderEngine.DrawFrame()*/;
 		}
 		done = true;
-		//renderEngine.Join();
+		renderEngine.Join();
 		renderEngine.Dispose();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
