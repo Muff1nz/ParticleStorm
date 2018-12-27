@@ -31,6 +31,7 @@ public:
 
 	//Accessors
 	GLFWwindow* GetWindow();
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 private:
 	//Particle Storm Specific Variables
 	Environment* environment;
@@ -74,6 +75,8 @@ private:
 	size_t currentFrame = 0;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -126,8 +129,11 @@ private:
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
-	void createVertexBuffers();
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+	                   VkDeviceMemory& bufferMemory);
+	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void CreateIndexBuffer();
 	void InitVulkan();
 
 	//Vertex data
@@ -160,13 +166,14 @@ private:
 	};
 
 	const std::vector<Vertex> vertices = {
-		{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
-		{ { 0.5f, 0.5f },{ 1.0f, 0.0f, 0.0f } },
-		{ { -0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
-
-		{ { -0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
 		{ { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f } },
 		{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
+		{ { 0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
+		{ { -0.5f, 0.5f },{ 1.0f, 1.0f, 1.0f } }
+	};
+
+	const std::vector<uint16_t> indices = {
+		0, 1, 2, 2, 3, 0
 	};
 
 	//Init GLFW
