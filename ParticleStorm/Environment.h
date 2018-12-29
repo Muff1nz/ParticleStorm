@@ -4,6 +4,7 @@
 #include <queue>
 #include "QuadTree.h"
 #include <mutex>
+#include "TestSquare.h"
 
 class QuadTree;
 
@@ -22,6 +23,8 @@ public:
 	glm::vec2* circlePos;
 	glm::vec2* circleVel;
 	std::queue<glm::vec2> explosions;
+
+	TestSquare square{};
 
 	QuadTree* tree;
 	std::mutex treeMutex{};

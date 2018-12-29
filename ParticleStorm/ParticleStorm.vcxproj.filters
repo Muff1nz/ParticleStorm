@@ -101,6 +101,9 @@
     <ClInclude Include="RenderEngineVulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TestSquare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.frag">

@@ -1,6 +1,4 @@
 #pragma once
-#include <vec3.hpp>
-#include <vec2.hpp>
 #include <thread>
 #include <array>
 #include "Stats.h"
@@ -9,6 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <optional>
+#include <glm.hpp>
 
 class QuadTree;
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
@@ -64,6 +63,7 @@ private:
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
@@ -77,6 +77,10 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSet> descriptorSets;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -129,12 +133,16 @@ private:
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
-	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
-	                   VkDeviceMemory& bufferMemory);
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
+	void CreateDescriptorSetLayout();
+	void CreateUniformBuffers();
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
 	void InitVulkan();
+	void UpdateUniformBuffer(uint32_t imageIndex);
 
 	//Vertex data
 	struct Vertex {
@@ -163,6 +171,11 @@ private:
 			attributeDescriptions[1].offset = offsetof(Vertex, color);
 			return attributeDescriptions;
 		}
+	};
+
+	struct UniformBufferObject {
+		glm::mat3 model;
+		glm::mat3 view;
 	};
 
 	const std::vector<Vertex> vertices = {
