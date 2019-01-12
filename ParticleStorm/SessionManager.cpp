@@ -194,8 +194,8 @@ void SessionManager::VulkanTest() const {
 		Timer timer;		
 		while (!glfwWindowShouldClose(renderEngine.GetWindow())) {
 			glfwPollEvents();
-			//environment.square.pos.x += timer.DeltaTime() * 0.1;
-			//std::cout << environment.square.pos.x << '\n';
+			environment.square.pos.x += timer.DeltaTime() * 0.1;
+			std::cout << environment.square.pos.x << '\n';
 /*			renderEngine.DrawFrame()*/;
 		}
 		done = true;

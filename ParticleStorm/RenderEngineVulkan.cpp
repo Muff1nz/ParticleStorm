@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <fstream>
 #include "Utils.h"
+#include <gtc/matrix_transform.hpp>
 
 //     _____                _                   _                   __  _____            _                   _             
 //    / ____|              | |                 | |                 / / |  __ \          | |                 | |            
@@ -929,15 +930,22 @@ void RenderEngineVulkan::InitVulkan() {
 
 void RenderEngineVulkan::UpdateUniformBuffer(uint32_t imageIndex) {
 	UniformBufferObject ubo = {};
-	ubo.model = glm::mat3(1);
-	//ubo.model = Utils::ChangeOrder(ubo.model);
-	//ubo.model[2][0] = environment->square.pos.x;
-	//ubo.model[2][1] = environment->square.pos.y;
-	ubo.view = glm::mat3(1);
+	ubo.model = glm::mat4(1);
+	ubo.view = glm::mat4(1);
+	ubo.proj = glm::mat4(1);
+	ubo.model = translate(ubo.model, glm::vec3(environment->square.pos, 0));
+	////ubo.model = Utils::ChangeOrder(ubo.model);
+	////ubo.model[2][0] = environment->square.pos.x;
+	////ubo.model[2][1] = environment->square.pos.y;
+	//ubo.view = glm::mat3(1);
+
 	//ubo.view = Utils::ChangeOrder(ubo.view);
-	std::cout << Utils::Mat3ToString(ubo.model) << '\n';
+	//std::cout << Utils::Mat3ToString(ubo.model) << '\n';
 	//std::cout << ubo.model[0][2] << " "; 
 	//std::cout << ubo.model[1][2] << "\n";
+	//ubo.color1 = { 1, 0, 0 };
+	//ubo.color2 = { 0, 1, 0 };
+	//ubo.color3 = { 0, 0, 1 };
 	void* data;
 	vkMapMemory(device, uniformBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));

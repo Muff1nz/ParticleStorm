@@ -45,7 +45,7 @@ private:
 #ifdef NDEBUG
 	const bool enableValidationLayers = false;
 #else
-	const bool enableValidationLayers = true;
+	const bool enableValidationLayers = false;
 #endif
 	VkDebugUtilsMessengerEXT callback;
 
@@ -173,11 +173,6 @@ private:
 		}
 	};
 
-	struct UniformBufferObject {
-		glm::mat3 model;
-		glm::mat3 view;
-	};
-
 	const std::vector<Vertex> vertices = {
 		{ { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f } },
 		{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
@@ -195,4 +190,19 @@ private:
 	//Threading
 	void RenderThreadRun(bool* done);
 };
+
+//struct UniformBufferObject {
+//	glm::mat3 model;
+//	glm::mat3 view;
+//	//glm::vec3 color1;
+//	//glm::vec3 color2;
+//	//glm::vec3 color3;
+//};
+
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 
