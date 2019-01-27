@@ -17,6 +17,7 @@
 #include "Utils.h"
 #include <gtc/matrix_transform.hpp>
 #include <array>
+#include "Timer.h"
 
 
 //     _____                _                   _                   __  _____            _                   _             
@@ -713,11 +714,11 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 		VkBuffer vertexBuffers[] = { vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, vertexBuffers, offsets);
+		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffers.data(), offsets);
 
 		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), environment->circleCount, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->circleCount), 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
@@ -847,8 +848,17 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 
 void RenderEngineVulkan::CreateInstanceBuffer() {
 	MVP_Array = new InstanceBufferObject[environment->circleCount];
-	instanceBuffer.resize(swapChainImages.size());
-	instanceMemory.resize(swapChainImages.size());
+	for (int i = 0; i < environment->circleCount; ++i) {
+		//glm::mat4 view = glm::mat4(1);
+		//glm::mat4 proj = CalcProj();
+		//glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->circlePos[i], 0));
+		//MVP_Array[i].MVP = proj * view * model;
+		MVP_Array[i].MVP = glm::mat4(1);
+	}
+
+	instanceBuffers.resize(swapChainImages.size());
+	instanceMemorys.resize(swapChainImages.size());
+	instanceDescriptors.resize(swapChainImages.size());
 	for (int i = 0; i < swapChainImages.size(); ++i) {
 		VkDeviceSize bufferSize = SizeOfMVPs();
 		VkBuffer stagingBuffer;
@@ -860,8 +870,13 @@ void RenderEngineVulkan::CreateInstanceBuffer() {
 		memcpy(data, MVP_Array, (size_t)bufferSize);
 		vkUnmapMemory(device, stagingBufferMemory);
 
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, instanceBuffer[i], instanceMemory[i]);
-		CopyBuffer(stagingBuffer, instanceBuffer[i], bufferSize);
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, instanceBuffers[i], instanceMemorys[i]);
+		CopyBuffer(stagingBuffer, instanceBuffers[i], bufferSize);
+
+		instanceDescriptors[i].range = bufferSize;
+		instanceDescriptors[i].buffer = instanceBuffers[i];
+		instanceDescriptors[i].offset = 0;
+
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
@@ -1047,17 +1062,17 @@ glm::mat4 RenderEngineVulkan::CalcProj() {
 }
 
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
-	for (int i = 0; i < environment->circleCount; ++i) {
-		glm::mat4 view = glm::mat4(1);
-		glm::mat4 proj = CalcProj();
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->circlePos[i], 0));
-		MVP_Array[i].MVP = proj * view * model;
-		MVP_Array[i].MVP = glm::mat4(1);
-	}
-	void* data;
-	vkMapMemory(device, instanceMemory[imageIndex], 0, SizeOfMVPs(), 0, &data);
-	memcpy(data, &MVP_Array, SizeOfMVPs());
-	vkUnmapMemory(device, instanceMemory[imageIndex]);
+	//for (int i = 0; i < environment->circleCount; ++i) {
+	//	//glm::mat4 view = glm::mat4(1);
+	//	//glm::mat4 proj = CalcProj();
+	//	//glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->circlePos[i], 0));
+	//	//MVP_Array[i].MVP = proj * view * model;
+	//	MVP_Array[i].MVP = glm::mat4(1);
+	//}
+	//void* data;
+	//vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
+	//memcpy(data, &MVP_Array, SizeOfMVPs());
+	//vkUnmapMemory(device, instanceMemorys[imageIndex]);
 }
 
 //    _______ _                        _ _             
@@ -1119,10 +1134,15 @@ void RenderEngineVulkan::DrawFrame() {
 	vkQueuePresentKHR(presentQueue, &presentInfo);
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+	++stats->renderUpdateTotalLastSecond;
+	stats->particlesRenderedTotalLastSecond += environment->circleCount;
 }
 
 void RenderEngineVulkan::RenderThreadRun(bool* done) {
+	Timer timer(1.0f/30.0f, 1.0f/90.0f);
 	while (!*done) {
+		timer.DeltaTime();
 		DrawFrame();
 	}
 }

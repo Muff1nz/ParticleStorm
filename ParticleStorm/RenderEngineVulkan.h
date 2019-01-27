@@ -79,8 +79,9 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
-	std::vector<VkBuffer> instanceBuffer;
-	std::vector<VkDeviceMemory> instanceMemory;
+	std::vector<VkBuffer> instanceBuffers;
+	std::vector<VkDeviceMemory> instanceMemorys;
+	std::vector<VkDescriptorBufferInfo> instanceDescriptors;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -194,7 +195,7 @@ private:
 		static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
 			std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 			for (int i = 0; i < 4; ++i) {
-				attributeDescriptions[i].binding = 0;
+				attributeDescriptions[i].binding = 1;
 				attributeDescriptions[i].location = i + 2;
 				attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 				attributeDescriptions[i].offset = sizeof(glm::vec4) * i;

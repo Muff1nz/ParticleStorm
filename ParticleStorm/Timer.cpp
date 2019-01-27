@@ -19,8 +19,10 @@ float Timer::DeltaTime() {
 	nowDeltaTime = SDL_GetPerformanceCounter();
 	const float deltaTime = TicksToSeconds(nowDeltaTime - lastDeltaTime);
 	float result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
-	if (deltaTime < minDeltaTime)
+	if (deltaTime < minDeltaTime) {
 		std::this_thread::sleep_for(std::chrono::microseconds(SecondsToMicroseconds(minDeltaTime - deltaTime)));
+		result = minDeltaTime;
+	}
 	realTimeDifference = result / deltaTime * 100;
 	return result;
 }
