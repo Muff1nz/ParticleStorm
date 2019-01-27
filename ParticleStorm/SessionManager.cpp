@@ -186,21 +186,38 @@ void SessionManager::VulkanTest() const {
 	Stats stats;
 	Environment environment;
 	RenderEngineVulkan renderEngine(&environment, &stats);
+	PhysicsEngine physicsEngine(&environment, &stats);
 
 	bool done = false;
 	try {
 		renderEngine.Init();
 		renderEngine.Start(&done);
-		Timer timer;		
+		physicsEngine.Init();
+		physicsEngine.Start(&done);
+
+		Timer timer;
+		timer.Start();
+
+
 		while (!glfwWindowShouldClose(renderEngine.GetWindow())) {
+			std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+			if (timer.ElapsedSeconds() >= 1) {
+				timer.Restart();
+				stats.CompleteLastSecond();
+				std::cout << stats.LastSecondToStringConsole();
+			}
+			
 			glfwPollEvents();
-			environment.square.pos.x += timer.DeltaTime() * 0.1;
-			std::cout << environment.square.pos.x << '\n';
-/*			renderEngine.DrawFrame()*/;
 		}
+		
+		
 		done = true;
+		physicsEngine.Join();
 		renderEngine.Join();
 		renderEngine.Dispose();
+
+
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}

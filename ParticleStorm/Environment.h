@@ -13,7 +13,7 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 1000;
+	const int circleCount = 10;
 	const int circleRadius = 16;
 
 	int seed;

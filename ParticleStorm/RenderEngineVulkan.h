@@ -8,8 +8,10 @@
 #include <GLFW/glfw3.h>
 #include <optional>
 #include <glm.hpp>
+#include <iostream>
 
 class QuadTree;
+
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
 class RenderEngineVulkan {
 public:
@@ -18,7 +20,7 @@ public:
 	~RenderEngineVulkan();
 
 	//Init
-	void Init();
+	bool Init();
 
 	//Cleanup
 	void Dispose();
@@ -45,7 +47,7 @@ private:
 #ifdef NDEBUG
 	const bool enableValidationLayers = false;
 #else
-	const bool enableValidationLayers = false;
+	const bool enableValidationLayers = true;
 #endif
 	VkDebugUtilsMessengerEXT callback;
 
@@ -77,10 +79,8 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
-	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
+	std::vector<VkBuffer> instanceBuffer;
+	std::vector<VkDeviceMemory> instanceMemory;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -134,15 +134,19 @@ private:
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	std::vector<VkVertexInputBindingDescription>CreateVertexBindingDescription();
+	std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription();
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
+	void CreateInstanceBuffer();
 	void CreateDescriptorSetLayout();
-	void CreateUniformBuffers();
-	void CreateDescriptorPool();
-	void CreateDescriptorSets();
+	std::size_t SizeOfMVPs() const;
 	void InitVulkan();
-	void UpdateUniformBuffer(uint32_t imageIndex);
+
+	//Vulkan/Engine
+	void UpdateInstanceBuffer(uint32_t imageIndex);
+	glm::mat4 CalcProj();
 
 	//Vertex data
 	struct Vertex {
@@ -152,6 +156,7 @@ private:
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription;
 			bindingDescription.binding = 0;
+			std::cout << "vertex binding: " << bindingDescription.binding << "\n";
 			bindingDescription.stride = sizeof(Vertex);
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
@@ -173,16 +178,43 @@ private:
 		}
 	};
 
+	struct InstanceBufferObject {
+		glm::mat4 MVP;
+
+		static VkVertexInputBindingDescription getBindingDescription() {
+			VkVertexInputBindingDescription bindingDescription;
+			bindingDescription.binding = 1;
+			std::cout << "instance binding: " << bindingDescription.binding << "\n";;
+			bindingDescription.stride = sizeof(InstanceBufferObject);
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+			return bindingDescription;
+		}
+
+		static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+			std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
+			for (int i = 0; i < 4; ++i) {
+				attributeDescriptions[i].binding = 0;
+				attributeDescriptions[i].location = i + 2;
+				attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+				attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
+			}
+			return attributeDescriptions;
+		}
+	};
+
 	const std::vector<Vertex> vertices = {
 		{ { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f } },
 		{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
 		{ { 0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
 		{ { -0.5f, 0.5f },{ 1.0f, 1.0f, 1.0f } }
 	};
-
+	
 	const std::vector<uint16_t> indices = {
 		0, 1, 2, 2, 3, 0
 	};
+
+	InstanceBufferObject* MVP_Array;
 
 	//Init GLFW
 	void InitWindow();
@@ -191,18 +223,5 @@ private:
 	void RenderThreadRun(bool* done);
 };
 
-//struct UniformBufferObject {
-//	glm::mat3 model;
-//	glm::mat3 view;
-//	//glm::vec3 color1;
-//	//glm::vec3 color2;
-//	//glm::vec3 color3;
-//};
-
-struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
 
 

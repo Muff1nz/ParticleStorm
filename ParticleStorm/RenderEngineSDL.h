@@ -3,7 +3,6 @@
 #include "Environment.h"
 #include <thread>
 #include "QuadTree.h"
-#include <vec3.hpp>
 #include "Stats.h"
 
 class RenderEngineSDL {

@@ -4,7 +4,7 @@
 
 class Timer {
 public:
-	Timer(float maxDeltaTime = std::numeric_limits<float>::max());
+	Timer(float maxDeltaTime = std::numeric_limits<float>::max(), float minDeltaTime = 0);
 	~Timer();
 
 	float DeltaTime();
@@ -16,8 +16,10 @@ public:
 	float ElapsedSeconds();
 private:
 	static float TicksToSeconds(Uint64 ticks);
+	static int SecondsToMicroseconds(float seconds);
 
 	const float maxDeltaTime;
+	const float minDeltaTime;
 	float realTimeDifference;
 
 	Uint64 nowDeltaTime;
