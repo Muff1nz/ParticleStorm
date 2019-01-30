@@ -1061,12 +1061,12 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 	environment->renderLock.unlock();
 
 	for (int i = 0; i < environment->circleCount; ++i) {
-		glm::mat4 view = glm::mat4(1);
-		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
-		//glm::mat4 model = scale(model, { 10, 10, 10 });
 		glm::vec2 pos = particlesRenderCopy[i];
 		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0));
+
+		glm::mat4 view = glm::mat4(1);
+		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
+		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->circleRadius, environment->circleRadius, 1 });
 		MVP_Array[i].MVP = proj * view * model;
 	}
 

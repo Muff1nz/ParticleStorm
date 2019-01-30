@@ -14,7 +14,7 @@ public:
 	const int worldHeight = 1300;
 
 	const int circleCount = 1000;
-	const int circleRadius = 16;
+	const int circleRadius = 10;
 
 	int seed;
 
