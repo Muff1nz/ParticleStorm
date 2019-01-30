@@ -712,12 +712,13 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 		VkBuffer vertexBuffers[] = { vertexBuffer };
+		VkBuffer instanceBuffer[] = { instanceBuffers[i] };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffers.data(), offsets);
+		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffer, offsets);
 
 		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
+		
 		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->circleCount), 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -848,18 +849,15 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 
 void RenderEngineVulkan::CreateInstanceBuffer() {
 	MVP_Array = new InstanceBufferObject[environment->circleCount];
-	for (int i = 0; i < environment->circleCount; ++i) {
-		//glm::mat4 view = glm::mat4(1);
-		//glm::mat4 proj = CalcProj();
-		//glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->circlePos[i], 0));
-		//MVP_Array[i].MVP = proj * view * model;
-		MVP_Array[i].MVP = glm::mat4(1);
-	}
-
 	instanceBuffers.resize(swapChainImages.size());
 	instanceMemorys.resize(swapChainImages.size());
 	instanceDescriptors.resize(swapChainImages.size());
 	for (int i = 0; i < swapChainImages.size(); ++i) {
+		for (int j = 0; j < environment->circleCount; ++j) {
+			MVP_Array[j].MVP = glm::mat4(1);
+		}
+
+
 		VkDeviceSize bufferSize = SizeOfMVPs();
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -1055,24 +1053,27 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-glm::mat4 RenderEngineVulkan::CalcProj() {
-	const float width = 2300; // 2560;
-	const float height = 1300; // width / aspectRatio;
-	return glm::ortho(0.0f, width, 0.0f, height);
-}
-
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
-	//for (int i = 0; i < environment->circleCount; ++i) {
-	//	//glm::mat4 view = glm::mat4(1);
-	//	//glm::mat4 proj = CalcProj();
-	//	//glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->circlePos[i], 0));
-	//	//MVP_Array[i].MVP = proj * view * model;
-	//	MVP_Array[i].MVP = glm::mat4(1);
-	//}
-	//void* data;
-	//vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
-	//memcpy(data, &MVP_Array, SizeOfMVPs());
-	//vkUnmapMemory(device, instanceMemorys[imageIndex]);
+	environment->renderLock.lock();
+	for (int i = 0; i < environment->circleCount; ++i) {
+		particlesRenderCopy[i] = environment->circlePos[i];
+	}
+	environment->renderLock.unlock();
+
+	for (int i = 0; i < environment->circleCount; ++i) {
+		glm::mat4 view = glm::mat4(1);
+		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
+		//glm::mat4 model = scale(model, { 10, 10, 10 });
+		glm::vec2 pos = particlesRenderCopy[i];
+		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
+		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0));
+		MVP_Array[i].MVP = proj * view * model;
+	}
+
+	void* data;
+	vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
+	memcpy(data, MVP_Array, SizeOfMVPs());
+	vkUnmapMemory(device, instanceMemorys[imageIndex]);
 }
 
 //    _______ _                        _ _             
@@ -1140,7 +1141,7 @@ void RenderEngineVulkan::DrawFrame() {
 }
 
 void RenderEngineVulkan::RenderThreadRun(bool* done) {
-	Timer timer(1.0f/30.0f, 1.0f/90.0f);
+	Timer timer(99999.0f, 1.0f/144.0f);
 	while (!*done) {
 		timer.DeltaTime();
 		DrawFrame();
