@@ -16,6 +16,9 @@
 #include <fstream>
 #include "Utils.h"
 #include <gtc/matrix_transform.hpp>
+#include <array>
+#include "Timer.h"
+
 
 //     _____                _                   _                   __  _____            _                   _             
 //    / ____|              | |                 | |                 / / |  __ \          | |                 | |            
@@ -479,14 +482,12 @@ void RenderEngineVulkan::CreateGraphicsPipeline() {
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+	auto bindingDescriptions = CreateVertexBindingDescription();
+	auto attributeDescriptions = CreateVertexAttributeDescription();
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -711,13 +712,14 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 		VkBuffer vertexBuffers[] = { vertexBuffer };
+		VkBuffer instanceBuffer[] = { instanceBuffers[i] };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffer, offsets);
 
 		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->circleCount), 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
@@ -776,6 +778,24 @@ void RenderEngineVulkan::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usag
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+std::vector<VkVertexInputBindingDescription> RenderEngineVulkan::CreateVertexBindingDescription() {
+	std::vector<VkVertexInputBindingDescription> bindingDescriptions = {};
+	bindingDescriptions.push_back(Vertex::getBindingDescription());
+	bindingDescriptions.push_back(InstanceBufferObject::getBindingDescription());
+	return bindingDescriptions;
+}
+
+std::vector<VkVertexInputAttributeDescription> RenderEngineVulkan::CreateVertexAttributeDescription() {
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
+	for (auto attributeDescription : Vertex::getAttributeDescriptions()) {
+		attributeDescriptions.push_back(attributeDescription);
+	}
+	for (auto description : InstanceBufferObject::getAttributeDescriptions()) {
+		attributeDescriptions.push_back(description);
+	}
+	return attributeDescriptions;
+}
+
 void RenderEngineVulkan::CreateVertexBuffer() {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -827,6 +847,39 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
+void RenderEngineVulkan::CreateInstanceBuffer() {
+	MVP_Array = new InstanceBufferObject[environment->circleCount];
+	instanceBuffers.resize(swapChainImages.size());
+	instanceMemorys.resize(swapChainImages.size());
+	instanceDescriptors.resize(swapChainImages.size());
+	for (int i = 0; i < swapChainImages.size(); ++i) {
+		for (int j = 0; j < environment->circleCount; ++j) {
+			MVP_Array[j].MVP = glm::mat4(1);
+		}
+
+
+		VkDeviceSize bufferSize = SizeOfMVPs();
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+		void* data;
+		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, MVP_Array, (size_t)bufferSize);
+		vkUnmapMemory(device, stagingBufferMemory);
+
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, instanceBuffers[i], instanceMemorys[i]);
+		CopyBuffer(stagingBuffer, instanceBuffers[i], bufferSize);
+
+		instanceDescriptors[i].range = bufferSize;
+		instanceDescriptors[i].buffer = instanceBuffers[i];
+		instanceDescriptors[i].offset = 0;
+
+		vkDestroyBuffer(device, stagingBuffer, nullptr);
+		vkFreeMemory(device, stagingBufferMemory, nullptr);
+	}
+}
+
 void RenderEngineVulkan::CreateDescriptorSetLayout() {
 	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 	uboLayoutBinding.binding = 0;
@@ -845,66 +898,7 @@ void RenderEngineVulkan::CreateDescriptorSetLayout() {
 	}
 }
 
-void RenderEngineVulkan::CreateUniformBuffers() {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	uniformBuffers.resize(swapChainImages.size());
-	uniformBuffersMemory.resize(swapChainImages.size());
-
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
-	}
-}
-
-void RenderEngineVulkan::CreateDescriptorPool() {
-	VkDescriptorPoolSize poolSize = {};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size());
-
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
-	poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());;
-
-	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
-}
-
-void RenderEngineVulkan::CreateDescriptorSets() {
-	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
-	allocInfo.pSetLayouts = layouts.data();
-
-	descriptorSets.resize(swapChainImages.size());
-	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
-
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = uniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = descriptorSets[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr; // Optional
-		descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-	}
-}
+std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->circleCount; }
 
 void RenderEngineVulkan::InitVulkan() {
 	CreateInstance();
@@ -920,36 +914,10 @@ void RenderEngineVulkan::InitVulkan() {
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateVertexBuffer();
+	CreateInstanceBuffer();
 	CreateIndexBuffer();
-	CreateUniformBuffers();
-	CreateDescriptorPool();
-	CreateDescriptorSets();
 	CreateCommandBuffers();
 	CreateSyncObjects();
-}
-
-void RenderEngineVulkan::UpdateUniformBuffer(uint32_t imageIndex) {
-	UniformBufferObject ubo = {};
-	ubo.model = glm::mat4(1);
-	ubo.view = glm::mat4(1);
-	ubo.proj = glm::mat4(1);
-	ubo.model = translate(ubo.model, glm::vec3(environment->square.pos, 0));
-	////ubo.model = Utils::ChangeOrder(ubo.model);
-	////ubo.model[2][0] = environment->square.pos.x;
-	////ubo.model[2][1] = environment->square.pos.y;
-	//ubo.view = glm::mat3(1);
-
-	//ubo.view = Utils::ChangeOrder(ubo.view);
-	//std::cout << Utils::Mat3ToString(ubo.model) << '\n';
-	//std::cout << ubo.model[0][2] << " "; 
-	//std::cout << ubo.model[1][2] << "\n";
-	//ubo.color1 = { 1, 0, 0 };
-	//ubo.color2 = { 0, 1, 0 };
-	//ubo.color3 = { 0, 0, 1 };
-	void* data;
-	vkMapMemory(device, uniformBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(device, uniformBuffersMemory[imageIndex]);
 }
 
 //     _____ _      ________          __  _____       _ _   
@@ -977,10 +945,11 @@ void RenderEngineVulkan::InitWindow() {
 //                      
 //                      
 
-void RenderEngineVulkan::Init() {
+bool RenderEngineVulkan::Init() {
 	isDisposed = false;
 	InitWindow();
 	InitVulkan();
+	return true;
 }
 
 //     _____ _                              
@@ -1010,14 +979,9 @@ void RenderEngineVulkan::Dispose() {
 	for (auto framebuffer : swapChainFrameBuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-		vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-	}
     vkDestroyRenderPass(device, renderPass, nullptr);
 	for (auto imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
@@ -1089,6 +1053,29 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
+	environment->renderLock.lock();
+	for (int i = 0; i < environment->circleCount; ++i) {
+		particlesRenderCopy[i] = environment->circlePos[i];
+	}
+	environment->renderLock.unlock();
+
+	for (int i = 0; i < environment->circleCount; ++i) {
+		glm::mat4 view = glm::mat4(1);
+		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
+		//glm::mat4 model = scale(model, { 10, 10, 10 });
+		glm::vec2 pos = particlesRenderCopy[i];
+		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
+		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0));
+		MVP_Array[i].MVP = proj * view * model;
+	}
+
+	void* data;
+	vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
+	memcpy(data, MVP_Array, SizeOfMVPs());
+	vkUnmapMemory(device, instanceMemorys[imageIndex]);
+}
+
 //    _______ _                        _ _             
 //   |__   __| |                      | (_)            
 //      | |  | |__  _ __ ___  __ _  __| |_ _ __   __ _ 
@@ -1113,7 +1100,7 @@ void RenderEngineVulkan::DrawFrame() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	UpdateUniformBuffer(imageIndex);
+	UpdateInstanceBuffer(imageIndex);
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1129,7 +1116,7 @@ void RenderEngineVulkan::DrawFrame() {
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
-		
+
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
@@ -1148,10 +1135,15 @@ void RenderEngineVulkan::DrawFrame() {
 	vkQueuePresentKHR(presentQueue, &presentInfo);
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+	++stats->renderUpdateTotalLastSecond;
+	stats->particlesRenderedTotalLastSecond += environment->circleCount;
 }
 
 void RenderEngineVulkan::RenderThreadRun(bool* done) {
+	Timer timer(99999.0f, 1.0f/144.0f);
 	while (!*done) {
+		timer.DeltaTime();
 		DrawFrame();
 	}
 }

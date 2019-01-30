@@ -131,7 +131,7 @@ void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
-	Timer timer(maxPhysicsDeltaTime);
+	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
 
 	while (!*done) {
 
