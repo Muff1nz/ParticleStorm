@@ -851,7 +851,6 @@ void RenderEngineVulkan::CreateInstanceBuffer() {
 	MVP_Array = new InstanceBufferObject[environment->circleCount];
 	instanceBuffers.resize(swapChainImages.size());
 	instanceMemorys.resize(swapChainImages.size());
-	instanceDescriptors.resize(swapChainImages.size());
 	for (int i = 0; i < swapChainImages.size(); ++i) {
 		for (int j = 0; j < environment->circleCount; ++j) {
 			MVP_Array[j].MVP = glm::mat4(1);
@@ -870,10 +869,6 @@ void RenderEngineVulkan::CreateInstanceBuffer() {
 
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, instanceBuffers[i], instanceMemorys[i]);
 		CopyBuffer(stagingBuffer, instanceBuffers[i], bufferSize);
-
-		instanceDescriptors[i].range = bufferSize;
-		instanceDescriptors[i].buffer = instanceBuffers[i];
-		instanceDescriptors[i].offset = 0;
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -964,14 +959,21 @@ bool RenderEngineVulkan::Init() {
 void RenderEngineVulkan::Dispose() {
 	if (isDisposed) return;
 
+	delete particlesRenderCopy;
+	delete MVP_Array;
+
 	vkDeviceWaitIdle(device);
 
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
 	vkDestroyCommandPool(device, commandPool, nullptr);
+	for (size_t i = 0; i < instanceBuffers.size(); ++i) {
+		vkDestroyBuffer(device, instanceBuffers[i], nullptr);
+		vkFreeMemory(device, instanceMemorys[i], nullptr);
+	}
 	vkDestroyBuffer(device, indexBuffer, nullptr);
 	vkFreeMemory(device, indexBufferMemory, nullptr);
 	vkDestroyBuffer(device, vertexBuffer, nullptr);

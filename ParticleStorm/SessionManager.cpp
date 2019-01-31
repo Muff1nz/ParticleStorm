@@ -59,7 +59,7 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 void SessionManager::Sandbox() const {
 	Environment environment{};
 	Stats stats{};
-	RenderEngineSDL renderEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
@@ -74,6 +74,8 @@ void SessionManager::Sandbox() const {
 		Timer timer;
 		timer.Start();
 
+		int lastMouseButtonState = GLFW_PRESS;
+
 		while (!done) {
 			SDL_Event event;
 
@@ -86,19 +88,18 @@ void SessionManager::Sandbox() const {
 				perSecondStats.push_back(stats.LastSecondToString());
 			}
 
-			while (SDL_PollEvent(&event)) {
-				switch (event.type) {
-				case SDL_QUIT:
-					done = true;
-					break;
-				case SDL_MOUSEBUTTONDOWN:
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						environment.explosions.push(glm::vec2(event.button.x, environment.worldHeight - event.button.y));
-						++stats.explosionTotalLastSecond;
-					}
-					break;
-				}
+			glfwPollEvents();
+			if (glfwWindowShouldClose(renderEngine.GetWindow()))
+				done = true;
+
+			auto state = glfwGetMouseButton(renderEngine.GetWindow(), GLFW_MOUSE_BUTTON_LEFT);
+			if (state == GLFW_PRESS && state != lastMouseButtonState) {
+				double x, y;
+				glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
+				environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
+				++stats.explosionTotalLastSecond;
 			}
+			lastMouseButtonState = state;
 		}
 
 		physicsEngine.Join();
@@ -117,9 +118,11 @@ void SessionManager::Sandbox() const {
 
 
 void SessionManager::Benchmark() const {
+	Timer::unhinged = true;
+
 	Environment environment(4000, 8, 1337);
 	Stats stats{};
-	RenderEngineSDL renderEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
@@ -180,45 +183,6 @@ void SessionManager::Benchmark() const {
 	renderEngine.Dispose();
 
 	SDL_Quit();
-}
 
-void SessionManager::VulkanTest() const {
-	Stats stats;
-	Environment environment;
-	RenderEngineVulkan renderEngine(&environment, &stats);
-	PhysicsEngine physicsEngine(&environment, &stats);
-
-	bool done = false;
-	try {
-		renderEngine.Init();
-		renderEngine.Start(&done);
-		physicsEngine.Init();
-		physicsEngine.Start(&done);
-
-		Timer timer;
-		timer.Start();
-
-
-		while (!glfwWindowShouldClose(renderEngine.GetWindow())) {
-			std::this_thread::sleep_for(std::chrono::microseconds(10));
-
-			if (timer.ElapsedSeconds() >= 1) {
-				timer.Restart();
-				stats.CompleteLastSecond();
-				std::cout << stats.LastSecondToStringConsole();
-			}
-			
-			glfwPollEvents();
-		}
-		
-		
-		done = true;
-		physicsEngine.Join();
-		renderEngine.Join();
-		renderEngine.Dispose();
-
-
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-	}
+	Timer::unhinged = false;
 }

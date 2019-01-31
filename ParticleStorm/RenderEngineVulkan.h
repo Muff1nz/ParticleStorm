@@ -81,7 +81,6 @@ private:
 	VkDeviceMemory indexBufferMemory;
 	std::vector<VkBuffer> instanceBuffers;
 	std::vector<VkDeviceMemory> instanceMemorys;
-	std::vector<VkDescriptorBufferInfo> instanceDescriptors;
 
 	//GLFW
 	GLFWwindow* window{};

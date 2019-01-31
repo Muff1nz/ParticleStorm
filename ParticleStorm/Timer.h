@@ -7,6 +7,8 @@ public:
 	Timer(float maxDeltaTime = std::numeric_limits<float>::max(), float minDeltaTime = 0);
 	~Timer();
 
+	static bool unhinged;
+
 	float DeltaTime();
 	float RealTimeDifference() const;
 

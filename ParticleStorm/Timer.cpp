@@ -1,6 +1,8 @@
 #include "Timer.h"
 #include <thread>
 
+bool Timer::unhinged = false;
+
 Timer::Timer(float maxDeltaTime, float minDeltaTime) : maxDeltaTime(maxDeltaTime), minDeltaTime(minDeltaTime) {
 	nowDeltaTime = SDL_GetPerformanceCounter();
 	now = SDL_GetPerformanceCounter();
@@ -19,7 +21,7 @@ float Timer::DeltaTime() {
 	nowDeltaTime = SDL_GetPerformanceCounter();
 	const float deltaTime = TicksToSeconds(nowDeltaTime - lastDeltaTime);
 	float result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
-	if (deltaTime < minDeltaTime) {
+	if (!unhinged && deltaTime < minDeltaTime) {
 		std::this_thread::sleep_for(std::chrono::microseconds(SecondsToMicroseconds(minDeltaTime - deltaTime)));
 		result = minDeltaTime;
 	}
