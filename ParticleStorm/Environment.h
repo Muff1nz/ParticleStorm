@@ -4,6 +4,7 @@
 #include <queue>
 #include "QuadTree.h"
 #include <mutex>
+#include "TestSquare.h"
 
 class QuadTree;
 
@@ -13,7 +14,7 @@ public:
 	const int worldHeight = 1300;
 
 	const int circleCount = 1000;
-	const int circleRadius = 16;
+	const int circleRadius = 10;
 
 	int seed;
 
@@ -22,6 +23,8 @@ public:
 	glm::vec2* circlePos;
 	glm::vec2* circleVel;
 	std::queue<glm::vec2> explosions;
+
+	TestSquare square{};
 
 	QuadTree* tree;
 	std::mutex treeMutex{};

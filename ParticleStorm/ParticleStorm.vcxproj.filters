@@ -22,6 +22,15 @@
     <Filter Include="Source Files\Misc">
       <UniqueIdentifier>{c1d098a5-80b6-41a6-bcbd-b872547295e0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{4ebcd778-54f1-4450-8867-c694e0e7b89d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Vertex">
+      <UniqueIdentifier>{c820b2a0-f6db-457a-a978-c89b8e6e54da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Fragment">
+      <UniqueIdentifier>{f05fa6b4-71d4-42a1-b3d7-d7951feddd11}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -53,6 +62,9 @@
     </ClCompile>
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEngineVulkan.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,5 +98,19 @@
     <ClInclude Include="NumberGenerator.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="RenderEngineVulkan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSquare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test.frag">
+      <Filter>Shaders\Fragment</Filter>
+    </None>
+    <None Include="test.vert">
+      <Filter>Shaders\Vertex</Filter>
+    </None>
   </ItemGroup>
 </Project>

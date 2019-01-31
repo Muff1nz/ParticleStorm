@@ -33,7 +33,7 @@ void PhysicsEngine::Join() {
 	physicsThread.join();
 }
 
-void PhysicsEngine::Start(SDL_bool* done) {
+void PhysicsEngine::Start(bool* done) {
 	physicsThread = std::thread([=] {PhysicsThreadRun(done);});
 }
 
@@ -125,13 +125,13 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 	}
 }
 
-void PhysicsEngine::PhysicsThreadRun(const SDL_bool* done) const {
+void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
 	auto const explosionForce = 250000.0f;
 
 	const auto circlePos = environment->circlePos;
 	const auto circleVel = environment->circleVel;
 
-	Timer timer(maxPhysicsDeltaTime);
+	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
 
 	while (!*done) {
 

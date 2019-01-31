@@ -9,6 +9,7 @@
 #include <windows.h>
 #include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
+#include "RenderEngineVulkan.h"
 
 
 SessionManager::SessionManager() = default;
@@ -35,7 +36,7 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 	CreateDirectory(statsOutputFolder.c_str(), nullptr);
 	std::ofstream statsFile(statsOutputFilePath);
 
-	statsFile << longTitle + "\n";
+	statsFile << "Title: " + longTitle + "\n";
 	statsFile << "Simulated " + std::to_string(environment.circleCount) + " particles with a raidus of: " + std::to_string(environment.circleRadius) + "\n";
 	statsFile << "Quadtree max particles per quad: " + std::to_string(environment.tree->maxParticles) + "\n";
 	statsFile << "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
@@ -58,12 +59,12 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 void SessionManager::Sandbox() const {
 	Environment environment{};
 	Stats stats{};
-	RenderEngineSDL renderEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
-		SDL_bool done = SDL_FALSE;
+		bool done = false;
 
 		renderEngine.Start(&done);
 		physicsEngine.Start(&done);
@@ -72,6 +73,8 @@ void SessionManager::Sandbox() const {
 
 		Timer timer;
 		timer.Start();
+
+		int lastMouseButtonState = GLFW_PRESS;
 
 		while (!done) {
 			SDL_Event event;
@@ -85,19 +88,18 @@ void SessionManager::Sandbox() const {
 				perSecondStats.push_back(stats.LastSecondToString());
 			}
 
-			while (SDL_PollEvent(&event)) {
-				switch (event.type) {
-				case SDL_QUIT:
-					done = SDL_TRUE;
-					break;
-				case SDL_MOUSEBUTTONDOWN:
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						environment.explosions.push(glm::vec2(event.button.x, environment.worldHeight - event.button.y));
-						++stats.explosionTotalLastSecond;
-					}
-					break;
-				}
+			glfwPollEvents();
+			if (glfwWindowShouldClose(renderEngine.GetWindow()))
+				done = true;
+
+			auto state = glfwGetMouseButton(renderEngine.GetWindow(), GLFW_MOUSE_BUTTON_LEFT);
+			if (state == GLFW_PRESS && state != lastMouseButtonState) {
+				double x, y;
+				glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
+				environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
+				++stats.explosionTotalLastSecond;
 			}
+			lastMouseButtonState = state;
 		}
 
 		physicsEngine.Join();
@@ -116,14 +118,16 @@ void SessionManager::Sandbox() const {
 
 
 void SessionManager::Benchmark() const {
+	Timer::unhinged = true;
+
 	Environment environment(4000, 8, 1337);
 	Stats stats{};
-	RenderEngineSDL renderEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
 	if (renderEngine.Init()) {
 		physicsEngine.Init();
 
-		SDL_bool done = SDL_FALSE;
+		bool done = false;
 
 		renderEngine.Start(&done);
 		physicsEngine.Start(&done);
@@ -166,7 +170,7 @@ void SessionManager::Benchmark() const {
 				environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
 			}
 		}
-		done = SDL_TRUE;
+		done = true;
 		physicsEngine.Join();
 		renderEngine.Join();
 
@@ -179,4 +183,6 @@ void SessionManager::Benchmark() const {
 	renderEngine.Dispose();
 
 	SDL_Quit();
+
+	Timer::unhinged = false;
 }

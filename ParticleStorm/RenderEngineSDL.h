@@ -3,7 +3,6 @@
 #include "Environment.h"
 #include <thread>
 #include "QuadTree.h"
-#include <vec3.hpp>
 #include "Stats.h"
 
 class RenderEngineSDL {
@@ -12,7 +11,7 @@ public:
 	~RenderEngineSDL();
 
 	bool Init();
-	void Start(SDL_bool* done);
+	void Start(bool* done);
 	void Join();
 	void Dispose() const;
 private:
@@ -31,7 +30,7 @@ private:
 	void RenderLine(int x1, int y1, int x2, int y2) const;
 	void SetRenderColor(const SDL_Color& color) const;
 	void GetRenderColor(SDL_Color& oldColor) const;
-	void RenderThreadRun(const SDL_bool* done) const;
+	void RenderThreadRun(const bool* done) const;
 	void RenderQuadTree(const QuadTree* tree) const;
 };
 

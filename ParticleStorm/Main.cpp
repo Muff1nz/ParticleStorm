@@ -4,6 +4,9 @@
 #include <thread>
 #include <cctype>
 #include "SessionManager.h"
+#include <iostream>
+#include "RenderEngineVulkan.h"
+
 
 void PrintMenu() {
 	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
@@ -13,7 +16,7 @@ void PrintMenu() {
 	std::cout << "Quit(X)\n";
 }
 
-int main(int argc, char* args[]) {
+void MainMenu() {
 	SessionManager session;
 
 	char userInput = 'N';
@@ -35,7 +38,10 @@ int main(int argc, char* args[]) {
 			break;
 		}
 	} while (std::toupper(userInput) != 'X');
-	return 0;
 }
 
 
+int main(int argc, char* args[]) {
+	MainMenu();
+	return 0;
+}
