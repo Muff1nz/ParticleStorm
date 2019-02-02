@@ -16,7 +16,25 @@ QuadTree::~QuadTree() {
 		}
 	}
 	delete subTree;
-};
+}
+
+bool QuadTree::QuadLimitReached() { return end - start >= maxParticles; }
+
+void QuadTree::Build(QuadTree* parent, int& current, std::vector<QuadTree> &quads, Stats& stats) {
+	PopulateQuadTreeWithParticles(parent, current, stats);
+
+	if (QuadLimitReached()) {
+		BuildSubTrees(quads, stats);
+	} else {
+		DestroySubTrees();
+		quads.push_back(*this);
+	}
+
+	if (subTree == nullptr) {
+		++stats.quadTreeLeafTotalLastSecond;
+		stats.quadTreeOverflowTotalLastSecond += overflow.size();
+	}
+}
 
 bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const {
 	const auto radius = environment->particleRadius;
@@ -54,7 +72,7 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 						++stats.quadTreeSwapTotalLastSecond;
 					}
 					current++;
-				} 
+				}
 			}
 		}
 
@@ -68,33 +86,42 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 		start = 0;
 		end = environment->particleCount;
 	}
+}
 
-	if (end - start >= maxParticles) {
-		if (subTree == nullptr) {
-			if (secretSubTree != nullptr) {
-				subTree = secretSubTree;
-			} else {
-				subTree = new QuadTree*[4];
-				subTree[0] = new QuadTree(environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2));
-				subTree[1] = new QuadTree(environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2));
-				subTree[2] = new QuadTree(environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
-				subTree[3] = new QuadTree(environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
-				secretSubTree = subTree;
-			}
-		}
-
-		int currentEnd = start;
-		for (int i = 0; i < 4; ++i) {
-			subTree[i]->Build(this, currentEnd, stats);
-		}
-	} else {
-		if (subTree != nullptr) {
-			subTree = nullptr;
-		}
-	}
-
+void QuadTree::BuildSubTrees(std::vector<QuadTree> &quads, Stats& stats) {
 	if (subTree == nullptr) {
-		++stats.quadTreeLeafTotalLastSecond;
-		stats.quadTreeOverflowTotalLastSecond += overflow.size();
+		if (secretSubTree != nullptr) {
+			subTree = secretSubTree;
+		} else {
+			subTree = new QuadTree*[4];
+			subTree[0] = new QuadTree(environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2));
+			subTree[1] = new QuadTree(environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2));
+			subTree[2] = new QuadTree(environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+			subTree[3] = new QuadTree(environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+			secretSubTree = subTree;
+		}
 	}
+
+	int currentEnd = start;
+	for (int i = 0; i < 4; ++i) {
+		subTree[i]->Build(this, currentEnd, quads, stats);
+	}
+}
+
+void QuadTree::DestroySubTrees() {
+	if (subTree != nullptr) {
+		subTree = nullptr;
+	}
+}
+
+bool QuadTree::operator==(const QuadTree &other) const {
+	return end == other.end;
+}
+
+bool QuadTree::operator<(const QuadTree& other) const {
+	return end < other.end;
+}
+
+bool QuadTree::operator>(const QuadTree& other) const {
+	return start > other.start;
 }

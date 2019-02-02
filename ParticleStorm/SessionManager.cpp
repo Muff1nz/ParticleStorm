@@ -114,7 +114,7 @@ void SessionManager::Sandbox() const {
 void SessionManager::Benchmark() const {
 	Timer::unhinged = true;
 
-	Environment environment(4000, 8, 1337);
+	Environment environment(20000, 5, 1337);
 	Stats stats{};
 	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
@@ -144,7 +144,7 @@ void SessionManager::Benchmark() const {
 		Timer explosionTimer;
 		explosionTimer.Start();
 
-		const int benchmarkDuration = 11;
+		const int benchmarkDuration = 21;
 
 		while (sessionTimer.ElapsedSeconds() <= benchmarkDuration) {
 			std::this_thread::sleep_for(std::chrono::microseconds(10));

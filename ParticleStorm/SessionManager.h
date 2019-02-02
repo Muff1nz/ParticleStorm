@@ -7,8 +7,8 @@ class Stats;
 
 class SessionManager {
 public:
-	const std::string shorTitle = "Removal_Of_SDL";
-	const std::string longTitle = "Removing SDL now that vulkan/GLFW is king";
+	const std::string shorTitle = "QuadTree++";
+	const std::string longTitle = "Making QuadTree better (i hope) by iterating through it linearly, instead of recursion";
 	const std::string statsOutputDir = "C:/C++ Projects/ParticleStorm_Stats/";
 	const std::string statsGrapherDir = "C:/Python Projects/ParticleStorm_Tools/StatsGrapher.py";
 
