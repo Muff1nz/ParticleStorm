@@ -110,18 +110,12 @@ void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>
 	
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
-	if (tree->subTree == nullptr) {
-		for (int i = tree->start; i < tree->end; ++i) {
-			ParticleCollision(i, tree->end, tree->overflow);
-		}
-		for (int i = 0; i < tree->overflow.size(); ++i) {
-			ParticleCollision(i, tree->overflow);
-		}
-	} else {
-		for (int i = 0; i < 4; ++i) {
-			QuadTreeParticleCollisions(tree->subTree[i]);
-		}
+void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree& tree) const {
+	for (int i = 0; i < tree.overflow.size(); ++i) {
+		ParticleCollision(i, tree.overflow);
+	}
+	for (int i = tree.start; i < tree.end; ++i) {
+		ParticleCollision(i, tree.end, tree.overflow);
 	}
 }
 
@@ -156,20 +150,21 @@ void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
 		}
 
 		int start = 0;
+		std::vector<QuadTree> quads;
 		environment->renderLock.lock();
 		environment->treeMutex.lock();
-		environment->tree->Build(nullptr, start, *stats);
+		environment->tree->Build(nullptr, start, quads, *stats);
 		environment->treeMutex.unlock();
 		environment->renderLock.unlock();
 
 		for (int i = 0; i < environment->circleCount; i++) {
 			BoundingBoxCollision(i);
-			//ParticleCollision(i); //Non-Quadtree collisions
 		}
 
-		QuadTreeParticleCollisions(environment->tree);
+		for (QuadTree quad : quads) {
+			QuadTreeParticleCollisions(quad);
+		}
 
-		++stats->physicsUpdateTotalLastSecond;
-		
+		++stats->physicsUpdateTotalLastSecond;		
 	}
 } 
