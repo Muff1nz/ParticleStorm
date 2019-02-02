@@ -12,8 +12,8 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 2000;
-	const int circleRadius = 12;
+	const int circleCount = 8000;
+	const int circleRadius = 8;
 
 	int seed;
 

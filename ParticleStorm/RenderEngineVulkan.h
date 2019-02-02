@@ -202,11 +202,12 @@ private:
 		}
 	};
 
+	const glm::vec3 color = { 0.0f, 1.0f, 0.0f };
 	const std::vector<Vertex> vertices = {
-		{ { -1.0f, -1.0f },{ 1.0f, 1.0f, 1.0f } },
-		{ { 1.0f, -1.0f },{ 1.0f, 1.0f, 1.0f } },
-		{ { 1.0f, 1.0f },{ 1.0f, 1.0f, 1.0f } },
-		{ { -1.0f, 1.0f },{ 1.0f, 1.0f, 1.0f } }
+		{ { -1.0f, -1.0f }, color },
+		{ { 1.0f, -1.0f }, color },
+		{ { 1.0f, 1.0f }, color },
+		{ { -1.0f, 1.0f }, color }
 	};
 	
 	const std::vector<uint16_t> indices = {
