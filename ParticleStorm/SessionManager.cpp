@@ -1,5 +1,4 @@
 #include "SessionManager.h"
-#include <SDL2/SDL.h>
 #include <vec2.hpp>
 #include <iostream>
 #include "Environment.h"
@@ -7,7 +6,6 @@
 #include <fstream>
 #include "Utils.h"
 #include <windows.h>
-#include "RenderEngineSDL.h"
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
 
@@ -77,8 +75,6 @@ void SessionManager::Sandbox() const {
 		int lastMouseButtonState = GLFW_PRESS;
 
 		while (!done) {
-			SDL_Event event;
-
 			std::this_thread::sleep_for(std::chrono::microseconds(10));
 
 			if (timer.ElapsedSeconds() >= 1) {
@@ -112,8 +108,6 @@ void SessionManager::Sandbox() const {
 	}
 
 	renderEngine.Dispose();
-
-	SDL_Quit();
 }
 
 
@@ -169,6 +163,8 @@ void SessionManager::Benchmark() const {
 				const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
 				environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
 			}
+
+			glfwPollEvents();
 		}
 		done = true;
 		physicsEngine.Join();
@@ -181,8 +177,6 @@ void SessionManager::Benchmark() const {
 	}
 
 	renderEngine.Dispose();
-
-	SDL_Quit();
 
 	Timer::unhinged = false;
 }

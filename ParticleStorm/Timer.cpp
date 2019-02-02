@@ -1,11 +1,12 @@
 #include "Timer.h"
 #include <thread>
+#include <windows.h>
 
 bool Timer::unhinged = false;
 
 Timer::Timer(float maxDeltaTime, float minDeltaTime) : maxDeltaTime(maxDeltaTime), minDeltaTime(minDeltaTime) {
-	nowDeltaTime = SDL_GetPerformanceCounter();
-	now = SDL_GetPerformanceCounter();
+	nowDeltaTime = NowSeconds();
+	now = NowSeconds();
 
 	lastDeltaTime = nowDeltaTime;
 	last = now;
@@ -18,8 +19,8 @@ Timer::~Timer() = default;
 
 float Timer::DeltaTime() {
 	lastDeltaTime = nowDeltaTime;
-	nowDeltaTime = SDL_GetPerformanceCounter();
-	const float deltaTime = TicksToSeconds(nowDeltaTime - lastDeltaTime);
+	nowDeltaTime = NowSeconds();
+	const float deltaTime = nowDeltaTime - lastDeltaTime;
 	float result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
 	if (!unhinged && deltaTime < minDeltaTime) {
 		std::this_thread::sleep_for(std::chrono::microseconds(SecondsToMicroseconds(minDeltaTime - deltaTime)));
@@ -44,22 +45,27 @@ void Timer::Stop() {
 
 void Timer::Restart() {
 	stopWatchRunning = true;
-	now = SDL_GetPerformanceCounter();
+	now = NowSeconds();
 	last = now;
 }
 
 float Timer::ElapsedSeconds() {
 	if (stopWatchRunning)
-		now = SDL_GetPerformanceCounter();
-	return TicksToSeconds(now - last);
+		now = NowSeconds();
+	return now - last;
 }
 
-float Timer::TicksToSeconds(Uint64 ticks) {
-	return ticks / float(SDL_GetPerformanceFrequency());
-}
 
 int Timer::SecondsToMicroseconds(float seconds) {
 	const float factor = 1000 * 1000;
 	return int(seconds * factor);
+}
+
+
+float Timer::NowSeconds() noexcept {
+	LARGE_INTEGER ticks, frequency;
+	if (QueryPerformanceCounter(&ticks) && QueryPerformanceFrequency(&frequency))
+		return float(ticks.QuadPart) / float(frequency.QuadPart);
+	return 1.0f;
 }
 

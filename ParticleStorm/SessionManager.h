@@ -4,13 +4,11 @@
 
 class Environment;
 class Stats;
-class PhysicsEngine;
-class RenderEngineSDL;
 
 class SessionManager {
 public:
-	const std::string shorTitle = "VulkanRenderEngine";
-	const std::string longTitle = "Making a render engine based on vulkan";
+	const std::string shorTitle = "Removal_Of_SDL";
+	const std::string longTitle = "Removing SDL now that vulkan/GLFW is king";
 	const std::string statsOutputDir = "C:/C++ Projects/ParticleStorm_Stats/";
 	const std::string statsGrapherDir = "C:/Python Projects/ParticleStorm_Tools/StatsGrapher.py";
 
