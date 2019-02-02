@@ -30,7 +30,7 @@ private:
 	void ParticleCollision(const int particle) const;
 	void ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const;
 	void ParticleCollision(const int particle, const std::vector<int>& overflow) const;
-	void QuadTreeParticleCollisions(QuadTree* tree) const;
+	void QuadTreeParticleCollisions(const QuadTree& tree) const;
 
 	void BoundingBoxCollision(int particle) const;
 	void PhysicsThreadRun(const bool* done) const;
