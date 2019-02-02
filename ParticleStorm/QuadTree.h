@@ -9,7 +9,7 @@ class QuadTree {
 public:
 	QuadTree(Environment* environment, Rect rect_);
 	~QuadTree();
-	bool QuadLimitReached();
+
 	std::vector<QuadTree> Build(Stats& stats);
 
 	const int maxParticles = 100;
@@ -20,7 +20,6 @@ public:
 	Rect rect;
 	QuadTree** subTree = nullptr;
 
-	void Build(QuadTree* parent, int& current, std::vector<QuadTree>& quads, Stats& stats);
 private:
 	const int radiusSquared;
 
@@ -29,6 +28,8 @@ private:
 
 	Environment* environment;
 
+	void Build(QuadTree* parent, int& current, std::vector<QuadTree>& quads, Stats& stats);
+	bool QuadLimitReached();
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
 	void BuildSubTrees(std::vector<QuadTree>& quads, Stats& stats);
 	void DestroySubTrees();

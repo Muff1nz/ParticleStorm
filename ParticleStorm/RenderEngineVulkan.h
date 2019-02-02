@@ -20,13 +20,13 @@ public:
 	~RenderEngineVulkan();
 
 	//Init
-	bool Init();
+	void Init();
 
 	//Cleanup
 	void Dispose();
 
 	//Threading
-	void Start(bool* done);
+	void Start();
 	void Join();
 	void DrawFrame();
 
@@ -220,7 +220,7 @@ private:
 	void InitWindow();
 
 	//Threading
-	void RenderThreadRun(bool* done);
+	void RenderThreadRun();
 };
 
 

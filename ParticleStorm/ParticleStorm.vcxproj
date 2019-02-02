@@ -141,6 +141,7 @@
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />
+    <ClInclude Include="Range.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="SessionManager.h" />

@@ -3,8 +3,7 @@
 #include <thread>
 #include "Stats.h"
 #include "NumberGenerator.h"
-#include "ConcurrentQueue.h"
-#include "WorkerThreadPool.h"
+#include "Range.h"
 
 class PhysicsEngine {
 public:
@@ -12,7 +11,7 @@ public:
 	~PhysicsEngine();
 
 	void Init();
-	void Start(bool* done);
+	void Start();
 	void Join();
 private:
 	const float maxPhysicsDeltaTime = 1.0f / 450.0f; //Which gives a minimum of 450 physics updates per "second" (maybe scale with particle radius)
@@ -29,18 +28,17 @@ private:
 	Stats* stats;
 
 	std::thread LeadThread;
-	const int workerThreadCount = 6;
-	WorkerThreadPool workerThreads;
 
 	void ParticleCollision(int particle1, int particle2) const;
-	void ParticleCollision(int particle) const;
+	void ParticleCollisionsNonQuadTreee(int start, int end) const;
 	void ParticleCollision(int particle, int end, const std::vector<int>& overflow) const;
 	void ParticleCollision(int particle, const std::vector<int>& overflow) const;
 	void QuadTreeParticleCollisions(const QuadTree& tree) const;
+	void QuadTreeParticleCollisions(std::vector<QuadTree>& quads, int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;
-	void BoundingBoxCollisions(int start, int end);
-
+	void HandleExplosions() const;
 	void BoundingBoxCollision(int particle) const;
-	void LeadThreadRun(bool* done);
+
+	void LeadThreadRun();
 };
 

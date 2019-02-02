@@ -2,6 +2,7 @@
 #include <functional>
 #include "ConcurrentQueue.h"
 #include <atomic>
+#include "Range.h"
 
 class WorkerThreadPool {
 public:
@@ -14,6 +15,7 @@ public:
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
+	void PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const;
 private:
 	bool isInitialized;
 	std::vector<std::thread> workerThreads;

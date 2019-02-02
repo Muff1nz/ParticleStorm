@@ -940,11 +940,10 @@ void RenderEngineVulkan::InitWindow() {
 //                      
 //                      
 
-bool RenderEngineVulkan::Init() {
+void RenderEngineVulkan::Init() {
 	isDisposed = false;
 	InitWindow();
 	InitVulkan();
-	return true;
 }
 
 //     _____ _                              
@@ -1087,8 +1086,8 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 //                                                __/ |
 //                                               |___/ 
 
-void RenderEngineVulkan::Start(bool* done) {
-	renderThead = std::thread([=] {RenderThreadRun(done); });
+void RenderEngineVulkan::Start() {
+	renderThead = std::thread([=] {RenderThreadRun(); });
 }
 
 void RenderEngineVulkan::Join() {
@@ -1142,9 +1141,9 @@ void RenderEngineVulkan::DrawFrame() {
 	stats->particlesRenderedTotalLastSecond += environment->particleCount;
 }
 
-void RenderEngineVulkan::RenderThreadRun(bool* done) {
+void RenderEngineVulkan::RenderThreadRun() {
 	Timer timer(99999.0f, 1.0f/144.0f);
-	while (!*done) {
+	while (!environment->done) {
 		timer.DeltaTime();
 		DrawFrame();
 	}
