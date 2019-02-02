@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL2/SDL.h>
 #include <limits>
 
 class Timer {
@@ -17,18 +16,18 @@ public:
 	void Restart();
 	float ElapsedSeconds();
 private:
-	static float TicksToSeconds(Uint64 ticks);
 	static int SecondsToMicroseconds(float seconds);
+	static float NowSeconds() noexcept;
 
 	const float maxDeltaTime;
 	const float minDeltaTime;
 	float realTimeDifference;
 
-	Uint64 nowDeltaTime;
-	Uint64 lastDeltaTime;
+	float nowDeltaTime;
+	float lastDeltaTime;
 
-	Uint64 now;
-	Uint64 last;
+	float now;
+	float last;
 
 	bool stopWatchRunning;
 };

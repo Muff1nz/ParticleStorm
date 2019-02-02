@@ -1,4 +1,3 @@
-#include <SDL2/SDL.h>
 #include <string> 
 #include <iostream>
 #include <thread>
