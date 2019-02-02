@@ -2,9 +2,9 @@
 #include "Stats.h"
 #include <iostream>
 
-QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(environment->circleRadius, 2)) {
+QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(environment->particleRadius, 2)) {
 	this->environment = environment;
-	const int r = environment->circleRadius * 1.5f;
+	const int r = environment->particleRadius * 1.5f;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
 }
@@ -19,7 +19,7 @@ QuadTree::~QuadTree() {
 };
 
 bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const {
-	const auto radius = environment->circleRadius;
+	const auto radius = environment->particleRadius;
 	glm::vec2 circleDistance;
 
 	circleDistance.x = abs(circleCenter.x - rect.centerX);
@@ -40,7 +40,7 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 
 
 void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
-	const auto particles = environment->circlePos;
+	const auto particles = environment->particlePos;
 	overflow.clear();
 	if (parent != nullptr) {
 		start = current;
@@ -66,7 +66,7 @@ void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
 		end = current;
 	} else {
 		start = 0;
-		end = environment->circleCount;
+		end = environment->particleCount;
 	}
 
 	if (end - start >= maxParticles) {

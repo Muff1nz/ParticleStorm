@@ -12,21 +12,21 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 8000;
-	const int circleRadius = 8;
+	const int particleCount = 8000;
+	const int particleRadius = 8;
 
 	int seed;
 
-	glm::vec2* circlePos;
-	glm::vec2* circleVel;
+	glm::vec2* particlePos;
+	glm::vec2* particleVel;
 	std::queue<glm::vec2> explosions;
 
 	TestSquare square{};
 
 	QuadTree* tree;
 	std::mutex treeMutex{};
-
 	std::mutex renderLock{};
+	std::mutex* particleLock;
 
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed);

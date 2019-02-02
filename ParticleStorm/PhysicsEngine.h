@@ -3,6 +3,7 @@
 #include <thread>
 #include "Stats.h"
 #include "NumberGenerator.h"
+#include "ConcurrentQueue.h"
 
 class PhysicsEngine {
 public:
@@ -19,17 +20,21 @@ private:
 	const float friction = 0.98;
 	const float doubleRadius;
 
+	const int WorkerThreadCount = 4;
+
 	NumberGenerator rng;
 
 	Environment* environment;
 	Stats* stats;
 
-	std::thread physicsThread;
+	std::thread LeadThread;
+	std::vector<std::thread> WorkerThreads;
+	ConcurrentQueue<std::function<void()>> work;
 
-	void ParticleCollision(const int particle1, const int particle2) const;
-	void ParticleCollision(const int particle) const;
-	void ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const;
-	void ParticleCollision(const int particle, const std::vector<int>& overflow) const;
+	void ParticleCollision(int particle1, int particle2) const;
+	void ParticleCollision(int particle) const;
+	void ParticleCollision(int particle, int end, const std::vector<int>& overflow) const;
+	void ParticleCollision(int particle, const std::vector<int>& overflow) const;
 	void QuadTreeParticleCollisions(QuadTree* tree) const;
 
 	void BoundingBoxCollision(int particle) const;
