@@ -20,6 +20,14 @@ QuadTree::~QuadTree() {
 
 bool QuadTree::QuadLimitReached() { return end - start >= maxParticles; }
 
+
+std::vector<QuadTree> QuadTree::Build(Stats& stats) {
+	int current = 0;
+	std::vector<QuadTree> quads;
+	Build(nullptr, current, quads, stats);
+	return quads;
+}
+
 void QuadTree::Build(QuadTree* parent, int& current, std::vector<QuadTree> &quads, Stats& stats) {
 	PopulateQuadTreeWithParticles(parent, current, stats);
 
@@ -57,7 +65,7 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 }
 
 
-void QuadTree::Build(QuadTree* parent, int& current, Stats& stats) {
+void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats& stats) {
 	const auto particles = environment->particlePos;
 	overflow.clear();
 	if (parent != nullptr) {

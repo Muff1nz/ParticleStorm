@@ -63,7 +63,7 @@
     <ClCompile Include="RenderEngineVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PhysicsThread.cpp">
+    <ClCompile Include="WorkerThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,11 +101,11 @@
     <ClInclude Include="TestSquare.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsThread.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConcurrentQueue.h">
       <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerThreadPool.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -22,6 +22,8 @@ void Environment::Init() {
 
 //Maybe optimize with XOR swapping?
 void Environment::SwapParticles(const int one, const int two) const {
+	//LockParticles(one, two);
+
 	const auto tempPos = particlePos[one];
 	particlePos[one] = particlePos[two];
 	particlePos[two] = tempPos;
@@ -29,5 +31,31 @@ void Environment::SwapParticles(const int one, const int two) const {
 	const auto tempVel = particleVel[one];
 	particleVel[one] = particleVel[two];
 	particleVel[two] = tempVel;
+
+	//UnlockParticles(one, two);
+}
+
+void Environment::LockParticles(int one, int two) const {
+	//std::cout << "\n\n\n" << "ONE: " << one << " TWO: " << two << "\n\n\n";
+
+	if (one < two) {
+		particleLock[one].lock();
+		particleLock[two].lock();
+		return;
+	}
+	particleLock[two].lock();
+	particleLock[one].lock();
+}
+
+void Environment::UnlockParticles(int one, int two) const {
+	//std::cout << "\n\n\n" << "ONE: " << one << " TWO: " << two << "\n\n\n";
+
+	if (one < two) {
+		particleLock[two].unlock();
+		particleLock[one].unlock();
+		return;
+	}
+	particleLock[one].unlock();
+	particleLock[two].unlock();
 }
 

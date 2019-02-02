@@ -34,7 +34,7 @@ void PhysicsEngine::Join() {
 }
 
 void PhysicsEngine::Start(bool* done) {
-	LeadThread = std::thread([=] {PhysicsThreadRun(done);});
+	LeadThread = std::thread([=] {LeadThreadRun(done);});
 }
 
 void PhysicsEngine::BoundingBoxCollision(const int particle) const {
@@ -60,26 +60,28 @@ void PhysicsEngine::BoundingBoxCollision(const int particle) const {
 }
 
 void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) const {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
+	const auto particlePos = environment->particlePos;
+	const auto particleVel = environment->particleVel;
+	//environment->LockParticles(particle1, particle2);
 
-	const auto dist = distance(circlePos[particle1], circlePos[particle2]);
+	const auto dist = distance(particlePos[particle1], particlePos[particle2]);
 	if (dist < doubleRadius) {
-		glm::vec2 positionDelta = circlePos[particle1] - circlePos[particle2];
+		glm::vec2 positionDelta = particlePos[particle1] - particlePos[particle2];
 
-		glm::vec2 newVel1 = circleVel[particle1] - dot(circleVel[particle1] - circleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+		glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
 
 		positionDelta = -positionDelta;
-		glm::vec2 newVel2 = circleVel[particle2] - dot(circleVel[particle2] - circleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+		glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
 
-		circleVel[particle1] = newVel1 * friction;
-		circleVel[particle2] = newVel2 * friction;
+		particleVel[particle1] = newVel1 * friction;
+		particleVel[particle2] = newVel2 * friction;
 
 		const float overlap = environment->particleRadius * 2 - dist;
-		circlePos[particle1] += -(positionDelta / dist) * (overlap / 2);
-		circlePos[particle2] += (positionDelta / dist) * (overlap / 2);
+		particlePos[particle1] += -(positionDelta / dist) * (overlap / 2);
+		particlePos[particle2] += (positionDelta / dist) * (overlap / 2);
 		++stats->particleCollisionTotalLastSecond;
 	}
+	//environment->UnlockParticles(particle1, particle2);
 }
 
 void PhysicsEngine::ParticleCollision(const int particle) const {
@@ -119,7 +121,20 @@ void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree& tree) const {
 	}
 }
 
-void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
+void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
+	for (int i = start; i < end; i++) {
+		environment->particleVel[i] += gravity * deltaTime;
+		environment->particlePos[i] += environment->particleVel[i] * deltaTime;
+	}
+}
+
+void PhysicsEngine::BoundingBoxCollisions(int start, int end) {
+	for (int i = 0; i < environment->particleCount; i++) {
+		BoundingBoxCollision(i);
+	}
+}
+
+void PhysicsEngine::LeadThreadRun(bool* done) {
 	auto const explosionForce = 250000.0f;
 
 	const auto circlePos = environment->particlePos;
@@ -127,6 +142,16 @@ void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
 
 	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
 
+	int particlesPerThread = environment->particleCount / workerThreadCount;
+	auto particleSections = new std::tuple<int, int>[workerThreadCount];
+	for (int i = 0; i < workerThreadCount + 1; ++i) {
+		int start = i * particlesPerThread;
+		int end = (i + 1) * particlesPerThread;
+		end = end <= environment->particleCount ? end : environment->particleCount;
+		particleSections[i] = { start, end };
+	}
+
+	workerThreads.Init(workerThreadCount, done);
 	while (!*done) {
 
 		float deltaTime = timer.DeltaTime();
@@ -144,27 +169,28 @@ void PhysicsEngine::PhysicsThreadRun(const bool* done) const {
 
 		}
 
-		for (int i = 0; i < environment->particleCount; i++) {
-			circleVel[i] += gravity * deltaTime;
-			circlePos[i] += circleVel[i] * deltaTime;
+		for (int i = 0; i < workerThreadCount + 1; ++i) {		
+			workerThreads.AddWork([=] { UpdateParticles(std::get<0>(particleSections[i]), std::get<1>(particleSections[i]), deltaTime); });
 		}
+		workerThreads.JoinWorkerThreads();
 
-		int start = 0;
-		std::vector<QuadTree> quads;
 		environment->renderLock.lock();
-		environment->treeMutex.lock();
-		environment->tree->Build(nullptr, start, quads, *stats);
-		environment->treeMutex.unlock();
+		auto quads = environment->tree->Build(*stats);
 		environment->renderLock.unlock();
 
-		for (int i = 0; i < environment->particleCount; i++) {
-			BoundingBoxCollision(i);
+		for (int i = 0; i < workerThreadCount + 1; ++i) {
+			workerThreads.AddWork([=] { BoundingBoxCollisions(std::get<0>(particleSections[i]), std::get<1>(particleSections[i])); });
 		}
+		workerThreads.JoinWorkerThreads();
 
 		for (QuadTree quad : quads) {
-			QuadTreeParticleCollisions(quad);
+			workerThreads.AddWork([=] {QuadTreeParticleCollisions(quad); });
 		}
+		workerThreads.JoinWorkerThreads();
 
 		++stats->physicsUpdateTotalLastSecond;		
 	}
-} 
+
+	workerThreads.CloseWorkerThreads();
+	delete particleSections;
+}

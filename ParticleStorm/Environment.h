@@ -34,5 +34,7 @@ public:
  
 	void Init();
 	void SwapParticles(int one, int two) const;
+	void LockParticles(int one, int two) const;
+	void UnlockParticles(int one, int two) const;
 };
 

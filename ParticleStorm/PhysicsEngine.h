@@ -4,6 +4,7 @@
 #include "Stats.h"
 #include "NumberGenerator.h"
 #include "ConcurrentQueue.h"
+#include "WorkerThreadPool.h"
 
 class PhysicsEngine {
 public:
@@ -20,7 +21,7 @@ private:
 	const float friction = 0.98;
 	const float doubleRadius;
 
-	const int WorkerThreadCount = 4;
+
 
 	NumberGenerator rng;
 
@@ -28,16 +29,18 @@ private:
 	Stats* stats;
 
 	std::thread LeadThread;
-	std::vector<std::thread> WorkerThreads;
-	ConcurrentQueue<std::function<void()>> work;
+	const int workerThreadCount = 6;
+	WorkerThreadPool workerThreads;
 
 	void ParticleCollision(int particle1, int particle2) const;
 	void ParticleCollision(int particle) const;
 	void ParticleCollision(int particle, int end, const std::vector<int>& overflow) const;
 	void ParticleCollision(int particle, const std::vector<int>& overflow) const;
-	void QuadTreeParticleCollisions(QuadTree* tree) const;
+	void QuadTreeParticleCollisions(const QuadTree& tree) const;
+	void UpdateParticles(int start, int end, float deltaTime) const;
+	void BoundingBoxCollisions(int start, int end);
 
 	void BoundingBoxCollision(int particle) const;
-	void PhysicsThreadRun(const bool* done) const;
+	void LeadThreadRun(bool* done);
 };
 

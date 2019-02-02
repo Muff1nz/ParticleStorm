@@ -19,9 +19,18 @@ public:
 	T Pop() {
 		std::unique_lock<std::mutex> lock(mutex);
 		condition.wait(lock, [=] { return !queue.empty(); });
-		T rc(std::move(queue.back()));
+		T ret = queue.back();
 		queue.pop_back();
-		return rc;
+		return ret;
+	}
+
+	T NonBlockPop() {
+		std::unique_lock<std::mutex> lock(mutex);
+		if (queue.empty())
+			return NULL;
+		T ret = queue.back();
+		queue.pop_back();
+		return ret;
 	}
 
 	int Size() {

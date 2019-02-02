@@ -10,6 +10,7 @@ public:
 	QuadTree(Environment* environment, Rect rect_);
 	~QuadTree();
 	bool QuadLimitReached();
+	std::vector<QuadTree> Build(Stats& stats);
 
 	const int maxParticles = 100;
 
