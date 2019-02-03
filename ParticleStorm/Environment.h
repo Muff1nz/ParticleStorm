@@ -4,17 +4,26 @@
 #include "QuadTree.h"
 #include <mutex>
 #include "WorkerThreadPool.h"
-#include "ConcurrentMap.h"
+
+#define full
 
 class QuadTree;
 
 class Environment {
 public:
+
+#ifdef full
+	const bool fullScreen = true;
+	const int worldWidth = 2560;
+	const int worldHeight = 1440;
+#else
+	const bool fullScreen = false;
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
+#endif
 
-	const int particleCount = 10000;
-	const int particleRadius = 6;
+	const int particleCount = 15000;
+	const int particleRadius = 5;
 
 	bool done;
 	int seed;
