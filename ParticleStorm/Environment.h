@@ -12,8 +12,8 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int particleCount = 4000;
-	const int particleRadius = 8;
+	const int particleCount = 10000;
+	const int particleRadius = 6;
 
 	bool done;
 	int seed;
@@ -27,7 +27,7 @@ public:
 	std::mutex renderLock{};
 	std::vector<std::unique_ptr<std::mutex>> particleLock;
 
-	const int workerThreadCount = 16;
+	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
 
 	Environment();

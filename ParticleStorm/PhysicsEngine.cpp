@@ -124,9 +124,9 @@ void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree& tree) const {
 	}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(std::vector<QuadTree>& quads, const int start, const int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVectror<QuadTree>* quads, int start, int end) const {
 	for (int i = start; i < end; ++i) {
-		QuadTreeParticleCollisions(quads[i]);
+		QuadTreeParticleCollisions((*quads)[i]);
 	}
 }
 
@@ -165,6 +165,8 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections, 1);
 
+	ConcurrentVectror<QuadTree>* quads = new ConcurrentVectror<QuadTree>();
+
 	float explosionTime = 0, updateTime = 0, quadTreeTime = 0, particleCollisionTime = 0;
 
 	timer2.Start();
@@ -190,7 +192,8 @@ void PhysicsEngine::LeadThreadRun() {
 		//QUADTREE
 		timer.Restart();
 		environment->renderLock.lock();
-		auto quads = environment->tree->Build(*stats);
+		environment->tree->Build(quads, stats);
+		environment->workerThreads.JoinWorkerThreads();
 		environment->renderLock.unlock();
 		timer.Stop();
 		quadTreeTime += timer.ElapsedSeconds();
@@ -198,9 +201,9 @@ void PhysicsEngine::LeadThreadRun() {
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(quads.size(), quadSections, 1);
+		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections, 1);
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=, &quads] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
 		/*for (QuadTree quad : quads) {
 			environment->workerThreads.AddWork([=] {QuadTreeParticleCollisions(quad); });
 		}*/
@@ -211,6 +214,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Stop();
 		particleCollisionTime += timer.ElapsedSeconds();
 
+		//delete quads;
 		++stats->physicsUpdateTotalLastSecond;
 
 		if (timer2.ElapsedSeconds() >= 1) {			

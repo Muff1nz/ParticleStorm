@@ -21,26 +21,25 @@ QuadTree::~QuadTree() {
 bool QuadTree::QuadLimitReached() { return end - start >= maxParticles; }
 
 
-std::vector<QuadTree> QuadTree::Build(Stats& stats) {
+void QuadTree::Build(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
 	int current = 0;
-	std::vector<QuadTree> quads;
-	Build(nullptr, current, quads, stats);
-	return quads;
+	quads->Clear();
+	Build(nullptr, current, &*quads, stats);
 }
 
-void QuadTree::Build(QuadTree* parent, int& current, std::vector<QuadTree> &quads, Stats& stats) {
+void QuadTree::Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree>* quads, Stats* stats) {
 	PopulateQuadTreeWithParticles(parent, current, stats);
 
 	if (QuadLimitReached()) {
-		BuildSubTrees(quads, stats);
+		CreateSubTrees(quads, stats);
 	} else {
 		DestroySubTrees();
-		quads.push_back(*this);
+		quads->push_back(*this);
 	}
 
 	if (subTree == nullptr) {
-		++stats.quadTreeLeafTotalLastSecond;
-		stats.quadTreeOverflowTotalLastSecond += overflow.size();
+		++stats->quadTreeLeafTotalLastSecond;
+		stats->quadTreeOverflowTotalLastSecond += overflow.size();
 	}
 }
 
@@ -65,7 +64,7 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 }
 
 
-void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats& stats) {
+void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats* stats) {
 	const auto particles = environment->particlePos;
 	overflow.clear();
 	if (parent != nullptr) {
@@ -77,7 +76,7 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 				} else {
 					if (i != current) {
 						environment->SwapParticles(current, i);
-						++stats.quadTreeSwapTotalLastSecond;
+						++stats->quadTreeSwapTotalLastSecond;
 					}
 					current++;
 				}
@@ -96,7 +95,14 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 	}
 }
 
-void QuadTree::BuildSubTrees(std::vector<QuadTree> &quads, Stats& stats) {
+void QuadTree::BuildSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
+	int currentEnd = start;
+	for (int i = 0; i < 4; ++i) {
+		subTree[i]->Build(this, currentEnd, quads, stats);
+	}
+}
+
+void QuadTree::CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
 	if (subTree == nullptr) {
 		if (secretSubTree != nullptr) {
 			subTree = secretSubTree;
@@ -110,10 +116,8 @@ void QuadTree::BuildSubTrees(std::vector<QuadTree> &quads, Stats& stats) {
 		}
 	}
 
-	int currentEnd = start;
-	for (int i = 0; i < 4; ++i) {
-		subTree[i]->Build(this, currentEnd, quads, stats);
-	}
+	environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
+	//BuildSubTrees(quads, stats);
 }
 
 void QuadTree::DestroySubTrees() {
