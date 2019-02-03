@@ -21,13 +21,11 @@ public:
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
-	ConcurrentMap<int, std::function<void(int, int)>> swapCallbacks;
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
 	std::mutex treeMutex{};
 	std::mutex renderLock{};
-	std::vector<std::unique_ptr<std::mutex>> particleLock;
 
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
@@ -37,11 +35,6 @@ public:
 	~Environment(); 
 
 	void SwapParticles(int one, int two);
-	void LockParticles(int one, int two) ;
-	void UnlockParticles(int one, int two);
-	void LockParticle(int particle);
-	void UnlockParticle(int particle);
-
 private:
 	void Init();
 };

@@ -63,7 +63,6 @@ void PhysicsEngine::BoundingBoxCollision(const int particle) const {
 void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) const {
 	const auto particlePos = environment->particlePos;
 	const auto particleVel = environment->particleVel;
-	//environment->LockParticles(particle1, particle2);
 
 	const auto dist = distance(particlePos[particle1], particlePos[particle2]);
 	if (dist < doubleRadius) {
@@ -82,7 +81,6 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 		particlePos[particle2] += (positionDelta / dist) * (overlap / 2);
 		++stats->particleCollisionTotalLastSecond;
 	}
-	//environment->UnlockParticles(particle1, particle2);
 }
 
 void PhysicsEngine::ParticleCollisionsNonQuadTreee(const int start, const int end) const {
@@ -204,12 +202,6 @@ void PhysicsEngine::LeadThreadRun() {
 		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections, 1);
 		for (auto quadSection : quadSections)
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
-		/*for (QuadTree quad : quads) {
-			environment->workerThreads.AddWork([=] {QuadTreeParticleCollisions(quad); });
-		}*/
-		//for (int i = 0; i < environment->workerThreadCount + 1; ++i) {
-		//	environment->workerThreads.AddWork([=] { ParticleCollisionsNonQuadTreee(particleSections[i].lower, particleSections[i].upper); });
-		//}
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
 		particleCollisionTime += timer.ElapsedSeconds();

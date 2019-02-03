@@ -73,7 +73,6 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 			if (ParticleBoxCollision(particles[i], paddedRect)) {
 				if (i < current) {
 					overflow.push_back(i);
-					environment->swapCallbacks.Insert(i, [=](int one, int two) { SwapCallback(one, two, i); });
 				} else {
 					if (i != current) {
 						environment->SwapParticles(current, i);
@@ -117,8 +116,8 @@ void QuadTree::CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) 
 		}
 	}
 
-	environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
-	//BuildSubTrees(quads, stats);
+	//environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
+	BuildSubTrees(quads, stats);
 }
 
 void QuadTree::DestroySubTrees() {
