@@ -32,7 +32,7 @@
 RenderEngineVulkan::RenderEngineVulkan(Environment* environment, Stats* stats) {
 	this->environment = environment;
 	this->stats = stats;
-	particlesRenderCopy = new glm::vec2[environment->circleCount];
+	particlesRenderCopy = new glm::vec2[environment->particleCount];
 }
 
 RenderEngineVulkan::~RenderEngineVulkan() {
@@ -719,7 +719,7 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 
 		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 		
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->circleCount), 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->particleCount), 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
@@ -848,11 +848,11 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 }
 
 void RenderEngineVulkan::CreateInstanceBuffer() {
-	MVP_Array = new InstanceBufferObject[environment->circleCount];
+	MVP_Array = new InstanceBufferObject[environment->particleCount];
 	instanceBuffers.resize(swapChainImages.size());
 	instanceMemorys.resize(swapChainImages.size());
 	for (int i = 0; i < swapChainImages.size(); ++i) {
-		for (int j = 0; j < environment->circleCount; ++j) {
+		for (int j = 0; j < environment->particleCount; ++j) {
 			MVP_Array[j].MVP = glm::mat4(1);
 		}
 
@@ -893,7 +893,7 @@ void RenderEngineVulkan::CreateDescriptorSetLayout() {
 	}
 }
 
-std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->circleCount; }
+std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->particleCount; }
 
 void RenderEngineVulkan::InitVulkan() {
 	CreateInstance();
@@ -940,11 +940,10 @@ void RenderEngineVulkan::InitWindow() {
 //                      
 //                      
 
-bool RenderEngineVulkan::Init() {
+void RenderEngineVulkan::Init() {
 	isDisposed = false;
 	InitWindow();
 	InitVulkan();
-	return true;
 }
 
 //     _____ _                              
@@ -1057,18 +1056,18 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 	environment->renderLock.lock();
-	for (int i = 0; i < environment->circleCount; ++i) {
-		particlesRenderCopy[i] = environment->circlePos[i];
+	for (int i = 0; i < environment->particleCount; ++i) {
+		particlesRenderCopy[i] = environment->particlePos[i];
 	}
 	environment->renderLock.unlock();
 
-	for (int i = 0; i < environment->circleCount; ++i) {
+	for (int i = 0; i < environment->particleCount; ++i) {
 		glm::vec2 pos = particlesRenderCopy[i];
 		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
 
 		glm::mat4 view = glm::mat4(1);
 		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->circleRadius, environment->circleRadius, 1 });
+		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
 		MVP_Array[i].MVP = proj * view * model;
 	}
 
@@ -1087,8 +1086,8 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 //                                                __/ |
 //                                               |___/ 
 
-void RenderEngineVulkan::Start(bool* done) {
-	renderThead = std::thread([=] {RenderThreadRun(done); });
+void RenderEngineVulkan::Start() {
+	renderThead = std::thread([=] {RenderThreadRun(); });
 }
 
 void RenderEngineVulkan::Join() {
@@ -1139,12 +1138,12 @@ void RenderEngineVulkan::DrawFrame() {
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	++stats->renderUpdateTotalLastSecond;
-	stats->particlesRenderedTotalLastSecond += environment->circleCount;
+	stats->particlesRenderedTotalLastSecond += environment->particleCount;
 }
 
-void RenderEngineVulkan::RenderThreadRun(bool* done) {
+void RenderEngineVulkan::RenderThreadRun() {
 	Timer timer(99999.0f, 1.0f/144.0f);
-	while (!*done) {
+	while (!environment->done) {
 		timer.DeltaTime();
 		DrawFrame();
 	}

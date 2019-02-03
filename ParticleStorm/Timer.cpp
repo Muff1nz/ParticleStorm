@@ -41,6 +41,7 @@ void Timer::Start() {
 
 void Timer::Stop() {
 	stopWatchRunning = false;
+	now = NowSeconds();
 }
 
 void Timer::Restart() {

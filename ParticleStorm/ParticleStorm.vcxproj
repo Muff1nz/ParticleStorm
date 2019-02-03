@@ -133,12 +133,17 @@
     <ClCompile Include="RenderEngineVulkan.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="WorkerThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConcurrentMap.h" />
+    <ClInclude Include="ConcurrentQueue.h" />
+    <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />
+    <ClInclude Include="Range.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="SessionManager.h" />
@@ -146,6 +151,7 @@
     <ClInclude Include="TestSquare.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test.frag" />

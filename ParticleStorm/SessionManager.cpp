@@ -35,7 +35,7 @@ void SessionManager::OutputStatsToFile(const Stats& stats, const std::vector<std
 	std::ofstream statsFile(statsOutputFilePath);
 
 	statsFile << "Title: " + longTitle + "\n";
-	statsFile << "Simulated " + std::to_string(environment.circleCount) + " particles with a raidus of: " + std::to_string(environment.circleRadius) + "\n";
+	statsFile << "Simulated " + std::to_string(environment.particleCount) + " particles with a raidus of: " + std::to_string(environment.particleRadius) + "\n";
 	statsFile << "Quadtree max particles per quad: " + std::to_string(environment.tree->maxParticles) + "\n";
 	statsFile << "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	statsFile << "[\n";
@@ -59,53 +59,51 @@ void SessionManager::Sandbox() const {
 	Stats stats{};
 	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
-	if (renderEngine.Init()) {
-		physicsEngine.Init();
+	renderEngine.Init();
+	physicsEngine.Init();
 
-		bool done = false;
+	renderEngine.Start();
+	physicsEngine.Start();
 
-		renderEngine.Start(&done);
-		physicsEngine.Start(&done);
+	std::vector<std::string> perSecondStats;
 
-		std::vector<std::string> perSecondStats;
+	Timer timer;
+	timer.Start();
 
-		Timer timer;
-		timer.Start();
+	int lastMouseButtonState = GLFW_PRESS;
 
-		int lastMouseButtonState = GLFW_PRESS;
+	while (!environment.done) {
+		std::this_thread::sleep_for(std::chrono::microseconds(10));
 
-		while (!done) {
-			std::this_thread::sleep_for(std::chrono::microseconds(10));
-
-			if (timer.ElapsedSeconds() >= 1) {
-				timer.Restart();
-				stats.CompleteLastSecond();
-				std::cout << stats.LastSecondToStringConsole();
-				perSecondStats.push_back(stats.LastSecondToString());
-			}
-
-			glfwPollEvents();
-			if (glfwWindowShouldClose(renderEngine.GetWindow()))
-				done = true;
-
-			auto state = glfwGetMouseButton(renderEngine.GetWindow(), GLFW_MOUSE_BUTTON_LEFT);
-			if (state == GLFW_PRESS && state != lastMouseButtonState) {
-				double x, y;
-				glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
-				environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
-				++stats.explosionTotalLastSecond;
-			}
-			lastMouseButtonState = state;
+		if (timer.ElapsedSeconds() >= 1) {
+			timer.Restart();
+			stats.CompleteLastSecond();
+			std::cout << stats.LastSecondToStringConsole();
+			perSecondStats.push_back(stats.LastSecondToString());
 		}
 
-		physicsEngine.Join();
-		renderEngine.Join();
+		glfwPollEvents();
+		if (glfwWindowShouldClose(renderEngine.GetWindow()))
+			environment.done = true;
 
-		stats.CompleteSession();
-		std::cout << stats.CompleteSessionToStringConsole();
-
-		OutputStatsToFile(stats, perSecondStats, environment);
+		auto state = glfwGetMouseButton(renderEngine.GetWindow(), GLFW_MOUSE_BUTTON_LEFT);
+		if (state == GLFW_PRESS && state != lastMouseButtonState) {
+			double x, y;
+			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
+			environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
+			++stats.explosionTotalLastSecond;
+		}
+		lastMouseButtonState = state;
 	}
+
+	physicsEngine.Join();
+	renderEngine.Join();
+
+	stats.CompleteSession();
+	std::cout << stats.CompleteSessionToStringConsole();
+
+	OutputStatsToFile(stats, perSecondStats, environment);
+	
 
 	renderEngine.Dispose();
 }
@@ -118,63 +116,61 @@ void SessionManager::Benchmark() const {
 	Stats stats{};
 	RenderEngineVulkan renderEngine(&environment, &stats);
 	PhysicsEngine physicsEngine(&environment, &stats);
-	if (renderEngine.Init()) {
-		physicsEngine.Init();
+	renderEngine.Init();
+	physicsEngine.Init();
 
-		bool done = false;
+	renderEngine.Start();
+	physicsEngine.Start();
 
-		renderEngine.Start(&done);
-		physicsEngine.Start(&done);
+	std::vector<std::string> perSecondStats;
 
-		std::vector<std::string> perSecondStats;
-
-		int explosionIndex = 0;
-		const int explosionPointCount = 4;
-		glm::vec2 explosionPoints[explosionPointCount];
-		for (int i = 0; i < explosionPointCount; ++i) {
-			explosionPoints[i] = { environment.worldWidth * (float(i) / (explosionPointCount - 1)) , environment.worldHeight };
-		}
-
-		Timer sessionTimer;
-		sessionTimer.Start();
-
-		Timer timer;
-		timer.Start();
-
-		Timer explosionTimer;
-		explosionTimer.Start();
-
-		const int benchmarkDuration = 21;
-
-		while (sessionTimer.ElapsedSeconds() <= benchmarkDuration) {
-			std::this_thread::sleep_for(std::chrono::microseconds(10));
-
-			if (timer.ElapsedSeconds() >= 1) {
-				timer.Restart();
-				stats.CompleteLastSecond();
-				std::cout << stats.LastSecondToStringConsole();
-				perSecondStats.push_back(stats.LastSecondToString());
-
-				std::cout << "\nBenchmark is " + std::to_string(sessionTimer.ElapsedSeconds() / float(benchmarkDuration) * 100) + "% complete\n";
-			}
-
-			if (explosionTimer.ElapsedSeconds() >= 1.0f) {
-				explosionTimer.Restart();
-				const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
-				environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
-			}
-
-			glfwPollEvents();
-		}
-		done = true;
-		physicsEngine.Join();
-		renderEngine.Join();
-
-		stats.CompleteSession();
-		std::cout << stats.CompleteSessionToStringConsole();
-
-		OutputStatsToFile(stats, perSecondStats, environment);
+	int explosionIndex = 0;
+	const int explosionPointCount = 4;
+	glm::vec2 explosionPoints[explosionPointCount];
+	for (int i = 0; i < explosionPointCount; ++i) {
+		explosionPoints[i] = { environment.worldWidth * (float(i) / (explosionPointCount - 1)) , environment.worldHeight };
 	}
+
+	Timer sessionTimer;
+	sessionTimer.Start();
+
+	Timer timer;
+	timer.Start();
+
+	Timer explosionTimer;
+	explosionTimer.Start();
+
+	const int benchmarkDuration = 21;
+
+	while (sessionTimer.ElapsedSeconds() <= benchmarkDuration) {
+		std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+		if (timer.ElapsedSeconds() >= 1) {
+			timer.Restart();
+			stats.CompleteLastSecond();
+			std::cout << stats.LastSecondToStringConsole();
+			perSecondStats.push_back(stats.LastSecondToString());
+
+			std::cout << "\nBenchmark is " + std::to_string(sessionTimer.ElapsedSeconds() / float(benchmarkDuration) * 100) + "% complete\n";
+		}
+
+		if (explosionTimer.ElapsedSeconds() >= 1.0f) {
+			explosionTimer.Restart();
+			const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
+			environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
+		}
+
+		glfwPollEvents();
+	}
+	environment.done = true;
+	physicsEngine.Join();
+	renderEngine.Join();
+
+	stats.CompleteSession();
+	std::cout << stats.CompleteSessionToStringConsole();
+
+	OutputStatsToFile(stats, perSecondStats, environment);
+	
 
 	renderEngine.Dispose();
 

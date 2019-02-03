@@ -3,7 +3,8 @@
 #include <queue>
 #include "QuadTree.h"
 #include <mutex>
-#include "TestSquare.h"
+#include "WorkerThreadPool.h"
+#include "ConcurrentMap.h"
 
 class QuadTree;
 
@@ -12,27 +13,29 @@ public:
 	const int worldWidth = 2300;
 	const int worldHeight = 1300;
 
-	const int circleCount = 8000;
-	const int circleRadius = 8;
+	const int particleCount = 10000;
+	const int particleRadius = 6;
 
+	bool done;
 	int seed;
 
-	glm::vec2* circlePos;
-	glm::vec2* circleVel;
+	glm::vec2* particlePos;
+	glm::vec2* particleVel;
 	std::queue<glm::vec2> explosions;
-
-	TestSquare square{};
 
 	QuadTree* tree;
 	std::mutex treeMutex{};
-
 	std::mutex renderLock{};
+
+	const int workerThreadCount = 30;
+	WorkerThreadPool workerThreads;
 
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed);
-	~Environment();
- 
+	~Environment(); 
+
+	void SwapParticles(int one, int two);
+private:
 	void Init();
-	void SwapParticles(int one, int two) const;
 };
 
