@@ -4,6 +4,7 @@
 #include "QuadTree.h"
 #include <mutex>
 #include "WorkerThreadPool.h"
+#include "ConcurrentMap.h"
 
 class QuadTree;
 
@@ -20,6 +21,7 @@ public:
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
+	ConcurrentMap<int, std::function<void(int, int)>> swapCallbacks;
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;

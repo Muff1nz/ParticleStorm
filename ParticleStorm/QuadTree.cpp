@@ -73,6 +73,7 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 			if (ParticleBoxCollision(particles[i], paddedRect)) {
 				if (i < current) {
 					overflow.push_back(i);
+					environment->swapCallbacks.Insert(i, [=](int one, int two) { SwapCallback(one, two, i); });
 				} else {
 					if (i != current) {
 						environment->SwapParticles(current, i);
@@ -124,6 +125,14 @@ void QuadTree::DestroySubTrees() {
 	if (subTree != nullptr) {
 		subTree = nullptr;
 	}
+}
+
+void QuadTree::SwapCallback(int one, int two, int overflow) {
+	if (overflow != one) {
+		overflow = one;
+		return;
+	}
+	overflow = two;
 }
 
 bool QuadTree::operator==(const QuadTree &other) const {

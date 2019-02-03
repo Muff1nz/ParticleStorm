@@ -34,6 +34,7 @@ private:
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
 	void CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
 	void DestroySubTrees();
+	void SwapCallback(int one, int two, int overflow);
 	void PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats* stats);
 	void BuildSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
 

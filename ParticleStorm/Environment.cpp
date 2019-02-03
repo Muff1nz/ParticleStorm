@@ -43,6 +43,20 @@ void Environment::SwapParticles(const int one, const int two) {
 	particleVel[one] = particleVel[two];
 	particleVel[two] = tempVel;
 
+	if (swapCallbacks.HasKey(one)) {
+		for (std::function<void(int, int)> callback : swapCallbacks[one]) {
+			callback(one, two);
+		}
+		swapCallbacks[one].clear();
+	}
+
+	if (swapCallbacks.HasKey(two)) {
+		for (std::function<void(int, int)> callback : swapCallbacks[one]) {
+			callback(one, two);
+		}
+		swapCallbacks[two].clear();
+	}
+
 	//UnlockParticles(one, two);
 }
 
