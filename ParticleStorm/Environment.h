@@ -5,7 +5,7 @@
 #include <mutex>
 #include "WorkerThreadPool.h"
 
-#define full
+//#define full
 
 class QuadTree;
 
@@ -40,7 +40,7 @@ public:
 	WorkerThreadPool workerThreads;
 
 	Environment();
-	Environment(int circleCount, int circleRadius, int seed);
+	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount);
 	~Environment(); 
 
 	void SwapParticles(int one, int two);

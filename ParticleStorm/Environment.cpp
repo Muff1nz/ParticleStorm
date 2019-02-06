@@ -6,7 +6,7 @@ Environment::Environment() {
 	Init();
 }
 
-Environment::Environment(int circleCount, int circleRadius, int seed) : particleCount(circleCount), particleRadius(circleRadius) {
+Environment::Environment(int circleCount, int circleRadius, int seed, int workerThreadCount) : particleCount(circleCount), particleRadius(circleRadius), workerThreadCount(workerThreadCount) {
 	Init();
 	this->seed = seed;
 }
