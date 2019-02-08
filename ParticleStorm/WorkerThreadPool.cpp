@@ -14,9 +14,10 @@ void WorkerThreadPool::Init(int threadCount, bool* done) {
 	if (isInitialized) {
 		throw std::runtime_error("ThreadPool is already Initialized!!");
 	}
-	
+
+	this->done = done;
 	for (int i = 0; i < threadCount; ++i) {
-		workerThreads.emplace_back([=] {WorkerThreadRun(done); });
+		workerThreads.emplace_back([=] {WorkerThreadRun(); });
 	}
 	isInitialized = true;
 }
@@ -31,7 +32,7 @@ void WorkerThreadPool::JoinWorkerThreads() {
 		if (workUnit != NULL)
 			workUnit();
 	}
-	while (!work.Empty() || busyThreadCount > 0) {
+	while (!*done && (!work.Empty() || busyThreadCount > 0)) {
 
 	}
 
@@ -64,13 +65,13 @@ void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range, 
 	}
 }
 
-void WorkerThreadPool::WorkerThreadRun(const bool* done) {
-	busyThreadCount++;
+void WorkerThreadPool::WorkerThreadRun() {
+	++busyThreadCount;
 	while (!*done) {
-		busyThreadCount--;
+		--busyThreadCount;
 		auto workUnit = work.Pop();
-		busyThreadCount++;
+		++busyThreadCount;
 		workUnit();
 	}
-	busyThreadCount--;
+	--busyThreadCount;
 }

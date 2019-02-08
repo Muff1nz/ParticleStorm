@@ -27,7 +27,7 @@ void PhysicsEngine::Init() {
 		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
 	}
 
-	environment->tree = new QuadTree(environment, Rect(0, 0, environment->worldWidth, environment->worldHeight));
+	environment->tree = new QuadTree(nullptr, environment, Rect(0, 0, environment->worldWidth, environment->worldHeight));
 }
 
 void PhysicsEngine::Join() {
@@ -68,10 +68,10 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 	if (dist < doubleRadius) {
 		glm::vec2 positionDelta = particlePos[particle1] - particlePos[particle2];
 
-		glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+		const glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
 
 		positionDelta = -positionDelta;
-		glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+		const glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
 
 		particleVel[particle1] = newVel1 * friction;
 		particleVel[particle2] = newVel2 * friction;
@@ -83,46 +83,15 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 	}
 }
 
-void PhysicsEngine::ParticleCollisionsNonQuadTreee(const int start, const int end) const {
-	for (int i = start + 1; i < end; ++i) {
-		for (int j = 0; j < environment->particleCount; ++j)
-			if (i != j)
-				ParticleCollision(i, j);
+void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
+	for (int i = 0; i < tree->particlesInQuad.Size(); ++i) {
+		for (int j = i + 1; j < tree->particlesInQuad.Size(); ++j) {
+			ParticleCollision(tree->particlesInQuad[i], tree->particlesInQuad[j]);
+		}
 	}
 }
 
-void PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
-
-	//Overflow particles
-	for (int i : overflow) 
-		if (particle != i)
-			ParticleCollision(particle, i);
-
-	//In scope particles
-	for (auto i = particle + 1; i < end; i++)
-		ParticleCollision(particle, i);	
-}
-
-void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>& overflow) const {
-
-	for (int i = particle + 1; i < overflow.size(); ++i) {
-		ParticleCollision(overflow[particle], overflow[i]);
-	}
-	
-}
-
-void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree& tree) const {
-	for (int i = 0; i < tree.overflow.size(); ++i) {
-		ParticleCollision(i, tree.overflow);
-	}
-	for (int i = tree.start; i < tree.end; ++i) {
-		ParticleCollision(i, tree.end, tree.overflow);
-	}
-}
-
-void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVectror<QuadTree>* quads, int start, int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
 		QuadTreeParticleCollisions((*quads)[i]);
 	}
@@ -163,7 +132,7 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections, 1);
 
-	ConcurrentVectror<QuadTree>* quads = new ConcurrentVectror<QuadTree>();
+	ConcurrentVector<QuadTree*>* quads = new ConcurrentVector<QuadTree*>();
 
 	float explosionTime = 0, updateTime = 0, quadTreeTime = 0, particleCollisionTime = 0;
 
@@ -189,10 +158,8 @@ void PhysicsEngine::LeadThreadRun() {
 
 		//QUADTREE
 		timer.Restart();
-		environment->renderLock.lock();
-		environment->tree->Build(quads, stats);
+		environment->tree->BuildRoot(quads, stats);
 		environment->workerThreads.JoinWorkerThreads();
-		environment->renderLock.unlock();
 		timer.Stop();
 		quadTreeTime += timer.ElapsedSeconds();
 
@@ -220,5 +187,7 @@ void PhysicsEngine::LeadThreadRun() {
 		}
 	}
 
+	std::cout << "\nJOINING THE THREADS!!\n";
 	environment->workerThreads.CloseWorkerThreads();
+	std::cout << "\nRUN COMPLETE!!\n";
 }

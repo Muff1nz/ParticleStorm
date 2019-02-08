@@ -17,12 +17,14 @@ public:
 	void CloseWorkerThreads();
 	void PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const;
 private:
+	bool* done;
+
 	bool isInitialized;
 	std::vector<std::thread> workerThreads;
 	ConcurrentQueue<std::function<void()>> work;
 	std::atomic_int busyThreadCount;
 
-	void WorkerThreadRun(const bool* done);
+	void WorkerThreadRun();
 
 };
 

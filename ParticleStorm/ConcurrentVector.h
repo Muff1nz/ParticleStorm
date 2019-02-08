@@ -4,7 +4,7 @@
 
 
 template <typename T>
-class ConcurrentVectror {
+class ConcurrentVector {
 public:
 	void push_back(T const& value) {
 		std::unique_lock<std::mutex> lock(mutex);

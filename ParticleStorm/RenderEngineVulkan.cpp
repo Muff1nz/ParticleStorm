@@ -32,7 +32,6 @@
 RenderEngineVulkan::RenderEngineVulkan(Environment* environment, Stats* stats) {
 	this->environment = environment;
 	this->stats = stats;
-	particlesRenderCopy = new glm::vec2[environment->particleCount];
 }
 
 RenderEngineVulkan::~RenderEngineVulkan() {
@@ -972,7 +971,6 @@ void RenderEngineVulkan::Init() {
 void RenderEngineVulkan::Dispose() {
 	if (isDisposed) return;
 
-	delete particlesRenderCopy;
 	delete MVP_Array;
 
 	vkDeviceWaitIdle(device);
@@ -1069,14 +1067,8 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 }
 
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
-	environment->renderLock.lock();
 	for (int i = 0; i < environment->particleCount; ++i) {
-		particlesRenderCopy[i] = environment->particlePos[i];
-	}
-	environment->renderLock.unlock();
-
-	for (int i = 0; i < environment->particleCount; ++i) {
-		glm::vec2 pos = particlesRenderCopy[i];
+		glm::vec2 pos = environment->particlePos[i];
 		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
 
 		glm::mat4 view = glm::mat4(1);

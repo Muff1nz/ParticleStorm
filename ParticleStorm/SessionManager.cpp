@@ -182,7 +182,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 			std::cout << stats.LastSecondToStringConsole();
 			perSecondStats.push_back(stats.LastSecondToString());
 
-			std::cout << "\nBenchmark is " + std::to_string(sessionTimer.ElapsedSeconds() / float(benchmarkDuration) * 100) + "% complete\n";
+			std::cout << "\nBenchmark is " + std::to_string(perSecondStats.size() / float(benchmarkDuration) * 100) + "% complete\n";
 		}
 
 		if (explosionTimer.ElapsedSeconds() >= 1.0f) {
@@ -216,7 +216,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 void SessionManager::ThreadingBenchmark() const {
 	const int threadRuns = 4;
 	const int particleRuns = 3;
-	int threadCounts[] = { 4, 8, 16, 30 };
+	int threadCounts[] = { 2, 4, 8, 16 };
 	int particleCounts[] = { 5000, 10000, 20000};
 	int particleRadiuses[] = { 8, 6, 4 };
 

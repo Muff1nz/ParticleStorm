@@ -27,11 +27,8 @@ private:
 	std::thread LeadThread;
 
 	void ParticleCollision(int particle1, int particle2) const;
-	void ParticleCollisionsNonQuadTreee(int start, int end) const;
-	void ParticleCollision(int particle, int end, const std::vector<int>& overflow) const;
-	void ParticleCollision(int particle, const std::vector<int>& overflow) const;
-	void QuadTreeParticleCollisions(const QuadTree& tree) const;
-	void QuadTreeParticleCollisions(ConcurrentVectror<QuadTree>* quads, int start, int end) const;
+	void QuadTreeParticleCollisions(QuadTree* tree) const;
+	void QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;
 	void HandleExplosions() const;
 	void BoundingBoxCollision(int particle) const;

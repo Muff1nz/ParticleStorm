@@ -3,22 +3,24 @@
 #include "Rect.h"
 #include "Stats.h"
 #include "ConcurrentVector.h"
+#include "ParticleBuffer.h"
 
 class Environment;
 
 class QuadTree {
 public:
-	QuadTree(Environment* environment, Rect rect_);
+	QuadTree(QuadTree* parent, Environment* environment, Rect rect_);
 	~QuadTree();
+	int QuadSize();
 
-	void Build(ConcurrentVectror<QuadTree>* quads, Stats* stats);
+	void BuildRoot(ConcurrentVector<QuadTree*>* quads, Stats* stats);
 
 	const int maxParticles = 100;
-
-	int start{}, end{};
-	std::vector<int> overflow;
+	ParticleBuffer particlesInQuad{};
 
 	Rect rect;
+
+	QuadTree* parent = nullptr;
 	QuadTree** subTree = nullptr;
 
 private:
@@ -29,17 +31,11 @@ private:
 
 	Environment* environment;
 
-	void Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree>* quads, Stats* stats);
+	void Build(ConcurrentVector<QuadTree*>* quads, Stats* stats);
 	bool QuadLimitReached();
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
-	void CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
-	void DestroySubTrees();
-	void SwapCallback(int one, int two, int overflow);
-	void PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats* stats);
-	void BuildSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
-
-	bool operator== (const QuadTree &other) const;
-	bool operator< (const QuadTree &other) const;
-	bool operator> (const QuadTree &other) const;
+	void CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats);
+	void PopulateQuadTreeWithParticles(Stats* stats, const int start, const int end);
+	void BuildSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) const;
 };
 
