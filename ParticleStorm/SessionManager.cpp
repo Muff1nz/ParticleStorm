@@ -26,7 +26,7 @@ char* SessionManager::FileTime() {
 }
 
 void SessionManager::OutputSingleRunToFile(const std::string& sessionString) const {
-	const std::string fileLeadText = "Normal_PS_Stats_";
+	const std::string fileLeadText = "Sandbox_PS_Stats_";
 	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
 	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
 
@@ -44,7 +44,7 @@ void SessionManager::OutputSingleRunToFile(const std::string& sessionString) con
 }
 
 void SessionManager::OutputMultiRunToFile(const std::string& sessionString) const {
-	const std::string fileLeadText = "Threading_PS_Stats_";
+	const std::string fileLeadText = "Benchmark_PS_Stats_";
 	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
 	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
 
@@ -57,6 +57,10 @@ void SessionManager::OutputMultiRunToFile(const std::string& sessionString) cons
 	statsFile.close();
 
 	auto command = "python \"" + multiStatsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
+	std::cout << command + "\n";
+	system(command.c_str());
+
+	command = "python \"" + singleStatsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
 	std::cout << command + "\n";
 	system(command.c_str());
 }
@@ -225,7 +229,11 @@ void SessionManager::ThreadingBenchmark() const {
 	for (int i = 0; i < particleRuns; ++i) {
 		for (int j = 0; j < threadRuns; ++j) {
 			sessionString += "<\n";
+			if (j == threadRuns - 1 && i == particleRuns - 1)
+				sessionString += "(\n";
 			sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCounts[j], true);
+			if (j == threadRuns - 1 && i == particleRuns - 1)
+				sessionString += ")\n";
 			sessionString += ">\n";
 		}
 	}

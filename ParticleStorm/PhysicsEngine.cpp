@@ -158,16 +158,12 @@ void PhysicsEngine::LeadThreadRun() {
 	const auto circleVel = environment->particleVel;
 
 	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
-	Timer timer2;
 
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections, 1);
 
 	ConcurrentVectror<QuadTree>* quads = new ConcurrentVectror<QuadTree>();
 
-	float explosionTime = 0, updateTime = 0, quadTreeTime = 0, particleCollisionTime = 0;
-
-	timer2.Start();
 	while (!environment->done) {
 
 		float deltaTime = timer.DeltaTime();
@@ -177,7 +173,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Restart();
 		HandleExplosions();
 		timer.Stop();
-		explosionTime += timer.ElapsedSeconds();
+		stats->puEventsTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//UPDATES
 		timer.Restart();
@@ -185,7 +181,7 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		updateTime += timer.ElapsedSeconds();
+		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//QUADTREE
 		timer.Restart();
@@ -194,7 +190,7 @@ void PhysicsEngine::LeadThreadRun() {
 		environment->workerThreads.JoinWorkerThreads();
 		environment->renderLock.unlock();
 		timer.Stop();
-		quadTreeTime += timer.ElapsedSeconds();
+		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
@@ -204,20 +200,10 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		particleCollisionTime += timer.ElapsedSeconds();
+		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//delete quads;
 		++stats->physicsUpdateTotalLastSecond;
-
-		if (timer2.ElapsedSeconds() >= 1) {			
-			std::cout << "\n\nPhysics task time: \n\n";
-			std::cout << "explosionTime: " << std::to_string(explosionTime) << "\n";
-			std::cout << "updateTime: " << std::to_string(updateTime) << "\n";
-			std::cout << "quadTreeTime: " << std::to_string(quadTreeTime) << "\n";
-			std::cout << "particleCollisionTime: " << std::to_string(particleCollisionTime) << "\n\n\n";
-			explosionTime = updateTime = quadTreeTime = particleCollisionTime = 0;
-			timer2.Restart();
-		}
 	}
 
 	environment->workerThreads.CloseWorkerThreads();
