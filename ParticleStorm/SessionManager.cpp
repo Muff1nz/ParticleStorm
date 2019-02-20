@@ -63,6 +63,10 @@ void SessionManager::OutputMultiRunToFile(const std::string& sessionString) cons
 	command = "python \"" + singleStatsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
 	std::cout << command + "\n";
 	system(command.c_str());
+
+	command = "python \"" + physicsDetailedGrapherDir + "\" \"" + statsOutputFilePath + "\"";
+	std::cout << command + "\n";
+	system(command.c_str());
 }
 
 std::string SessionManager::SessionToString(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) const {

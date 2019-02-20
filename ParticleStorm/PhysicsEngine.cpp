@@ -202,7 +202,6 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Stop();
 		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
-		//delete quads;
 		++stats->physicsUpdateTotalLastSecond;
 	}
 

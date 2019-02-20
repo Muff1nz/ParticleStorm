@@ -15,7 +15,7 @@ public:
 	void Stop();
 	void Restart();
 	float ElapsedSeconds();
-	float ElapsedMilliseconds();
+	int ElapsedMilliseconds();
 private:
 	static int SecondsToMicroseconds(float seconds);
 	static float NowSeconds() noexcept;

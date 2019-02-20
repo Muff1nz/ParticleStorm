@@ -56,10 +56,10 @@ float Timer::ElapsedSeconds() {
 	return now - last;
 }
 
-float Timer::ElapsedMilliseconds() {
+int Timer::ElapsedMilliseconds() {
 	if (stopWatchRunning)
 		now = NowSeconds();
-	return (now - last) * 1000;
+	return int((now - last) * 1000);
 }
 
 
