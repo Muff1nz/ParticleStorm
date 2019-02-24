@@ -18,8 +18,7 @@ public:
 	~SessionManager();
 
 	void Sandbox() const;
-	std::string Benchmark(int particleCount = 20000, int particleRadius = 5, int threadCount = 16, bool suppress = false) const;
-	void ThreadingBenchmark() const;
+	void Benchmark() const;
 
 private:
 	void OutputSingleRunToFile(const std::string& sessionString) const;
@@ -27,5 +26,7 @@ private:
 	std::string SessionToString(const Stats& stats, const std::vector<std::string>& perSecondStats,
 	                            const Environment& environment) const;
 	static char* FileTime();
+
+	std::string Benchmark(int particleCount, int particleRadius, int threadCount) const;
 };
 

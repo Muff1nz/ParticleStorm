@@ -113,6 +113,6 @@ void QuadTree::CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) 
 		}
 	}
 
-	//environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
-	BuildSubTrees(quads, stats);
+	environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
+	//BuildSubTrees(quads, stats);
 }
