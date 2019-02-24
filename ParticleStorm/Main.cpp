@@ -12,7 +12,6 @@ void PrintMenu() {
 	std::cout << "ParticleStorm Main Menu:\n";	
 	std::cout << "Sandbox(1):\n";
 	std::cout << "Benchmark(2)\n";
-	std::cout << "ThreadingBenchmark(3)\n";
 	std::cout << "Quit(X)\n";
 }
 
@@ -30,9 +29,6 @@ void MainMenu() {
 			break;
 		case '2':
 			session.Benchmark();
-			break;
-		case '3':
-			session.ThreadingBenchmark();
 			break;
 		case 'X':
 			break;

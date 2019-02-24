@@ -148,7 +148,7 @@ void SessionManager::Sandbox() const {
 }
 
 
-std::string SessionManager::Benchmark(int particleCount, int particleRadius, int threadCount, bool suppress) const {
+std::string SessionManager::Benchmark(int particleCount, int particleRadius, int threadCount) const {
 	Timer::unhinged = true;
 
 	Environment environment(particleCount, particleRadius, 1337, threadCount);
@@ -213,15 +213,10 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 	Timer::unhinged = false;
 
-	auto sessionString = SessionToString(stats, perSecondStats, environment);
-
-	if (!suppress) {
-		OutputSingleRunToFile(sessionString);
-	}
-	return sessionString;
+	return SessionToString(stats, perSecondStats, environment);
 }
 
-void SessionManager::ThreadingBenchmark() const {
+void SessionManager::Benchmark() const {
 	const int threadRuns = 4;
 	const int particleRuns = 3;
 	int threadCounts[] = { 4, 8, 16, 30 };
@@ -235,7 +230,7 @@ void SessionManager::ThreadingBenchmark() const {
 			sessionString += "<\n";
 			if (j == threadRuns - 1 && i == particleRuns - 1)
 				sessionString += "(\n";
-			sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCounts[j], true);
+			sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCounts[j]);
 			if (j == threadRuns - 1 && i == particleRuns - 1)
 				sessionString += ")\n";
 			sessionString += ">\n";
