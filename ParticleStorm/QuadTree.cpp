@@ -34,7 +34,7 @@ void QuadTree::Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree>
 		CreateSubTrees(quads, stats);
 	} else {
 		DestroySubTrees();
-		quads->push_back(*this);
+		quads->Push(*this);
 	}
 
 	if (subTree == nullptr) {
