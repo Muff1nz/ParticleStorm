@@ -1,8 +1,10 @@
 #pragma once
 #include <vec2.hpp>
 #include <queue>
-#include "QuadTree.h"
+#include <mutex>
+
 #include "WorkerThreadPool.h"
+#include "QuadTree.h"
 
 //#define full
 

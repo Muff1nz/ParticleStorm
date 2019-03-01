@@ -181,7 +181,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 	const int benchmarkDuration = 10;
 
-	while (perSecondStats.size() <= benchmarkDuration) {
+	while (perSecondStats.size() < benchmarkDuration) {
 		std::this_thread::sleep_for(std::chrono::microseconds(10));
 
 		if (timer.ElapsedSeconds() >= 1) {
@@ -213,13 +213,13 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 	Timer::unhinged = false;
 
-	return SessionToString(stats, perSecondStats, environment);;
+	return SessionToString(stats, perSecondStats, environment);
 }
 
 void SessionManager::Benchmark() const {
 	const int threadRuns = 4;
 	const int particleRuns = 3;
-	int threadCounts[] = { 2, 4, 8, 16 };
+	int threadCounts[] = { 4, 8, 16, 30 };
 	int particleCounts[] = { 5000, 10000, 20000};
 	int particleRadiuses[] = { 8, 6, 4 };
 
