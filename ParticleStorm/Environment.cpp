@@ -19,7 +19,7 @@ Environment::~Environment() {
 void Environment::Init() {
 	particlePos = new glm::vec2[particleCount];
 	particleVel = new glm::vec2[particleCount];
-	workerThreads.Init(workerThreadCount, &done);
+	workerThreads.Init(workerThreadCount);
 }
 
 

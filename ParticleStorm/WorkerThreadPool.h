@@ -1,28 +1,41 @@
 #pragma once
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 #include <functional>
-#include "ConcurrentQueue.h"
-#include <atomic>
+
 #include "Range.h"
+#include "Queue.h"
+#include <atomic>
+
 
 class WorkerThreadPool {
 public:
 	WorkerThreadPool();
-	WorkerThreadPool(int threadCount, bool* done);
+	WorkerThreadPool(int threadCount);
 	~WorkerThreadPool();
 
-	void Init(int threadCount, bool* done);
+	void Init(int threadCount);
 
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
 	void PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const;
 private:
-	bool isInitialized;
-	std::vector<std::thread> workerThreads;
-	ConcurrentQueue<std::function<void()>> work;
-	std::atomic_int busyThreadCount;
+	bool isInitialized{};
+	bool done = false;
 
-	void WorkerThreadRun(const bool* done);
+	std::vector<std::thread> workerThreads;
+	Queue<std::function<void()>> work;
+
+	std::mutex mutex;
+	std::condition_variable consumeCondition;
+	std::condition_variable joinCondition;
+	int busyThreads = 0;
+
+	void WorkerThreadRun();
 
 };
 

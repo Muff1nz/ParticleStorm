@@ -101,9 +101,6 @@
     <ClInclude Include="TestSquare.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConcurrentQueue.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="WorkerThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -113,7 +110,7 @@
     <ClInclude Include="ConcurrentVector.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="ConcurrentMap.h">
+    <ClInclude Include="Queue.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>

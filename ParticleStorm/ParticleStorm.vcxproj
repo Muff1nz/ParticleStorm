@@ -136,13 +136,12 @@
     <ClCompile Include="WorkerThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConcurrentMap.h" />
-    <ClInclude Include="ConcurrentQueue.h" />
     <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />
+    <ClInclude Include="Queue.h" />
     <ClInclude Include="Range.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
