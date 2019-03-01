@@ -142,7 +142,7 @@ void SessionManager::Sandbox() const {
 	std::cout << stats.CompleteSessionToStringConsole();
 
 	OutputSingleRunToFile(SessionToString(stats, perSecondStats, environment));
-	
+
 
 	renderEngine.Dispose();
 }
@@ -202,7 +202,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 		glfwPollEvents();
 	}
 	environment.done = true;
-	
+
 	stats.CompleteSession();
 	std::cout << stats.CompleteSessionToStringConsole();
 
@@ -220,8 +220,8 @@ void SessionManager::Benchmark() const {
 	const int threadRuns = 4;
 	const int particleRuns = 3;
 	int threadCounts[] = { 4, 8, 16, 30 };
-	int particleCounts[] = { 5000, 10000, 20000};
-	int particleRadiuses[] = { 8, 6, 4 };
+	int particleCounts[] = { 20000, 40000, 80000 };
+	int particleRadiuses[] = { 4, 3, 2 };
 
 	std::string sessionString = "";
 
