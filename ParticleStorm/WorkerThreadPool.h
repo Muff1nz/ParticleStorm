@@ -22,7 +22,7 @@ public:
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
-	void PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const;
+	void PartitionForWorkers(int size, std::vector<Range>& range) const;
 private:
 	bool isInitialized{};
 	bool done = false;

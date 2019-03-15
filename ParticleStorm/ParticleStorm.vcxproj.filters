@@ -66,7 +66,7 @@
     <ClCompile Include="WorkerThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParticleBuffer.h">
+    <ClCompile Include="LazyVector.h">
       <Filter>Header Files\Utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -114,6 +114,9 @@
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="Queue.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearQuad.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>

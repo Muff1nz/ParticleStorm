@@ -99,6 +99,12 @@ void QuadTree::BuildSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) c
 	}
 }
 
+void QuadTree::BuildSubTreesThreaded(ConcurrentVector<QuadTree*>* quads, Stats* stats) const {
+	for (int i = 0; i < 4; ++i) {
+		environment->workerThreads.AddWork([=] { subTree[i]->Build(quads, stats); });
+	}
+}
+
 void QuadTree::CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) {
 	if (subTree == nullptr) {
 		if (secretSubTree != nullptr) {
@@ -113,6 +119,10 @@ void QuadTree::CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) 
 		}
 	}
 
-	environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
-	//BuildSubTrees(quads, stats);
+	if (particlesInQuad.Size() >= maxParticlesPerThread)
+		BuildSubTreesThreaded(quads, stats);
+	else if (particlesInQuad.Size() >= minParticlesPerThread)
+		environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
+	else
+		BuildSubTrees(quads, stats);
 }

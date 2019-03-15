@@ -114,12 +114,12 @@ void SessionManager::Sandbox() const {
 	while (!environment.done) {
 		std::this_thread::sleep_for(std::chrono::microseconds(10));
 
-		if (timer.ElapsedSeconds() >= 1) {
-			timer.Restart();
-			stats.CompleteLastSecond();
-			std::cout << stats.LastSecondToStringConsole();
-			perSecondStats.push_back(stats.LastSecondToString());
-		}
+		//if (timer.ElapsedSeconds() >= 1) {
+		//	timer.Restart();
+		//	stats.CompleteLastSecond();
+		//	std::cout << stats.LastSecondToStringConsole();
+		//	perSecondStats.push_back(stats.LastSecondToString());
+		//}
 
 		glfwPollEvents();
 		if (glfwWindowShouldClose(renderEngine.GetWindow()))

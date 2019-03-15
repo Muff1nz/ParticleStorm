@@ -1,7 +1,6 @@
 #pragma once
 #include <vec2.hpp>
 #include <queue>
-#include <mutex>
 
 #include "WorkerThreadPool.h"
 #include "QuadTree.h"
@@ -23,17 +22,21 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 40000;
-	const int particleRadius = 4;
+	const int particleCount = 7000;
+	const int particleRadius = 8;
 
 	bool done;
 	int seed;
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
+	glm::vec2* shadowParticlePos;
+	glm::vec2* shadowParticleVel;
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
+
+	std::mutex renderLock{};
 
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
