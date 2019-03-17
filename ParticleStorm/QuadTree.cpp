@@ -4,7 +4,7 @@
 
 QuadTree::QuadTree(Environment* environment, Rect rect_) : radiusSquared(pow(environment->particleRadius, 2)) {
 	this->environment = environment;
-	const int r = environment->particleRadius * 1.5f;
+	const int r = environment->particleRadius * 2.0f;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
 }

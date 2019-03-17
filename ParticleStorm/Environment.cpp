@@ -19,6 +19,7 @@ Environment::~Environment() {
 void Environment::Init() {
 	particlePos = new glm::vec2[particleCount];
 	particleVel = new glm::vec2[particleCount];
+	particleResting = new bool[particleCount];
 	workerThreads.Init(workerThreadCount);
 }
 

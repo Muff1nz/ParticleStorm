@@ -23,14 +23,16 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 15000;
-	const int particleRadius = 5;
+	const int particleCount = 10000;
+	const int particleRadius = 6;
 
 	bool done;
 	int seed;
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
+	bool* particleResting;
+
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
