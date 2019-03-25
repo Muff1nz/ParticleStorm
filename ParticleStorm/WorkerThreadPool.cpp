@@ -1,4 +1,5 @@
 #include "WorkerThreadPool.h"
+#include <string>
 
 
 WorkerThreadPool::WorkerThreadPool() {
@@ -61,6 +62,11 @@ void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range) 
 			end = size;
 		range.emplace_back(Range(start, end));
 	}
+}
+
+std::string WorkerThreadPool::StateString() {
+	std::unique_lock<std::mutex> lock(mutex);
+	return "Busy threads: " + std::to_string(busyThreads) + " Work units in queue: " + std::to_string(work.Size());
 }
 
 void WorkerThreadPool::WorkerThreadRun() {

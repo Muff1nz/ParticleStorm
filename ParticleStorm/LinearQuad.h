@@ -4,10 +4,10 @@ class LinearQuad {
 public:
 	int start;
 	int end;
-	LazyVector<int> overflow;
+	std::vector<int> overflow;
 
 	void Reset() {
 		start = end = 0;
-		overflow.Clear();
+		overflow.clear();
 	}
 };

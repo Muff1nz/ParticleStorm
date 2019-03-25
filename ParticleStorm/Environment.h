@@ -22,7 +22,7 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 50000;
+	const int particleCount = 40000;
 	const int particleRadius = 4;
 
 	bool done;
@@ -38,7 +38,7 @@ public:
 
 	QuadTree* tree;
 
-	std::mutex renderLock{};
+	std::mutex renderLock;
 
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;

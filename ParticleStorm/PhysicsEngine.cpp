@@ -6,7 +6,7 @@
 #include "Timer.h"
 #include "Range.h"
 #include "LinearQuad.h"
-#include <unordered_set>
+#include <map>
 
 PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->particleRadius * 2) {
 	this->environment = environment;
@@ -95,14 +95,14 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 }
 
 
-void PhysicsEngine::ParticleCollision(const int particle, const int end, const LazyVector<int>& overflow) const {
+void PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
 	const auto circlePos = environment->particlePos;
 	const auto circleVel = environment->particleVel;
 
-	//Overflow particles
-	for (int i = 0; i < overflow.Size(); ++i) {
-		if (particle != overflow[i])
-			ParticleCollision(particle, overflow[i]);
+	////Overflow particles
+	for (int i : overflow) {
+		if (particle != i)
+			ParticleCollision(particle, i);
 	}
 
 	//In scope particles
@@ -110,16 +110,15 @@ void PhysicsEngine::ParticleCollision(const int particle, const int end, const L
 		ParticleCollision(particle, i);
 }
 
-void PhysicsEngine::ParticleCollision(const int particle, const LazyVector<int>& overflow) const {
-
-	for (int i = particle + 1; i < overflow.Size(); ++i) {
+void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>& overflow) const {
+	for (int i = particle + 1; i < overflow.size(); ++i) {
 		ParticleCollision(overflow[particle], overflow[i]);
 	}
 
 }
 
 void PhysicsEngine::LinearQuadTreeParticleCollisions(const LinearQuad& linearQuad) const {
-	for (int i = 0; i < linearQuad.overflow.Size(); ++i) {
+	for (int i = 0; i < linearQuad.overflow.size(); ++i) {
 		ParticleCollision(i, linearQuad.overflow);
 	}
 	for (int i = linearQuad.start; i < linearQuad.end; ++i) {
@@ -127,15 +126,15 @@ void PhysicsEngine::LinearQuadTreeParticleCollisions(const LinearQuad& linearQua
 	}
 }
 
-void PhysicsEngine::LinearQuadTreeParticleCollisions(const LazyVector<LinearQuad>* linearQuads, int start, int end) const {
+void PhysicsEngine::LinearQuadTreeParticleCollisions(ConcurrentVector<LinearQuad*>* linearQuads, int start, int end) const {
 	for (int i = start; i < end; ++i) {
-		LinearQuadTreeParticleCollisions(linearQuads->GetValue(i));
+		LinearQuadTreeParticleCollisions(*(*linearQuads)[i]);
 	}
 }
 
 void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
-	for (int i = 0; i < tree->particlesInQuad.Size(); ++i) {
-		for (int j = i + 1; j < tree->particlesInQuad.Size(); ++j) {
+	for (int i = 0; i < tree->particlesInQuad.size(); ++i) {
+		for (int j = i + 1; j < tree->particlesInQuad.size(); ++j) {
 			ParticleCollision(tree->particlesInQuad[i], tree->particlesInQuad[j]);
 		}
 	}
@@ -176,52 +175,46 @@ void PhysicsEngine::HandleExplosions() const {
 
 
 
-void PhysicsEngine::AlignQuadTree(ConcurrentVector<QuadTree*>& quads, LazyVector<LinearQuad>& linearQuads) const {
+void PhysicsEngine::AlignQuadTree(ConcurrentVector<QuadTree*>& quads, ConcurrentVector<LinearQuad*>& linearQuads) const {
 	int currentIndex = 0;
-	//glm::vec2 movedParticleFlag = { -9999, -9999 };
+	for (int i = 0; i < linearQuads.Size(); ++i) {
+		delete linearQuads[i];
+	}
 	linearQuads.Clear();
 
-	std::unordered_set<int> movedParticles;
-
+	std::map<int, int> movedParticles;
+	std::unique_lock<std::mutex> lock(environment->renderLock);
 	for (int i = 0; i < quads.Size(); ++i) {
-		if (linearQuads.TrueSize() <= i)
-			linearQuads.Add(LinearQuad{});
-		else {
-			linearQuads.GrowOne();
-			linearQuads.Get(i)->Reset();
-		}
-		LinearQuad* linearQuad = linearQuads.Get(i);
+
+		QuadTree* quad = quads[i];
+		LinearQuad* linearQuad = new LinearQuad{};
 		linearQuad->start = currentIndex;
 
-		for (int j = 0; j < quads[i]->particlesInQuad.Size(); ++j) {
-			int particle = quads[i]->particlesInQuad[j];
+		for (int particle : quad->particlesInQuad) {
+
 			if (movedParticles.find(particle) != movedParticles.end()) {	//Overflow
-				linearQuad->overflow.Add(particle);
+				linearQuad->overflow.push_back(movedParticles[particle]);
 			} else {						//Move to shadow
 				environment->shadowParticlePos[currentIndex] = environment->particlePos[particle];
 				environment->shadowParticleVel[currentIndex] = environment->particleVel[particle];
-				//environment->particleVel[particle] = movedParticleFlag;
-				movedParticles.emplace(particle);
+				movedParticles.emplace(particle, currentIndex);
 				++currentIndex;
 			}
-			if (currentIndex > 7000)
-				std::cout << particle << " WTF?\n";
 		}
 		linearQuad->end = currentIndex;
-		std::cout << "LINEAR QUAD: " << linearQuad->start << " " << linearQuad->end << " " << linearQuad->overflow.Size() << std::endl;
-
-
-		//Swap shadow to front
-		environment->renderLock.lock();
-		glm::vec2* temp = environment->particlePos;
-		environment->particlePos = environment->shadowParticlePos;
-		environment->shadowParticlePos = temp;
-
-		temp = environment->particleVel;
-		environment->particleVel = environment->shadowParticleVel;
-		environment->shadowParticleVel = temp;
-		environment->renderLock.unlock();
+		linearQuads.Push(linearQuad);
 	}
+
+	//Swap shadow to front
+
+	glm::vec2* temp = environment->particlePos;
+	environment->particlePos = environment->shadowParticlePos;
+	environment->shadowParticlePos = temp;
+
+	temp = environment->particleVel;
+	environment->particleVel = environment->shadowParticleVel;
+	environment->shadowParticleVel = temp;
+	lock.unlock();
 }
 
 void PhysicsEngine::LeadThreadRun() {
@@ -234,46 +227,52 @@ void PhysicsEngine::LeadThreadRun() {
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
 	ConcurrentVector<QuadTree*>* quads = new ConcurrentVector<QuadTree*>();
-	LazyVector<LinearQuad> linearQuads;
+	ConcurrentVector<LinearQuad*>* linearQuads = new ConcurrentVector<LinearQuad*>();
 
-	while (!environment->done) {
+	while (!environment->done) { //TODO: Currently have commented out linear quads code. Didn't seem like it was immediately better.
 
 		float deltaTime = timer.DeltaTime();
 		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
 
-		//std::cout << "EXPLOSIONS\n\n";
 		//EXPLOSIONS
 		timer.Restart();
 		HandleExplosions();
 		timer.Stop();
 		stats->puEventsTotalLastSecond += timer.ElapsedMilliseconds();
 
-		//std::cout << "QUADTREE\n\n";
 		//QUADTREE
 		timer.Restart();
 		environment->tree->BuildRoot(quads, stats);
 		environment->workerThreads.JoinWorkerThreads();
-		//AlignQuadTree(*quads, linearQuads);
+
+		//LINEAR QUADS
+		//AlignQuadTree(*quads, *linearQuads);
+
+
 		timer.Stop();
 		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
-		//std::cout << "PARTICLE COLLISIONS\n\n";
 		//PARTICLE COLLISIONS
 		timer.Restart();
+
+		//DISPERSED QUADS
 		std::vector<Range> quadSections;
 		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections);
 		for (auto quadSection : quadSections)
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
+
+		//LINEAR QUADS
 		//std::vector<Range> quadSections;
-		//environment->workerThreads.PartitionForWorkers(linearQuads.Size(), quadSections);
+		//environment->workerThreads.PartitionForWorkers(linearQuads->Size(), quadSections);
 		//for (auto quadSection : quadSections)
-		//	environment->workerThreads.AddWork([=] { LinearQuadTreeParticleCollisions(&linearQuads, quadSection.lower, quadSection.upper); });
+		//	environment->workerThreads.AddWork([=] { LinearQuadTreeParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
 		//environment->workerThreads.JoinWorkerThreads();
+
+
 		timer.Stop();
 		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
-		//std::cout << "UPDATES\n\n";
 		//UPDATES
 		timer.Restart();
 		for (auto particleSection : particleSections)

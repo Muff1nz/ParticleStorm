@@ -28,18 +28,17 @@ private:
 	std::thread LeadThread;
 
 	void ParticleCollision(int particle1, int particle2) const;
-	void ParticleCollision(int particle, int end, const LazyVector<int>& overflow) const;
-	void ParticleCollision(int particle, const LazyVector<int>& overflow) const;
+	void ParticleCollision(int particle, int end, const const std::vector<int>& overflow) const;
+	void ParticleCollision(int particle, const std::vector<int>& overflow) const;
 	void LinearQuadTreeParticleCollisions(const LinearQuad& linearQuad) const;
-	void LinearQuadTreeParticleCollisions(const LinearQuad* linearQuad) const;
-	void LinearQuadTreeParticleCollisions(const LazyVector<LinearQuad>* linearQuads, int start, int end) const;
+	void LinearQuadTreeParticleCollisions(ConcurrentVector<LinearQuad*>* linearQuads, int start, int end) const;
 	void QuadTreeParticleCollisions(QuadTree* tree) const;
 	void QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;
 	void HandleExplosions() const;
 	void BoundingBoxCollision(int particle) const;
+	void AlignQuadTree(ConcurrentVector<QuadTree*>& quads, ConcurrentVector<LinearQuad*>& linearQuads) const;
 
-	void AlignQuadTree(ConcurrentVector<QuadTree*>& quads, LazyVector<LinearQuad>& linearQuads) const;
 	void LeadThreadRun();
 };
 

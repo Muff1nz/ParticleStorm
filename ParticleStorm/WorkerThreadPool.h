@@ -8,7 +8,6 @@
 
 #include "Range.h"
 #include "Queue.h"
-#include <atomic>
 
 
 class WorkerThreadPool {
@@ -23,6 +22,7 @@ public:
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
 	void PartitionForWorkers(int size, std::vector<Range>& range) const;
+	std::string StateString();
 private:
 	bool isInitialized{};
 	bool done = false;

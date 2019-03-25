@@ -18,7 +18,8 @@ public:
 	const int maxParticles = 100;
 	const int minParticlesPerThread = 400;
 	const int maxParticlesPerThread = 1600;
-	LazyVector<int> particlesInQuad{};
+	const int maxParticlesPerThread4X = maxParticlesPerThread * 4;
+	std::vector<int> particlesInQuad{};
 
 	Rect rect;
 
