@@ -4,6 +4,8 @@
 
 #include "WorkerThreadPool.h"
 #include "QuadTree.h"
+#include "Stats.h"
+#include "ConcurrentVector.h"
 
 //#define full
 
@@ -28,6 +30,8 @@ public:
 	bool done;
 	int seed;
 
+	Stats stats;
+
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
 	bool* particleResting;
@@ -37,6 +41,7 @@ public:
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
+	ConcurrentVector<QuadTree*> quads;
 
 	std::mutex renderLock;
 

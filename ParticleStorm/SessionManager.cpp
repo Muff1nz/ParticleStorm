@@ -95,9 +95,8 @@ std::string SessionManager::SessionToString(const Stats& stats, const std::vecto
 
 void SessionManager::Sandbox() const {
 	Environment environment{};
-	Stats stats{};
-	RenderEngineVulkan renderEngine(&environment, &stats);
-	PhysicsEngine physicsEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment);
+	PhysicsEngine physicsEngine(&environment);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -116,9 +115,9 @@ void SessionManager::Sandbox() const {
 
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
-			stats.CompleteLastSecond();
-			std::cout << stats.LastSecondToStringConsole();
-			perSecondStats.push_back(stats.LastSecondToString());
+			environment.stats.CompleteLastSecond();
+			std::cout << environment.stats.LastSecondToStringConsole();
+			perSecondStats.push_back(environment.stats.LastSecondToString());
 		}
 
 		glfwPollEvents();
@@ -130,7 +129,7 @@ void SessionManager::Sandbox() const {
 			double x, y;
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
 			environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
-			++stats.explosionTotalLastSecond;
+			++environment.stats.explosionTotalLastSecond;
 		}
 		lastMouseButtonState = state;
 	}
@@ -138,10 +137,10 @@ void SessionManager::Sandbox() const {
 	physicsEngine.Join();
 	renderEngine.Join();
 
-	stats.CompleteSession();
-	std::cout << stats.CompleteSessionToStringConsole();
+	environment.stats.CompleteSession();
+	std::cout << environment.stats.CompleteSessionToStringConsole();
 
-	OutputSingleRunToFile(SessionToString(stats, perSecondStats, environment));
+	OutputSingleRunToFile(SessionToString(environment.stats, perSecondStats, environment));
 
 
 	renderEngine.Dispose();
@@ -152,9 +151,8 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 	Timer::unhinged = true;
 
 	Environment environment(particleCount, particleRadius, 1337, threadCount);
-	Stats stats{};
-	RenderEngineVulkan renderEngine(&environment, &stats);
-	PhysicsEngine physicsEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment);
+	PhysicsEngine physicsEngine(&environment);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -186,9 +184,9 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
-			stats.CompleteLastSecond();
-			std::cout << stats.LastSecondToStringConsole();
-			perSecondStats.push_back(stats.LastSecondToString());
+			environment.stats.CompleteLastSecond();
+			std::cout << environment.stats.LastSecondToStringConsole();
+			perSecondStats.push_back(environment.stats.LastSecondToString());
 
 			std::cout << "\nBenchmark is " + std::to_string(perSecondStats.size() / float(benchmarkDuration) * 100) + "% complete\n";
 		}
@@ -203,8 +201,8 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 	}
 	environment.done = true;
 
-	stats.CompleteSession();
-	std::cout << stats.CompleteSessionToStringConsole();
+	environment.stats.CompleteSession();
+	std::cout << environment.stats.CompleteSessionToStringConsole();
 
 	physicsEngine.Join();
 	renderEngine.Join();
@@ -213,7 +211,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 	Timer::unhinged = false;
 
-	return SessionToString(stats, perSecondStats, environment);
+	return SessionToString(environment.stats, perSecondStats, environment);
 }
 
 void SessionManager::Benchmark() const {

@@ -1,7 +1,6 @@
 #pragma once
 #include <thread>
 #include <array>
-#include "Stats.h"
 #include "Environment.h"
 
 #define GLFW_INCLUDE_VULKAN
@@ -16,7 +15,7 @@ class QuadTree;
 class RenderEngineVulkan {
 public:
 	//Constructor / Destructor
-	RenderEngineVulkan(Environment* environment, Stats* stats);
+	RenderEngineVulkan(Environment* environment);
 	~RenderEngineVulkan();
 
 	//Init
@@ -36,7 +35,6 @@ public:
 private:
 	//Particle Storm Specific Variables
 	Environment* environment;
-	Stats* stats;
 
 	//General
 	const int MAX_FRAMES_IN_FLIGHT = 2;
