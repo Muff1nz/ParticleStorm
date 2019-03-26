@@ -29,9 +29,8 @@
 //                                                                                                                         
 //                                                                                                                         
 
-RenderEngineVulkan::RenderEngineVulkan(Environment* environment, Stats* stats) {
+RenderEngineVulkan::RenderEngineVulkan(Environment* environment) {
 	this->environment = environment;
-	this->stats = stats;
 }
 
 RenderEngineVulkan::~RenderEngineVulkan() {
@@ -1147,8 +1146,7 @@ void RenderEngineVulkan::DrawFrame() {
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-	++stats->renderUpdateTotalLastSecond;
-	stats->particlesRenderedTotalLastSecond += environment->particleCount;
+	++environment->stats.renderUpdateTotalLastSecond;
 }
 
 void RenderEngineVulkan::RenderThreadRun() {

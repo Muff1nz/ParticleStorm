@@ -1,16 +1,12 @@
 #include "PhysicsEngine.h"
-#include "Environment.h"
 #include <detail/func_geometric.inl>
-#include <thread>
 #include <iostream>
 #include "Timer.h"
 #include "Range.h"
-#include "LinearQuad.h"
 #include <map>
 
-PhysicsEngine::PhysicsEngine(Environment* environment, Stats* stats) : doubleRadius(environment->particleRadius * 2) {
+PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->particleRadius * 2) {
 	this->environment = environment;
-	this->stats = stats;
 	rng = NumberGenerator(environment->seed);
 }
 
@@ -90,7 +86,7 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 		else
 			particleResting[particle2] = true;
 
-		++stats->particleCollisionTotalLastSecond;
+		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
@@ -226,23 +222,20 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
-	ConcurrentVector<QuadTree*>* quads = new ConcurrentVector<QuadTree*>();
-	ConcurrentVector<LinearQuad*>* linearQuads = new ConcurrentVector<LinearQuad*>();
-
 	while (!environment->done) { //TODO: Currently have commented out linear quads code. Didn't seem like it was immediately better.
 
 		float deltaTime = timer.DeltaTime();
-		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
+		environment->stats.physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
 
 		//EXPLOSIONS
 		timer.Restart();
 		HandleExplosions();
 		timer.Stop();
-		stats->puEventsTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puEventsTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//QUADTREE
 		timer.Restart();
-		environment->tree->BuildRoot(quads, stats);
+		environment->tree->BuildRoot();
 		environment->workerThreads.JoinWorkerThreads();
 
 		//LINEAR QUADS
@@ -250,16 +243,16 @@ void PhysicsEngine::LeadThreadRun() {
 
 
 		timer.Stop();
-		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
 
 		//DISPERSED QUADS
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections);
+		environment->workerThreads.PartitionForWorkers(environment->quads.Size(), quadSections);
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(&environment->quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 
 		//LINEAR QUADS
@@ -271,7 +264,7 @@ void PhysicsEngine::LeadThreadRun() {
 
 
 		timer.Stop();
-		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//UPDATES
 		timer.Restart();
@@ -279,9 +272,9 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puPositionUpdatesTotalLastSecond += timer.ElapsedMilliseconds();
 
-		++stats->physicsUpdateTotalLastSecond;
+		++environment->stats.physicsUpdateTotalLastSecond;
 	}
 
 	std::cout << "\nJOINING THE THREADS!!\n";

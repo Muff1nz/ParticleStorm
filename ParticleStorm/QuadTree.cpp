@@ -27,29 +27,25 @@ int QuadTree::QuadSize() {
 
 bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles; }
 
-void QuadTree::BuildRoot(ConcurrentVector<QuadTree*>* quads, Stats* stats) {
+void QuadTree::BuildRoot() {
 	int current = 0;
-	quads->Clear();
-	Build(&*quads, stats);
+	environment->quads.Clear();
+	Build();
 }
 
-void QuadTree::Build(ConcurrentVector<QuadTree*>* quads, Stats* stats) {
+void QuadTree::Build() {
 	if (parent != nullptr) {
 		if (parent->parent == nullptr)
-			PopulateQuadTreeWithParticles(stats, 0, environment->particleCount);
+			PopulateQuadTreeWithParticles(0, environment->particleCount);
 		else
-			PopulateQuadTreeWithParticles(stats, 0, parent->particlesInQuad.size());
+			PopulateQuadTreeWithParticles(0, parent->particlesInQuad.size());
 	}
 
 	if (QuadLimitReached()) {
-		CreateSubTrees(quads, stats);
+		CreateSubTrees();
 	} else {
 		subTree = nullptr;
-		quads->Push(this);
-	}
-
-	if (subTree == nullptr) {
-		++stats->quadTreeLeafTotalLastSecond;
+		environment->quads.Push(this);
 	}
 }
 
@@ -74,7 +70,7 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 }
 
 
-void QuadTree::PopulateQuadTreeWithParticles(Stats* stats, const int start, const int end) {
+void QuadTree::PopulateQuadTreeWithParticles(const int start, const int end) {
 	const auto allParticles = environment->particlePos;
 
 	particlesInQuad.clear();
@@ -93,19 +89,19 @@ void QuadTree::PopulateQuadTreeWithParticles(Stats* stats, const int start, cons
 	}
 }
 
-void QuadTree::BuildSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) const {
+void QuadTree::BuildSubTrees() const {
 	for (int i = 0; i < 4; ++i) {
-		subTree[i]->Build(quads, stats);
+		subTree[i]->Build();
 	}
 }
 
-void QuadTree::BuildSubTreesThreaded(ConcurrentVector<QuadTree*>* quads, Stats* stats) const {
+void QuadTree::BuildSubTreesThreaded() const {
 	for (int i = 0; i < 4; ++i) { //TODO: Sub-thread individual quads too.
-		environment->workerThreads.AddWork([=] { subTree[i]->Build(quads, stats); });
+		environment->workerThreads.AddWork([=] { subTree[i]->Build(); });
 	}
 }
 
-void QuadTree::CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) {
+void QuadTree::CreateSubTrees() {
 	if (subTree == nullptr) {
 		if (secretSubTree != nullptr) {
 			subTree = secretSubTree;
@@ -120,9 +116,9 @@ void QuadTree::CreateSubTrees(ConcurrentVector<QuadTree*>* quads, Stats* stats) 
 	}
 
 	if (particlesInQuad.size() >= maxParticlesPerThread)
-		BuildSubTreesThreaded(quads, stats);
+		BuildSubTreesThreaded();
 	else if (particlesInQuad.size() >= minParticlesPerThread)
-		environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
+		environment->workerThreads.AddWork([=] { BuildSubTrees(); });
 	else
-		BuildSubTrees(quads, stats);
+		BuildSubTrees();
 }

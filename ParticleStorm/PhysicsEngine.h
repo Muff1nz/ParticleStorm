@@ -1,13 +1,13 @@
 #pragma once
 #include "Environment.h"
 #include <thread>
-#include "Stats.h"
+#include "ConcurrentVector.h"
 #include "NumberGenerator.h"
 #include "LinearQuad.h"
 
 class PhysicsEngine {
 public:
-	PhysicsEngine(Environment* environment, Stats* stats);
+	PhysicsEngine(Environment* environment);
 	~PhysicsEngine();
 
 	void Init();
@@ -23,7 +23,6 @@ private:
 	NumberGenerator rng;
 
 	Environment* environment;
-	Stats* stats;
 
 	std::thread LeadThread;
 
