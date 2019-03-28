@@ -21,7 +21,7 @@ public:
 	const int maxParticlesPerThread4X = maxParticlesPerThread * 4;
 	std::vector<int> particlesInQuad{};
 
-	const int maxDepth = 5;
+	const int maxDepth = 10;
 	int depth;
 
 	Rect rect;
