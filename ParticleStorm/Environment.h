@@ -43,8 +43,6 @@ public:
 	QuadTree* tree;
 	ConcurrentVector<QuadTree*> quads;
 
-	std::mutex renderLock;
-
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
 
