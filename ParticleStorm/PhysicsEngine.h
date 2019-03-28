@@ -24,10 +24,10 @@ private:
 
 	std::thread LeadThread;
 
-	void ResolveCollision(const int particle1, const int particle2, const float dist) const;
-	void QuadInternalParticleCollision(const int particle1, const int particle2, QuadTree* tree) const;
-	void QuadMixedParticleCollision(const int particle1, const int particle2, QuadTree* tree) const;
-	void QuadExternalCollision(int particle1, int particle2) const;
+	void ResolveCollision(int particle1, int particle2, float dist) const;
+	void QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
+	void QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
+	void QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
 	void QuadTreeParticleCollisions(QuadTree* tree) const;
 	void QuadTreeParticleCollisions(int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;

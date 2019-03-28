@@ -90,34 +90,36 @@ void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, c
 		particleResting[particle2] = true;
 }
 
-void PhysicsEngine::QuadInternalParticleCollision(const int particle1, const int particle2, QuadTree* tree) const {
-	const auto dist = distance(tree->particlePos[particle1], tree->particlePos[particle2]);
+void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+	const auto dist = distance(tree->particlePos[localParticle1], tree->particlePos[localParticle2]);
 	if (dist < doubleRadius) {
-		const int globalParticle1 = tree->particleIndex[particle1];
-		const int globalParticle2 = tree->particleIndex[particle2];
+		const int globalParticle1 = tree->particleIndex[localParticle1];
+		const int globalParticle2 = tree->particleIndex[localParticle2];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->particlePos[particle1] = environment->particlePos[globalParticle1];
-		tree->particlePos[particle2] = environment->particlePos[globalParticle2];
+		tree->particlePos[localParticle1] = environment->particlePos[globalParticle1];
+		tree->particlePos[localParticle2] = environment->particlePos[globalParticle2];
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
-void PhysicsEngine::QuadMixedParticleCollision(const int particle1, const int particle2, QuadTree* tree) const {
-	const int globalParticle2 = tree->particleIndex[particle2];
-	const auto dist = distance(tree->particlePos[particle1], environment->particlePos[globalParticle2]);
+void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+	const int globalParticle2 = tree->particleIndex[localParticle2];
+	const auto dist = distance(tree->particlePos[localParticle1], environment->particlePos[globalParticle2]);
 	if (dist < doubleRadius) {
-		const int globalParticle1 = tree->particleIndex[particle1];
+		const int globalParticle1 = tree->particleIndex[localParticle1];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->particlePos[particle1] = environment->particlePos[globalParticle1];
+		tree->particlePos[localParticle1] = environment->particlePos[globalParticle1];
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
 
-void PhysicsEngine::QuadExternalCollision(const int particle1, const int particle2) const {
-	const auto dist = distance(environment->particlePos[particle1], environment->particlePos[particle2]);
+void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+	const int globalParticle1 = tree->particleIndex[localParticle1];
+	const int globalParticle2 = tree->particleIndex[localParticle2];
+	const auto dist = distance(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2]);
 	if (dist < doubleRadius) {
-		ResolveCollision(particle1, particle2, dist);
+		ResolveCollision(globalParticle1, globalParticle2, dist);
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
@@ -129,13 +131,13 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 			const int gloablJ = tree->particleIndex[j];
 
 			if (environment->particleQuadCount[globalI] > 1 && environment->particleQuadCount[gloablJ] > 1)
-				QuadExternalCollision(globalI, gloablJ);
+				QuadExternalCollision(i, j, tree);
 			else if (environment->particleQuadCount[globalI] > 1)
 				QuadMixedParticleCollision(j, i, tree);
 			else if (environment->particleQuadCount[gloablJ] > 1)
 				QuadMixedParticleCollision(i, j, tree);
 			else
-				QuadInternalParticleCollision(i, j, tree);
+				QuadInternalParticleCollision(i, j,tree);
 		}
 	}
 
