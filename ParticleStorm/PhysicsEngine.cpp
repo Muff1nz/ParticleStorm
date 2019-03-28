@@ -85,8 +85,6 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 			particleResting[particle1] = true;
 		else
 			particleResting[particle2] = true;
-
-		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 

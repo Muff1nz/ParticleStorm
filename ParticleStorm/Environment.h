@@ -30,7 +30,7 @@ public:
 	bool done;
 	int seed;
 
-	Stats stats;
+	Stats stats{};
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
