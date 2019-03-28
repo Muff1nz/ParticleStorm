@@ -97,7 +97,6 @@ void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, cons
 		ResolveCollision(globalParticle1, globalParticle2, dist);
 		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
 		tree->internalParticlePos[localParticle2] = environment->particlePos[globalParticle2];
-		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
@@ -108,7 +107,6 @@ void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const i
 		const int globalParticle1 = tree->internalParticle[localParticle1];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
 		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
-		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
@@ -119,7 +117,6 @@ void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int lo
 	const auto dist = distance(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2]);
 	if (dist < doubleRadius) {
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
