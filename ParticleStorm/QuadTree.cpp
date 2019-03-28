@@ -8,6 +8,11 @@ QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_) : rad
 	const int r = environment->particleRadius * 2.0f;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
+
+	if (parent != nullptr)
+		depth = parent->depth + 1;
+	else
+		depth = 0;
 }
 
 QuadTree::~QuadTree() {
@@ -25,7 +30,7 @@ int QuadTree::QuadSize() {
 	return particlesInQuad.size();
 }
 
-bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles; }
+bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles && depth <= maxDepth; }
 
 void QuadTree::BuildRoot(ConcurrentVector<QuadTree*>* quads, Stats* stats) {
 	int current = 0;

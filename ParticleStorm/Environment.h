@@ -23,7 +23,7 @@ public:
 #endif
 
 	const int particleCount = 40000;
-	const int particleRadius = 4;
+	const int particleRadius = 3;
 
 	bool done;
 	int seed;

@@ -21,6 +21,9 @@ public:
 	const int maxParticlesPerThread4X = maxParticlesPerThread * 4;
 	std::vector<int> particlesInQuad{};
 
+	const int maxDepth = 5;
+	int depth;
+
 	Rect rect;
 
 	QuadTree* parent = nullptr;
