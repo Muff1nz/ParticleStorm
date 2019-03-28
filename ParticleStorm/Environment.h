@@ -25,7 +25,7 @@ public:
 #endif
 
 	const int particleCount = 40000;
-	const int particleRadius = 4;
+	const int particleRadius = 3;
 
 	bool done;
 	int seed;
@@ -36,12 +36,11 @@ public:
 	glm::vec2* particleVel;
 	bool* particleResting;
 
-	glm::vec2* shadowParticlePos;
-	glm::vec2* shadowParticleVel;
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
 	ConcurrentVector<QuadTree*> quads;
+	std::atomic_int* particleQuadCount;
 
 	std::mutex renderLock;
 

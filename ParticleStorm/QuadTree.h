@@ -1,7 +1,6 @@
 #pragma once
 #include "Environment.h"
 #include "Rect.h"
-#include "LazyVector.h"
 
 class Environment;
 
@@ -16,8 +15,10 @@ public:
 	const int maxParticles = 100;
 	const int minParticlesPerThread = 400;
 	const int maxParticlesPerThread = 1600;
-	const int maxParticlesPerThread4X = maxParticlesPerThread * 4;
-	std::vector<int> particlesInQuad{};
+
+	std::vector<int> particleIndex;
+	std::vector<glm::vec2> particlePos;
+	std::vector<int> overflow;
 
 	Rect rect;
 

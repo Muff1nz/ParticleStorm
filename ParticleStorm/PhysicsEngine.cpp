@@ -4,6 +4,10 @@
 #include "Timer.h"
 #include "Range.h"
 #include <map>
+#include <common.hpp>
+#include <common.hpp>
+#include <common.hpp>
+#include <common.hpp>
 
 PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->particleRadius * 2) {
 	this->environment = environment;
@@ -59,86 +63,92 @@ void PhysicsEngine::BoundingBoxCollision(const int particle) const {
 	}
 }
 
-void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) const {
+
+void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, const float dist) const {
 	const auto particlePos = environment->particlePos;
 	const auto particleVel = environment->particleVel;
 	const auto particleResting = environment->particleResting;
 
-	const auto dist = distance(particlePos[particle1], particlePos[particle2]);
+	glm::vec2 positionDelta = particlePos[particle1] - particlePos[particle2];
+	const float overlap = environment->particleRadius * 2 - dist;
+	const glm::vec2 displacement = positionDelta / dist * (overlap / 2);
+	particlePos[particle1] += displacement;
+	particlePos[particle2] += -displacement;
+	positionDelta = particlePos[particle1] - particlePos[particle2];
+
+	const glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+
+	positionDelta = -positionDelta;
+	const glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+
+	particleVel[particle1] = newVel1 * friction;
+	particleVel[particle2] = newVel2 * friction;
+
+	if (particlePos[particle1].y >= particlePos[particle2].y)
+		particleResting[particle1] = true;
+	else
+		particleResting[particle2] = true;
+}
+
+void PhysicsEngine::QuadInternalParticleCollision(const int particle1, const int particle2, QuadTree* tree) const {
+	const auto dist = distance(tree->particlePos[particle1], tree->particlePos[particle2]);
 	if (dist < doubleRadius) {
-		glm::vec2 positionDelta = particlePos[particle1] - particlePos[particle2];
-		const float overlap = environment->particleRadius * 2 - dist;
-		const glm::vec2 displacement = positionDelta / dist * (overlap / 2);
-		particlePos[particle1] += displacement;
-		particlePos[particle2] += -displacement;
-		positionDelta = particlePos[particle1] - particlePos[particle2];
+		const int globalParticle1 = tree->particleIndex[particle1];
+		const int globalParticle2 = tree->particleIndex[particle2];
+		ResolveCollision(globalParticle1, globalParticle2, dist);
+		tree->particlePos[particle1] = environment->particlePos[globalParticle1];
+		tree->particlePos[particle2] = environment->particlePos[globalParticle2];
+		++environment->stats.particleCollisionTotalLastSecond;
+	}
+}
 
-		const glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
-
-		positionDelta = -positionDelta;
-		const glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
-
-		particleVel[particle1] = newVel1 * friction;
-		particleVel[particle2] = newVel2 * friction;
-
-		if (particlePos[particle1].y >= particlePos[particle2].y)
-			particleResting[particle1] = true;
-		else
-			particleResting[particle2] = true;
-
+void PhysicsEngine::QuadMixedParticleCollision(const int particle1, const int particle2, QuadTree* tree) const {
+	const int globalParticle2 = tree->particleIndex[particle2];
+	const auto dist = distance(tree->particlePos[particle1], environment->particlePos[globalParticle2]);
+	if (dist < doubleRadius) {
+		const int globalParticle1 = tree->particleIndex[particle1];
+		ResolveCollision(globalParticle1, globalParticle2, dist);
+		tree->particlePos[particle1] = environment->particlePos[globalParticle1];
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
 
-void PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
-
-	////Overflow particles
-	for (int i : overflow) {
-		if (particle != i)
-			ParticleCollision(particle, i);
-	}
-
-	//In scope particles
-	for (auto i = particle + 1; i < end; i++)
-		ParticleCollision(particle, i);
-}
-
-void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>& overflow) const {
-	for (int i = particle + 1; i < overflow.size(); ++i) {
-		ParticleCollision(overflow[particle], overflow[i]);
-	}
-
-}
-
-void PhysicsEngine::LinearQuadTreeParticleCollisions(const LinearQuad& linearQuad) const {
-	for (int i = 0; i < linearQuad.overflow.size(); ++i) {
-		ParticleCollision(i, linearQuad.overflow);
-	}
-	for (int i = linearQuad.start; i < linearQuad.end; ++i) {
-		ParticleCollision(i, linearQuad.end, linearQuad.overflow);
-	}
-}
-
-void PhysicsEngine::LinearQuadTreeParticleCollisions(ConcurrentVector<LinearQuad*>* linearQuads, int start, int end) const {
-	for (int i = start; i < end; ++i) {
-		LinearQuadTreeParticleCollisions(*(*linearQuads)[i]);
+void PhysicsEngine::QuadExternalCollision(const int particle1, const int particle2) const {
+	const auto dist = distance(environment->particlePos[particle1], environment->particlePos[particle2]);
+	if (dist < doubleRadius) {
+		ResolveCollision(particle1, particle2, dist);
+		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
 void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
-	for (int i = 0; i < tree->particlesInQuad.size(); ++i) {
-		for (int j = i + 1; j < tree->particlesInQuad.size(); ++j) {
-			ParticleCollision(tree->particlesInQuad[i], tree->particlesInQuad[j]);
+	for (int i = 0; i < tree->particleIndex.size(); ++i) { //All inscope against each other
+		for (int j = i + 1; j < tree->particleIndex.size(); ++j) {
+			const int globalI = tree->particleIndex[i];
+			const int gloablJ = tree->particleIndex[j];
+
+			if (environment->particleQuadCount[globalI] > 1 && environment->particleQuadCount[gloablJ] > 1)
+				QuadExternalCollision(globalI, gloablJ);
+			else if (environment->particleQuadCount[globalI] > 1)
+				QuadMixedParticleCollision(j, i, tree);
+			else if (environment->particleQuadCount[gloablJ] > 1)
+				QuadMixedParticleCollision(i, j, tree);
+			else
+				QuadInternalParticleCollision(i, j, tree);
 		}
 	}
+
+	//for (int i = 0; i < tree->overflow.size(); ++i) { //All inscope against each other
+	//	for (int j = i + 1; j < tree->overflow.size(); ++j) {
+	//		QuadInternalParticleCollision(tree->overflow[i], tree->overflow[j], tree);
+	//	}
+	//}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
-		QuadTreeParticleCollisions((*quads)[i]);
+		QuadTreeParticleCollisions(environment->quads[i]);
 	}
 }
 
@@ -149,6 +159,7 @@ void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 			environment->particleVel[i] += gravity * deltaTime;
 		environment->particlePos[i] += environment->particleVel[i] * deltaTime;
 		environment->particleResting[i] = false;
+		environment->particleQuadCount[i] = 0;
 	}
 }
 
@@ -169,49 +180,6 @@ void PhysicsEngine::HandleExplosions() const {
 	}
 }
 
-
-
-void PhysicsEngine::AlignQuadTree(ConcurrentVector<QuadTree*>& quads, ConcurrentVector<LinearQuad*>& linearQuads) const {
-	int currentIndex = 0;
-	for (int i = 0; i < linearQuads.Size(); ++i) {
-		delete linearQuads[i];
-	}
-	linearQuads.Clear();
-
-	std::map<int, int> movedParticles;
-	std::unique_lock<std::mutex> lock(environment->renderLock);
-	for (int i = 0; i < quads.Size(); ++i) {
-
-		QuadTree* quad = quads[i];
-		LinearQuad* linearQuad = new LinearQuad{};
-		linearQuad->start = currentIndex;
-
-		for (int particle : quad->particlesInQuad) {
-
-			if (movedParticles.find(particle) != movedParticles.end()) {	//Overflow
-				linearQuad->overflow.push_back(movedParticles[particle]);
-			} else {						//Move to shadow
-				environment->shadowParticlePos[currentIndex] = environment->particlePos[particle];
-				environment->shadowParticleVel[currentIndex] = environment->particleVel[particle];
-				movedParticles.emplace(particle, currentIndex);
-				++currentIndex;
-			}
-		}
-		linearQuad->end = currentIndex;
-		linearQuads.Push(linearQuad);
-	}
-
-	//Swap shadow to front
-
-	glm::vec2* temp = environment->particlePos;
-	environment->particlePos = environment->shadowParticlePos;
-	environment->shadowParticlePos = temp;
-
-	temp = environment->particleVel;
-	environment->particleVel = environment->shadowParticleVel;
-	environment->shadowParticleVel = temp;
-	lock.unlock();
-}
 
 void PhysicsEngine::LeadThreadRun() {
 	const auto circlePos = environment->particlePos;
@@ -237,32 +205,16 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Restart();
 		environment->tree->BuildRoot();
 		environment->workerThreads.JoinWorkerThreads();
-
-		//LINEAR QUADS
-		//AlignQuadTree(*quads, *linearQuads);
-
-
 		timer.Stop();
 		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
-
-		//DISPERSED QUADS
 		std::vector<Range> quadSections;
 		environment->workerThreads.PartitionForWorkers(environment->quads.Size(), quadSections);
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(&environment->quads, quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
-
-		//LINEAR QUADS
-		//std::vector<Range> quadSections;
-		//environment->workerThreads.PartitionForWorkers(linearQuads->Size(), quadSections);
-		//for (auto quadSection : quadSections)
-		//	environment->workerThreads.AddWork([=] { LinearQuadTreeParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
-		//environment->workerThreads.JoinWorkerThreads();
-
-
 		timer.Stop();
 		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
 

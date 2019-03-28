@@ -22,7 +22,7 @@ QuadTree::~QuadTree() {
 int QuadTree::QuadSize() {
 	if (parent == nullptr)
 		return environment->particleCount;
-	return particlesInQuad.size();
+	return particleIndex.size();
 }
 
 bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles; }
@@ -38,7 +38,7 @@ void QuadTree::Build() {
 		if (parent->parent == nullptr)
 			PopulateQuadTreeWithParticles(0, environment->particleCount);
 		else
-			PopulateQuadTreeWithParticles(0, parent->particlesInQuad.size());
+			PopulateQuadTreeWithParticles(0, parent->particleIndex.size());
 	}
 
 	if (QuadLimitReached()) {
@@ -46,6 +46,9 @@ void QuadTree::Build() {
 	} else {
 		subTree = nullptr;
 		environment->quads.Push(this);
+		for (int i : particleIndex) {
+			++environment->particleQuadCount[i];
+		}
 	}
 }
 
@@ -73,17 +76,20 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 void QuadTree::PopulateQuadTreeWithParticles(const int start, const int end) {
 	const auto allParticles = environment->particlePos;
 
-	particlesInQuad.clear();
+	particleIndex.clear();
+	particlePos.clear();
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = start; i < end; i++) {
 			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
-				particlesInQuad.push_back(i);
+				particleIndex.push_back(i);
+				particlePos.push_back(allParticles[i]);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
-				particlesInQuad.push_back(parent->particlesInQuad[i]);
+			if (ParticleBoxCollision(parent->particlePos[i], paddedRect)) {
+				particleIndex.push_back(parent->particleIndex[i]);
+				particlePos.push_back(parent->particlePos[i]);
 			}
 		}
 	}
@@ -115,9 +121,9 @@ void QuadTree::CreateSubTrees() {
 		}
 	}
 
-	if (particlesInQuad.size() >= maxParticlesPerThread)
+	if (particleIndex.size() >= maxParticlesPerThread)
 		BuildSubTreesThreaded();
-	else if (particlesInQuad.size() >= minParticlesPerThread)
+	else if (particleIndex.size() >= minParticlesPerThread)
 		environment->workerThreads.AddWork([=] { BuildSubTrees(); });
 	else
 		BuildSubTrees();
