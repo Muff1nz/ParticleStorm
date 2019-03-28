@@ -1066,7 +1066,6 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 }
 
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
-	std::unique_lock<std::mutex> lock(environment->renderLock);
 	glm::vec2* particles = environment->particlePos;
 
 	for (int i = 0; i < environment->particleCount; ++i) {
@@ -1078,7 +1077,6 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
 		MVP_Array[i].MVP = proj * view * model;
 	}
-	lock.unlock();
 
 	void* data;
 	vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);

@@ -42,8 +42,6 @@ public:
 	ConcurrentVector<QuadTree*> quads;
 	std::atomic_int* particleQuadCount;
 
-	std::mutex renderLock;
-
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
 

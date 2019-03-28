@@ -60,7 +60,7 @@ void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range) 
 		int end = (i + 1) * unitsPerThread;
 		if (i == totalThreads - 1)
 			end = size;
-		range.emplace_back(Range(start, end));
+		range.emplace_back(start, end);
 	}
 }
 
