@@ -15,10 +15,14 @@ public:
 	const int maxParticles = 100;
 	const int minParticlesPerThread = 400;
 	const int maxParticlesPerThread = 1600;
+	const int maxDepth = 10;
+	int depth;
 
-	std::vector<int> particleIndex;
-	std::vector<glm::vec2> particlePos;
-	std::vector<int> overflow;
+	std::vector<int> particlesInQuad;
+
+	std::vector<int> internalParticle;
+	std::vector<glm::vec2> internalParticlePos;
+	std::vector<int> externalParticle;
 
 	Rect rect;
 

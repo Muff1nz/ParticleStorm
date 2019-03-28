@@ -8,6 +8,11 @@ QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_) : rad
 	const int r = environment->particleRadius * 2.0f;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
+
+	if (parent != nullptr)
+		depth = parent->depth + 1;
+	else
+		depth = 0;
 }
 
 QuadTree::~QuadTree() {
@@ -22,10 +27,10 @@ QuadTree::~QuadTree() {
 int QuadTree::QuadSize() {
 	if (parent == nullptr)
 		return environment->particleCount;
-	return particleIndex.size();
+	return particlesInQuad.size();
 }
 
-bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles; }
+bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles && depth <= maxDepth; }
 
 void QuadTree::BuildRoot() {
 	int current = 0;
@@ -38,7 +43,7 @@ void QuadTree::Build() {
 		if (parent->parent == nullptr)
 			PopulateQuadTreeWithParticles(0, environment->particleCount);
 		else
-			PopulateQuadTreeWithParticles(0, parent->particleIndex.size());
+			PopulateQuadTreeWithParticles(0, parent->particlesInQuad.size());
 	}
 
 	if (QuadLimitReached()) {
@@ -46,7 +51,7 @@ void QuadTree::Build() {
 	} else {
 		subTree = nullptr;
 		environment->quads.Push(this);
-		for (int i : particleIndex) {
+		for (int i : particlesInQuad) {
 			++environment->particleQuadCount[i];
 		}
 	}
@@ -75,21 +80,17 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 
 void QuadTree::PopulateQuadTreeWithParticles(const int start, const int end) {
 	const auto allParticles = environment->particlePos;
-
-	particleIndex.clear();
-	particlePos.clear();
+	particlesInQuad.clear();
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = start; i < end; i++) {
 			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
-				particleIndex.push_back(i);
-				particlePos.push_back(allParticles[i]);
+				particlesInQuad.push_back(i);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(parent->particlePos[i], paddedRect)) {
-				particleIndex.push_back(parent->particleIndex[i]);
-				particlePos.push_back(parent->particlePos[i]);
+			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+				particlesInQuad.push_back(parent->particlesInQuad[i]);
 			}
 		}
 	}
@@ -121,9 +122,9 @@ void QuadTree::CreateSubTrees() {
 		}
 	}
 
-	if (particleIndex.size() >= maxParticlesPerThread)
+	if (particlesInQuad.size() >= maxParticlesPerThread)
 		BuildSubTreesThreaded();
-	else if (particleIndex.size() >= minParticlesPerThread)
+	else if (particlesInQuad.size() >= minParticlesPerThread)
 		environment->workerThreads.AddWork([=] { BuildSubTrees(); });
 	else
 		BuildSubTrees();

@@ -90,32 +90,32 @@ void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, c
 }
 
 void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
-	const auto dist = distance(tree->particlePos[localParticle1], tree->particlePos[localParticle2]);
+	const auto dist = distance(tree->internalParticlePos[localParticle1], tree->internalParticlePos[localParticle2]);
 	if (dist < doubleRadius) {
-		const int globalParticle1 = tree->particleIndex[localParticle1];
-		const int globalParticle2 = tree->particleIndex[localParticle2];
+		const int globalParticle1 = tree->internalParticle[localParticle1];
+		const int globalParticle2 = tree->internalParticle[localParticle2];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->particlePos[localParticle1] = environment->particlePos[globalParticle1];
-		tree->particlePos[localParticle2] = environment->particlePos[globalParticle2];
+		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
+		tree->internalParticlePos[localParticle2] = environment->particlePos[globalParticle2];
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
 void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
-	const int globalParticle2 = tree->overflow[localParticle2];
-	const auto dist = distance(tree->particlePos[localParticle1], environment->particlePos[globalParticle2]);
+	const int globalParticle2 = tree->externalParticle[localParticle2];
+	const auto dist = distance(tree->internalParticlePos[localParticle1], environment->particlePos[globalParticle2]);
 	if (dist < doubleRadius) {
-		const int globalParticle1 = tree->particleIndex[localParticle1];
+		const int globalParticle1 = tree->internalParticle[localParticle1];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->particlePos[localParticle1] = environment->particlePos[globalParticle1];
+		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
 		++environment->stats.particleCollisionTotalLastSecond;
 	}
 }
 
 
 void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
-	const int globalParticle1 = tree->overflow[localParticle1];
-	const int globalParticle2 = tree->overflow[localParticle2];
+	const int globalParticle1 = tree->externalParticle[localParticle1];
+	const int globalParticle2 = tree->externalParticle[localParticle2];
 	const auto dist = distance(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2]);
 	if (dist < doubleRadius) {
 		ResolveCollision(globalParticle1, globalParticle2, dist);
@@ -124,8 +124,8 @@ void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int lo
 }
 
 void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
-	const int internalParticles = tree->particleIndex.size();
-	const int externalParticles = tree->overflow.size();
+	const int internalParticles = tree->internalParticle.size();
+	const int externalParticles = tree->externalParticle.size();
 
 	for (int i = 0; i < internalParticles; ++i) {	//All internal particles against each other
 		for (int j = i + 1; j < internalParticles; ++j) {
@@ -155,14 +155,16 @@ void PhysicsEngine::QuadTreeParticleCollisions(const int start, const int end) c
 void PhysicsEngine::CalculateQuadTreeOverflow(const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
 		QuadTree* quad = environment->quads[i];
-		quad->overflow.clear();
-		for (int j = 0; j < quad->particleIndex.size(); ++j) {
-			const int globalParticle = quad->particleIndex[j];
+		quad->externalParticle.clear();
+		quad->internalParticle.clear();
+		quad->internalParticlePos.clear();
+		for (int j = 0; j < quad->particlesInQuad.size(); ++j) {
+			const int globalParticle = quad->particlesInQuad[j];
 			if (environment->particleQuadCount[globalParticle] > 1) {
-				quad->overflow.push_back(globalParticle);
-				quad->particlePos.erase(quad->particlePos.begin() + j);
-				quad->particleIndex.erase(quad->particleIndex.begin() + j);
-				--j; //Do index again since it was purged
+				quad->externalParticle.push_back(globalParticle);
+			} else {
+				quad->internalParticle.push_back(globalParticle);
+				quad->internalParticlePos.push_back(environment->particlePos[globalParticle]);
 			}
 		}
 	}
@@ -207,7 +209,7 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
-	while (!environment->done) { //TODO: Currently have commented out linear quads code. Didn't seem like it was immediately better.
+	while (!environment->done) {
 
 		float deltaTime = timer.DeltaTime();
 		environment->stats.physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
