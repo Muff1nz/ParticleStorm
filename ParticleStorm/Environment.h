@@ -6,6 +6,7 @@
 #include "QuadTree.h"
 #include "Stats.h"
 #include "ConcurrentVector.h"
+#include <atomic>
 
 //#define full
 

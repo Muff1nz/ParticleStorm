@@ -1,5 +1,4 @@
 #include "Environment.h"
-#include <iostream>
 
 
 Environment::Environment() {
