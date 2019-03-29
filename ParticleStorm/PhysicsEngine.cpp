@@ -215,7 +215,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Restart();
 		HandleExplosions();
 		timer.Stop();
-		environment->stats.puEventsTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puEventsTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//QUADTREE
 		timer.Restart();
@@ -227,7 +227,7 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { CalculateQuadTreeOverflow(quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
@@ -235,7 +235,7 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//UPDATES
 		timer.Restart();
@@ -243,7 +243,7 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		environment->stats.puPositionUpdatesTotalLastSecond += timer.ElapsedMilliseconds();
+		environment->stats.puPositionUpdatesTotalLastSecond += timer.ElapsedMicroseconds();
 
 		++environment->stats.physicsUpdateTotalLastSecond;
 	}
