@@ -36,8 +36,6 @@ public:
 	glm::vec2* particleVel;
 	bool* particleResting;
 
-	glm::vec2* shadowParticlePos;
-	glm::vec2* shadowParticleVel;
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
