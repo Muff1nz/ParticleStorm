@@ -21,10 +21,8 @@ public:
 	void Benchmark() const;
 
 private:
-	void OutputSingleRunToFile(const std::string& sessionString) const;
 	void OutputMultiRunToFile(const std::string& sessionString) const;
-	std::string SessionToString(const Stats& stats, const std::vector<std::string>& perSecondStats,
-	                            const Environment& environment) const;
+	std::string SessionToString(const std::vector<std::string>& perSecondStats, const Environment& environment) const;
 	static char* FileTime();
 
 	std::string Benchmark(int particleCount, int particleRadius, int threadCount) const;
