@@ -1,12 +1,13 @@
 #pragma once
 #include <vec2.hpp>
 #include <queue>
+#include <atomic>
 
 #include "WorkerThreadPool.h"
 #include "QuadTree.h"
 #include "Stats.h"
 #include "ConcurrentVector.h"
-#include <atomic>
+
 
 //#define full
 
@@ -25,8 +26,8 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 40000;
-	const int particleRadius = 3;
+	const int particleCount = 80000;
+	const int particleRadius = 2;
 
 	bool done;
 	int seed;

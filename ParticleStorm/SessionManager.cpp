@@ -1,11 +1,13 @@
 #include "SessionManager.h"
+
 #include <vec2.hpp>
 #include <iostream>
-#include "Environment.h"
-#include "Timer.h"
 #include <fstream>
-#include "Utils.h"
 #include <windows.h>
+
+#include "Utils.h"
+#include "Timer.h"
+#include "Environment.h"
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
 

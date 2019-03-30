@@ -1,6 +1,7 @@
 #pragma once
 #include "Environment.h"
 #include "Rect.h"
+#include "MultiIntVector.h"
 
 class Environment;
 
@@ -8,17 +9,22 @@ class QuadTree {
 public:
 	QuadTree(QuadTree* parent, Environment* environment, Rect rect_);
 	~QuadTree();
-	int QuadSize();
+	int QuadSize() const;
 
 	void BuildRoot();
 
 	const int maxParticles = 100;
-	const int minParticlesPerThread = 400;
-	const int maxParticlesPerThread = 1600;
+	const int particlesPerThreadLevel1 = 800;
+	const int particlesPerThreadLevel2 = particlesPerThreadLevel1 * 4;
+	const int particlesPerThreadLevel3 = particlesPerThreadLevel2 * 4;
 	const int maxDepth = 10;
 	int depth;
 
+	int finishedThreads;
+
 	std::vector<int> particlesInQuad;
+	std::mutex QuadLock;
+	MultiIntVector particlesInQuadThreaded;
 
 	std::vector<int> internalParticle;
 	std::vector<glm::vec2> internalParticlePos;
@@ -38,10 +44,14 @@ private:
 	Environment* environment;
 
 	void Build();
-	bool QuadLimitReached();
+	void HandleSubTrees();
+	void BuildThreaded(int start, int end, int threadCount, int ThreadNumber);
+	bool QuadLimitReached() const;
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
+	void BuildBigSubTreesThreaded();
 	void CreateSubTrees();
-	void PopulateQuadTreeWithParticles(const int start, const int end);
+	void PopulateQuadTreeWithParticles();
+	void PopulateQuadTreeWithParticlesThreaded(int start, int end, int ThreadNumber);
 	void BuildSubTrees() const;
 	void BuildSubTreesThreaded() const;
 };

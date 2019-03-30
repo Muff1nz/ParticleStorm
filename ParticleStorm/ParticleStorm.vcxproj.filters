@@ -119,6 +119,9 @@
     <ClInclude Include="Stats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MultiIntVector.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.frag">

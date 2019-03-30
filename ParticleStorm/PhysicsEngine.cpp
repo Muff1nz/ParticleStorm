@@ -4,10 +4,6 @@
 #include "Timer.h"
 #include "Range.h"
 #include <map>
-#include <common.hpp>
-#include <common.hpp>
-#include <common.hpp>
-#include <common.hpp>
 
 PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->particleRadius * 2) {
 	this->environment = environment;
@@ -222,7 +218,7 @@ void PhysicsEngine::LeadThreadRun() {
 		environment->tree->BuildRoot();
 		environment->workerThreads.JoinWorkerThreads();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(environment->quads.Size(), quadSections);
+		environment->workerThreads.PartitionForWorkers(environment->quads.size(), quadSections);
 		for (auto quadSection : quadSections)
 			environment->workerThreads.AddWork([=] { CalculateQuadTreeOverflow(quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
