@@ -98,9 +98,6 @@
     <ClInclude Include="RenderEngineVulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TestSquare.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WorkerThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>

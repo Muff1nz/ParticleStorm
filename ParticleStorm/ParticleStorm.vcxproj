@@ -147,7 +147,6 @@
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
-    <ClInclude Include="TestSquare.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WorkerThreadPool.h" />

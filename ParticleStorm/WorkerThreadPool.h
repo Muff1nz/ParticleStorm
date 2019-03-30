@@ -8,7 +8,6 @@
 
 #include "Range.h"
 #include "Queue.h"
-#include <atomic>
 
 
 class WorkerThreadPool {
