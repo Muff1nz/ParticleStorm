@@ -1,10 +1,6 @@
-#include <string> 
 #include <iostream>
-#include <thread>
 #include <cctype>
 #include "SessionManager.h"
-#include <iostream>
-#include "RenderEngineVulkan.h"
 
 
 void PrintMenu() {

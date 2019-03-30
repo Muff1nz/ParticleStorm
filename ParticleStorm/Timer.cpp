@@ -62,6 +62,12 @@ int Timer::ElapsedMilliseconds() {
 	return int((now - last) * 1000);
 }
 
+int Timer::ElapsedMicroseconds() {
+	if (stopWatchRunning)
+		now = NowSeconds();
+	return SecondsToMicroseconds(now - last);
+}
+
 
 int Timer::SecondsToMicroseconds(float seconds) {
 	const float factor = 1000 * 1000;

@@ -4,14 +4,14 @@
 //float overlap = particleRadius * 2 - distance;
 //if (alreadyMoved[particle] == alreadyMoved[i]) {
 //	alreadyMoved[particle] = true; alreadyMoved[i] = true;
-//	particlePos[particle] += -(positionDelta / distance) * (overlap / 2);
-//	particlePos[i] += (positionDelta / distance) * (overlap / 2);
+//	internalParticlePos[particle] += -(positionDelta / distance) * (overlap / 2);
+//	internalParticlePos[i] += (positionDelta / distance) * (overlap / 2);
 //} else if (!alreadyMoved[particle]) {
 //	alreadyMoved[particle] = true;
-//	particlePos[particle] += -(positionDelta / distance) * overlap;
+//	internalParticlePos[particle] += -(positionDelta / distance) * overlap;
 //} else {
 //	alreadyMoved[i] = true;
-//	particlePos[i] += (positionDelta / distance) * overlap;
+//	internalParticlePos[i] += (positionDelta / distance) * overlap;
 //}
 
 //TODO: Method 2
@@ -19,29 +19,29 @@
 //glm::vec2 bottom;
 //int topIndex;
 
-//if (particlePos[particle].y > particlePos[i].y) {
+//if (internalParticlePos[particle].y > internalParticlePos[i].y) {
 //	topIndex = particle;
-//	top = particlePos[particle];
-//	bottom = particlePos[i];
+//	top = internalParticlePos[particle];
+//	bottom = internalParticlePos[i];
 //} else {
 //	topIndex = i;
-//	top = particlePos[i];
-//	bottom = particlePos[particle];
+//	top = internalParticlePos[i];
+//	bottom = internalParticlePos[particle];
 //}
 
 //float a = 1;
 //float b = -2 * bottom.y;
 //float c = pow(bottom.y, 2) - 4 * pow(particleRadius, 2) + pow(bottom.x - top.x, 2);
-//particlePos[topIndex].y = QuadraticEquation(a, b, c);
+//internalParticlePos[topIndex].y = QuadraticEquation(a, b, c);
 
 
 //TODO: Method 3
 ////			This did solve the "Particle soup" problem, but made the particles unstable.
 //			float overlap = particleRadius * 2 - distance;
-//			if (particlePos[particle].y > particlePos[i].y)
-//				particlePos[particle] += -(positionDelta / distance) * overlap;
+//			if (internalParticlePos[particle].y > internalParticlePos[i].y)
+//				internalParticlePos[particle] += -(positionDelta / distance) * overlap;
 //			else
-//				particlePos[i] += positionDelta / distance * overlap;
+//				internalParticlePos[i] += positionDelta / distance * overlap;
 
 
 

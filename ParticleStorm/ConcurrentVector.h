@@ -4,19 +4,19 @@
 
 
 template <typename T>
-class ConcurrentVectror {
+class ConcurrentVector {
 public:
-	void Push(T const& value) {
+	void push_back(T const value) {
 		std::unique_lock<std::mutex> lock(mutex);
 		vector.push_back(value);
 	}
 
-	int Size() {
+	int size() {
 		std::unique_lock<std::mutex> lock(mutex);
 		return vector.size();
 	}
 
-	void Clear() {
+	void clear() {
 		vector.clear();
 	}
 

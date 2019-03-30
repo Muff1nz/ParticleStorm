@@ -1,24 +1,38 @@
 #pragma once
 #include "Environment.h"
 #include "Rect.h"
-#include "Stats.h"
-#include "ConcurrentVector.h"
+#include "MultiIntVector.h"
 
 class Environment;
 
 class QuadTree {
 public:
-	QuadTree(Environment* environment, Rect rect_);
+	QuadTree(QuadTree* parent, Environment* environment, Rect rect_);
 	~QuadTree();
+	int QuadSize() const;
 
-	void Build(ConcurrentVectror<QuadTree>* quads, Stats* stats);
+	void BuildRoot();
 
 	const int maxParticles = 100;
+	const int particlesPerThreadLevel1 = 800;
+	const int particlesPerThreadLevel2 = particlesPerThreadLevel1 * 4;
+	const int particlesPerThreadLevel3 = particlesPerThreadLevel2 * 4;
+	const int maxDepth = 10;
+	int depth;
 
-	int start{}, end{};
-	std::vector<int> overflow;
+	int finishedThreads;
+
+	std::vector<int> particlesInQuad;
+	std::mutex QuadLock;
+	MultiIntVector particlesInQuadThreaded;
+
+	std::vector<int> internalParticle;
+	std::vector<glm::vec2> internalParticlePos;
+	std::vector<int> externalParticle;
 
 	Rect rect;
+
+	QuadTree* parent = nullptr;
 	QuadTree** subTree = nullptr;
 
 private:
@@ -29,17 +43,16 @@ private:
 
 	Environment* environment;
 
-	void Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree>* quads, Stats* stats);
-	bool QuadLimitReached();
+	void Build();
+	void HandleSubTrees();
+	void BuildThreaded(int start, int end, int threadCount, int ThreadNumber);
+	bool QuadLimitReached() const;
 	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
-	void CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
-	void DestroySubTrees();
-	void SwapCallback(int one, int two, int overflow);
-	void PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Stats* stats);
-	void BuildSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats);
-
-	bool operator== (const QuadTree &other) const;
-	bool operator< (const QuadTree &other) const;
-	bool operator> (const QuadTree &other) const;
+	void BuildBigSubTreesThreaded();
+	void CreateSubTrees();
+	void PopulateQuadTreeWithParticles();
+	void PopulateQuadTreeWithParticlesThreaded(int start, int end, int ThreadNumber);
+	void BuildSubTrees() const;
+	void BuildSubTreesThreaded() const;
 };
 

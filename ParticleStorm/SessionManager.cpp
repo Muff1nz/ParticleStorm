@@ -1,11 +1,13 @@
 #include "SessionManager.h"
+
 #include <vec2.hpp>
 #include <iostream>
-#include "Environment.h"
-#include "Timer.h"
 #include <fstream>
-#include "Utils.h"
 #include <windows.h>
+
+#include "Utils.h"
+#include "Timer.h"
+#include "Environment.h"
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
 
@@ -25,26 +27,8 @@ char* SessionManager::FileTime() {
 	return name;
 }
 
-void SessionManager::OutputSingleRunToFile(const std::string& sessionString) const {
-	const std::string fileLeadText = "Sandbox_PS_Stats_";
-	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
-	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
-
-	std::cout << "Results are saved to: " + statsOutputFolder + "\n";
-	CreateDirectory(statsOutputFolder.c_str(), nullptr);
-	std::ofstream statsFile(statsOutputFilePath);
-
-	statsFile << sessionString;
-
-	statsFile.close();
-
-	auto command = "python \"" + singleStatsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
-	std::cout << command + "\n";
-	system(command.c_str());
-}
-
 void SessionManager::OutputMultiRunToFile(const std::string& sessionString) const {
-	const std::string fileLeadText = "Benchmark_PS_Stats_";
+	const std::string fileLeadText = "Benchmark_";
 	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
 	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
 
@@ -69,20 +53,15 @@ void SessionManager::OutputMultiRunToFile(const std::string& sessionString) cons
 	system(command.c_str());
 }
 
-std::string SessionManager::SessionToString(const Stats& stats, const std::vector<std::string>& perSecondStats, const Environment& environment) const {
-	const std::string fileLeadText = "PS_Stats_";
-	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
-	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
-
+std::string SessionManager::SessionToString(const std::vector<std::string>& perSecondStats, const Environment& environment) const {
 	std::string sessionString;
-
 	sessionString += "Title: " + longTitle + "\n";
 	sessionString += "Simulated " + std::to_string(environment.particleCount) + " particles with a raidus of: " + std::to_string(environment.particleRadius) + "\n";
 	sessionString += "Quadtree max particles per quad: " + std::to_string(environment.tree->maxParticles) + "\n";
 	sessionString += "Worker threads: " + std::to_string(environment.workerThreadCount) + "\n";
 	sessionString += "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	sessionString += "[\n";
-	sessionString += stats.CompleteSessionToString();
+	sessionString += environment.stats.CompleteSessionToString();
 	sessionString += "]\n";
 	for (int i = 0; i < perSecondStats.size(); i++) {
 		sessionString += "{\n";
@@ -95,9 +74,8 @@ std::string SessionManager::SessionToString(const Stats& stats, const std::vecto
 
 void SessionManager::Sandbox() const {
 	Environment environment{};
-	Stats stats{};
-	RenderEngineVulkan renderEngine(&environment, &stats);
-	PhysicsEngine physicsEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment);
+	PhysicsEngine physicsEngine(&environment);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -116,9 +94,9 @@ void SessionManager::Sandbox() const {
 
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
-			stats.CompleteLastSecond();
-			std::cout << stats.LastSecondToStringConsole();
-			perSecondStats.push_back(stats.LastSecondToString());
+			environment.stats.CompleteLastSecond();
+			std::cout << environment.stats.LastSecondToStringConsole();
+			perSecondStats.push_back(environment.stats.LastSecondToString());
 		}
 
 		glfwPollEvents();
@@ -130,7 +108,7 @@ void SessionManager::Sandbox() const {
 			double x, y;
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
 			environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
-			++stats.explosionTotalLastSecond;
+			++environment.stats.explosionTotalLastSecond;
 		}
 		lastMouseButtonState = state;
 	}
@@ -138,11 +116,8 @@ void SessionManager::Sandbox() const {
 	physicsEngine.Join();
 	renderEngine.Join();
 
-	stats.CompleteSession();
-	std::cout << stats.CompleteSessionToStringConsole();
-
-	OutputSingleRunToFile(SessionToString(stats, perSecondStats, environment));
-	
+	environment.stats.CompleteSession();
+	std::cout << environment.stats.CompleteSessionToStringConsole();
 
 	renderEngine.Dispose();
 }
@@ -152,9 +127,8 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 	Timer::unhinged = true;
 
 	Environment environment(particleCount, particleRadius, 1337, threadCount);
-	Stats stats{};
-	RenderEngineVulkan renderEngine(&environment, &stats);
-	PhysicsEngine physicsEngine(&environment, &stats);
+	RenderEngineVulkan renderEngine(&environment);
+	PhysicsEngine physicsEngine(&environment);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -186,9 +160,9 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
-			stats.CompleteLastSecond();
-			std::cout << stats.LastSecondToStringConsole();
-			perSecondStats.push_back(stats.LastSecondToString());
+			environment.stats.CompleteLastSecond();
+			std::cout << environment.stats.LastSecondToStringConsole();
+			perSecondStats.push_back(environment.stats.LastSecondToString());
 
 			std::cout << "\nBenchmark is " + std::to_string(perSecondStats.size() / float(benchmarkDuration) * 100) + "% complete\n";
 		}
@@ -202,9 +176,9 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 		glfwPollEvents();
 	}
 	environment.done = true;
-	
-	stats.CompleteSession();
-	std::cout << stats.CompleteSessionToStringConsole();
+
+	environment.stats.CompleteSession();
+	std::cout << environment.stats.CompleteSessionToStringConsole();
 
 	physicsEngine.Join();
 	renderEngine.Join();
@@ -213,7 +187,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 
 	Timer::unhinged = false;
 
-	return SessionToString(stats, perSecondStats, environment);
+	return SessionToString(perSecondStats, environment);
 }
 
 void SessionManager::Benchmark() const {
