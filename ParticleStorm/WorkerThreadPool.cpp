@@ -1,4 +1,5 @@
 #include "WorkerThreadPool.h"
+#include <string>
 
 
 WorkerThreadPool::WorkerThreadPool() {
@@ -50,8 +51,8 @@ void WorkerThreadPool::CloseWorkerThreads() {
 	}
 }
 
-void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const {
-	const int totalThreads = workerThreads.size() + extraThreads;
+void WorkerThreadPool::PartitionForWorkers(const int size, std::vector<Range>& range, const int threads) const {
+	const int totalThreads = threads != 0 ? threads: workerThreads.size();
 	const int unitsPerThread = size / totalThreads;
 	range.clear();
 	for (int i = 0; i < totalThreads; ++i) {
@@ -59,8 +60,13 @@ void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range, 
 		int end = (i + 1) * unitsPerThread;
 		if (i == totalThreads - 1)
 			end = size;
-		range.emplace_back(Range(start, end));
+		range.emplace_back(start, end);
 	}
+}
+
+std::string WorkerThreadPool::StateString() {
+	std::unique_lock<std::mutex> lock(mutex);
+	return "Busy threads: " + std::to_string(busyThreads) + " Work units in queue: " + std::to_string(work.Size());
 }
 
 void WorkerThreadPool::WorkerThreadRun() {

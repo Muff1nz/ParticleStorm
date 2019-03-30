@@ -1,5 +1,4 @@
 #include "Environment.h"
-#include <iostream>
 
 
 Environment::Environment() {
@@ -14,24 +13,13 @@ Environment::Environment(int circleCount, int circleRadius, int seed, int worker
 Environment::~Environment() {
 	delete particlePos;
 	delete particleVel;
+	delete particleQuadCount;
 }
 
 void Environment::Init() {
 	particlePos = new glm::vec2[particleCount];
 	particleVel = new glm::vec2[particleCount];
 	particleResting = new bool[particleCount];
+	particleQuadCount = new std::atomic_int[particleCount];
 	workerThreads.Init(workerThreadCount);
 }
-
-
-//Maybe optimize with XOR swapping?
-void Environment::SwapParticles(const int one, const int two) {
-	const auto tempPos = particlePos[one];
-	particlePos[one] = particlePos[two];
-	particlePos[two] = tempPos;
-
-	const auto tempVel = particleVel[one];
-	particleVel[one] = particleVel[two];
-	particleVel[two] = tempVel;
-}
-

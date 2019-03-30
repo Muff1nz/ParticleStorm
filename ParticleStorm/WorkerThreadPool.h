@@ -3,7 +3,6 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
 #include <functional>
 
 #include "Range.h"
@@ -21,7 +20,8 @@ public:
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
-	void PartitionForWorkers(int size, std::vector<Range>& range, int extraThreads) const;
+	void PartitionForWorkers(int size, std::vector<Range>& range, int threads = 0) const;
+	std::string StateString();
 private:
 	bool isInitialized{};
 	bool done = false;

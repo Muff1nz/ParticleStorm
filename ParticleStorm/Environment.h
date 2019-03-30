@@ -1,10 +1,13 @@
 #pragma once
 #include <vec2.hpp>
 #include <queue>
-#include <mutex>
+#include <atomic>
 
 #include "WorkerThreadPool.h"
 #include "QuadTree.h"
+#include "Stats.h"
+#include "ConcurrentVector.h"
+
 
 //#define full
 
@@ -23,11 +26,13 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 10000;
-	const int particleRadius = 6;
+	const int particleCount = 80000;
+	const int particleRadius = 2;
 
 	bool done;
 	int seed;
+
+	Stats stats{};
 
 	glm::vec2* particlePos;
 	glm::vec2* particleVel;
@@ -36,8 +41,8 @@ public:
 	std::queue<glm::vec2> explosions;
 
 	QuadTree* tree;
-	std::mutex treeMutex{};
-	std::mutex renderLock{};
+	ConcurrentVector<QuadTree*> quads;
+	std::atomic_int* particleQuadCount;
 
 	const int workerThreadCount = 30;
 	WorkerThreadPool workerThreads;
@@ -45,8 +50,6 @@ public:
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount);
 	~Environment(); 
-
-	void SwapParticles(int one, int two);
 private:
 	void Init();
 };
