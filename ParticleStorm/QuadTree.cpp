@@ -24,33 +24,46 @@ QuadTree::~QuadTree() {
 	delete subTree;
 }
 
-int QuadTree::QuadSize() {
+int QuadTree::QuadSize() const {
 	if (parent == nullptr)
 		return environment->particleCount;
 	return particlesInQuad.size();
 }
 
-bool QuadTree::QuadLimitReached() { return QuadSize() >= maxParticles && depth <= maxDepth; }
+bool QuadTree::QuadLimitReached() const { return QuadSize() >= maxParticles && depth <= maxDepth; }
 
 void QuadTree::BuildRoot() {
-	int current = 0;
-	environment->quads.Clear();
-	Build();
+	environment->quads.clear();
+	HandleSubTrees();
 }
 
 void QuadTree::Build() {
-	if (parent != nullptr) {
-		if (parent->parent == nullptr)
-			PopulateQuadTreeWithParticles(0, environment->particleCount);
-		else
-			PopulateQuadTreeWithParticles(0, parent->particlesInQuad.size());
-	}
+	PopulateQuadTreeWithParticles();
+	HandleSubTrees();
+}
 
+void QuadTree::BuildThreaded(const int start, const int end, const int threadCount, const int ThreadNumber) {
+	PopulateQuadTreeWithParticlesThreaded(start, end, ThreadNumber);
+
+	QuadLock.lock();
+	++finishedThreads;
+	if (finishedThreads != threadCount) {
+		QuadLock.unlock();
+		return;
+	}
+	QuadLock.unlock();
+
+	particlesInQuad = particlesInQuadThreaded.Merge();
+
+	HandleSubTrees();
+}
+
+void QuadTree::HandleSubTrees() {
 	if (QuadLimitReached()) {
 		CreateSubTrees();
 	} else {
 		subTree = nullptr;
-		environment->quads.Push(this);
+		environment->quads.push_back(this);
 	}
 }
 
@@ -74,21 +87,38 @@ bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& r
 	return cornerDistanceSq <= radiusSquared;
 }
 
-
-void QuadTree::PopulateQuadTreeWithParticles(const int start, const int end) {
+void QuadTree::PopulateQuadTreeWithParticles() {
+	const int size = parent->QuadSize();
 	const auto allParticles = environment->particlePos;
-
 	particlesInQuad.clear();
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
-		for (int i = start; i < end; i++) {
+		for (int i = 0; i < size; i++) {
 			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
 				particlesInQuad.push_back(i);
 			}
 		}
 	} else { //Parent contains a subset of all particles
-		for (int i = start; i < end; i++) {
+		for (int i = 0; i < size; i++) {
 			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
 				particlesInQuad.push_back(parent->particlesInQuad[i]);
+			}
+		}
+	}
+}
+
+void QuadTree::PopulateQuadTreeWithParticlesThreaded(const int start, const int end, const int ThreadNumber) {
+	const auto allParticles = environment->particlePos;
+	particlesInQuad.clear();
+	if (parent->parent == nullptr) { //Parent is root node, containing all particles
+		for (int i = start; i < end; i++) {
+			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
+				particlesInQuadThreaded.Add(i, ThreadNumber);
+			}
+		}
+	} else { //Parent contains a subset of all particles
+		for (int i = start; i < end; i++) {
+			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+				particlesInQuadThreaded.Add(parent->particlesInQuad[i], ThreadNumber);
 			}
 		}
 	}
@@ -101,8 +131,30 @@ void QuadTree::BuildSubTrees() const {
 }
 
 void QuadTree::BuildSubTreesThreaded() const {
-	for (int i = 0; i < 4; ++i) { //TODO: Sub-thread individual quads too.
+	for (int i = 0; i < 4; ++i) {
 		environment->workerThreads.AddWork([=] { subTree[i]->Build(); });
+	}
+}
+
+void QuadTree::BuildBigSubTreesThreaded() {
+	int threads = QuadSize() / particlesPerThreadLevel2;
+	if (threads > environment->workerThreadCount)
+		threads = environment->workerThreadCount;
+	if (threads < 2)
+		threads = 2;
+
+	std::vector<Range> partitions;
+	environment->workerThreads.PartitionForWorkers(QuadSize(), partitions, threads);
+
+	for (int i = 0; i < 4; ++i) {
+		subTree[i]->particlesInQuad.clear();
+		subTree[i]->particlesInQuadThreaded.Reset(threads);
+		subTree[i]->finishedThreads = 0;
+
+		for (int j = 0; j < partitions.size(); ++j) {
+			environment->workerThreads.AddWork([=] { subTree[i]->BuildThreaded(partitions[j].lower, partitions[j].upper, threads, j); });
+		}
+	
 	}
 }
 
@@ -120,10 +172,10 @@ void QuadTree::CreateSubTrees() {
 		}
 	}
 
-	if (particlesInQuad.size() >= maxParticlesPerThread)
+	if (QuadSize() >= particlesPerThreadLevel3)
+		BuildBigSubTreesThreaded();
+	else if (QuadSize() >= particlesPerThreadLevel2)
 		BuildSubTreesThreaded();
-	else if (particlesInQuad.size() >= minParticlesPerThread)
-		environment->workerThreads.AddWork([=] { BuildSubTrees(); });
-	else
+	else 
 		BuildSubTrees();
 }

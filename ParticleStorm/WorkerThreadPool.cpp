@@ -51,8 +51,8 @@ void WorkerThreadPool::CloseWorkerThreads() {
 	}
 }
 
-void WorkerThreadPool::PartitionForWorkers(int size, std::vector<Range>& range) const {
-	const int totalThreads = workerThreads.size();
+void WorkerThreadPool::PartitionForWorkers(const int size, std::vector<Range>& range, const int threads) const {
+	const int totalThreads = threads != 0 ? threads: workerThreads.size();
 	const int unitsPerThread = size / totalThreads;
 	range.clear();
 	for (int i = 0; i < totalThreads; ++i) {

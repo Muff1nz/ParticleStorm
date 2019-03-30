@@ -140,6 +140,7 @@
     <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="LinearQuad.h" />
+    <ClInclude Include="MultiIntVector.h" />
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />

@@ -138,7 +138,7 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
-	while (!environment->done) { //TODO: Currently have commented out linear quads code. Didn't seem like it was immediately better.
+	while (!environment->done) {
 
 		float deltaTime = timer.DeltaTime();
 		environment->stats.physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
@@ -159,7 +159,7 @@ void PhysicsEngine::LeadThreadRun() {
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(environment->quads.Size(), quadSections);
+		environment->workerThreads.PartitionForWorkers(environment->quads.size(), quadSections);
 		for (auto quadSection : quadSections)
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(&environment->quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();

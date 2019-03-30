@@ -7,6 +7,7 @@
 #include "Stats.h"
 #include "ConcurrentVector.h"
 
+
 //#define full
 
 class QuadTree;
@@ -24,8 +25,8 @@ public:
 	const int worldHeight = 1300;
 #endif
 
-	const int particleCount = 40000;
-	const int particleRadius = 3;
+	const int particleCount = 80000;
+	const int particleRadius = 2;
 
 	bool done;
 	int seed;
