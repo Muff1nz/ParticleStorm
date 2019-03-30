@@ -7,8 +7,8 @@ class Stats;
 
 class SessionManager {
 public:
-	const std::string shorTitle = "ThreadingFix";
-	const std::string longTitle = "Fixing multi threading joining logic";
+	const std::string shorTitle = "SwapQuad";
+	const std::string longTitle = "SwapQuad";
 	const std::string statsOutputDir = "C:/C++ Projects/ParticleStorm_Stats/";
 	const std::string singleStatsGrapherDir = "C:/Python Projects/ParticleStorm_Tools/StatsGrapher.py";
 	const std::string multiStatsGrapherDir = "C:/Python Projects/ParticleStorm_Tools/MultiStatsGrapher.py";
