@@ -87,51 +87,30 @@ void PhysicsEngine::ParticleCollision(const int particle1, const int particle2) 
 			particleResting[particle1] = true;
 		else
 			particleResting[particle2] = true;
-
-		++stats->particleCollisionTotalLastSecond;
 	}
 }
 
-void PhysicsEngine::ParticleCollisionsNonQuadTreee(const int start, const int end) const {
-	for (int i = start + 1; i < end; ++i) {
-		for (int j = 0; j < environment->particleCount; ++j)
-			if (i != j)
-				ParticleCollision(i, j);
+void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree* tree) const {
+	for (int i = tree->start; i < tree->end; ++i) {
+		for (int j = i + 1; j < tree->end; ++j) {
+			ParticleCollision(i, j);
+		}
+	}
+
+	for (int i = tree->start; i < tree->end; ++i) {
+		for (int j = 0; j < tree->overflow.size(); ++j) {
+			ParticleCollision(i, tree->overflow[j]);
+		}
+	}
+
+	for (int i = 0; i < tree->overflow.size(); ++i) {
+		for (int j = i + 1; j < tree->overflow.size(); ++j) {
+			ParticleCollision(tree->overflow[i], tree->overflow[j]);
+		}
 	}
 }
 
-void PhysicsEngine::ParticleCollision(const int particle, const int end, const std::vector<int>& overflow) const {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
-
-	//Overflow particles
-	for (int i : overflow) 
-		if (particle != i)
-			ParticleCollision(particle, i);
-
-	//In scope particles
-	for (auto i = particle + 1; i < end; i++)
-		ParticleCollision(particle, i);	
-}
-
-void PhysicsEngine::ParticleCollision(const int particle, const std::vector<int>& overflow) const {
-
-	for (int i = particle + 1; i < overflow.size(); ++i) {
-		ParticleCollision(overflow[particle], overflow[i]);
-	}
-	
-}
-
-void PhysicsEngine::QuadTreeParticleCollisions(const QuadTree& tree) const {
-	for (int i = 0; i < tree.overflow.size(); ++i) {
-		ParticleCollision(i, tree.overflow);
-	}
-	for (int i = tree.start; i < tree.end; ++i) {
-		ParticleCollision(i, tree.end, tree.overflow);
-	}
-}
-
-void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVectror<QuadTree>* quads, int start, int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVectror<QuadTree*>* quads, int start, int end) const {
 	for (int i = start; i < end; ++i) {
 		QuadTreeParticleCollisions((*quads)[i]);
 	}
@@ -171,9 +150,9 @@ void PhysicsEngine::LeadThreadRun() {
 	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
 
 	std::vector<Range> particleSections;
-	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections, 1);
+	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
-	ConcurrentVectror<QuadTree>* quads = new ConcurrentVectror<QuadTree>();
+	ConcurrentVectror<QuadTree*>* quads = new ConcurrentVectror<QuadTree*>();
 
 	while (!environment->done) {
 
@@ -184,7 +163,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Restart();
 		HandleExplosions();
 		timer.Stop();
-		stats->puEventsTotalLastSecond += timer.ElapsedMilliseconds();
+		stats->puEventsTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//QUADTREE
 		timer.Restart();
@@ -193,17 +172,17 @@ void PhysicsEngine::LeadThreadRun() {
 		environment->workerThreads.JoinWorkerThreads();
 		environment->renderLock.unlock();
 		timer.Stop();
-		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections, 1);
+		environment->workerThreads.PartitionForWorkers(quads->Size(), quadSections);
 		for (auto quadSection : quadSections)
 			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMilliseconds();
+		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//UPDATES
 		timer.Restart();
@@ -211,7 +190,7 @@ void PhysicsEngine::LeadThreadRun() {
 			environment->workerThreads.AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
-		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMilliseconds();
+		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMicroseconds();
 
 		++stats->physicsUpdateTotalLastSecond;
 	}

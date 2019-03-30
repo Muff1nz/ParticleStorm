@@ -1152,7 +1152,6 @@ void RenderEngineVulkan::DrawFrame() {
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	++stats->renderUpdateTotalLastSecond;
-	stats->particlesRenderedTotalLastSecond += environment->particleCount;
 }
 
 void RenderEngineVulkan::RenderThreadRun() {

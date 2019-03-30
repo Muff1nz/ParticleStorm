@@ -18,28 +18,26 @@ QuadTree::~QuadTree() {
 	delete subTree;
 }
 
-bool QuadTree::QuadLimitReached() { return end - start >= maxParticles; }
+bool QuadTree::QuadLimitReached() { return end - start >= maxParticles && depth <= maxDepth; }
 
 
-void QuadTree::Build(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
+void QuadTree::Build(ConcurrentVectror<QuadTree*>* quads, Stats* stats) {
 	int current = 0;
 	quads->Clear();
-	Build(nullptr, current, &*quads, stats);
+	Build(nullptr, current, quads, stats);
 }
 
-void QuadTree::Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree>* quads, Stats* stats) {
+void QuadTree::Build(QuadTree* parent, int& current, ConcurrentVectror<QuadTree*>* quads, Stats* stats) {
 	PopulateQuadTreeWithParticles(parent, current, stats);
+
+	if (parent != nullptr)
+		depth = parent->depth + 1;
 
 	if (QuadLimitReached()) {
 		CreateSubTrees(quads, stats);
 	} else {
 		DestroySubTrees();
-		quads->Push(*this);
-	}
-
-	if (subTree == nullptr) {
-		++stats->quadTreeLeafTotalLastSecond;
-		stats->quadTreeOverflowTotalLastSecond += overflow.size();
+		quads->Push(this);
 	}
 }
 
@@ -76,7 +74,6 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 				} else {
 					if (i != current) {
 						environment->SwapParticles(current, i);
-						++stats->quadTreeSwapTotalLastSecond;
 					}
 					current++;
 				}
@@ -95,14 +92,14 @@ void QuadTree::PopulateQuadTreeWithParticles(QuadTree* parent, int& current, Sta
 	}
 }
 
-void QuadTree::BuildSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
+void QuadTree::BuildSubTrees(ConcurrentVectror<QuadTree*>* quads, Stats* stats) {
 	int currentEnd = start;
 	for (int i = 0; i < 4; ++i) {
 		subTree[i]->Build(this, currentEnd, quads, stats);
 	}
 }
 
-void QuadTree::CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) {
+void QuadTree::CreateSubTrees(ConcurrentVectror<QuadTree*>* quads, Stats* stats) {
 	if (subTree == nullptr) {
 		if (secretSubTree != nullptr) {
 			subTree = secretSubTree;
@@ -116,7 +113,6 @@ void QuadTree::CreateSubTrees(ConcurrentVectror<QuadTree>* quads, Stats* stats) 
 		}
 	}
 
-	//environment->workerThreads.AddWork([=] { BuildSubTrees(quads, stats); });
 	BuildSubTrees(quads, stats);
 }
 
