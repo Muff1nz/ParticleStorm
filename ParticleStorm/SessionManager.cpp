@@ -1,21 +1,53 @@
 #include "SessionManager.h"
 
-#include <vec2.hpp>
 #include <iostream>
 #include <fstream>
 #include <windows.h>
 
-#include "Utils.h"
 #include "Timer.h"
 #include "Environment.h"
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
+#include "Utils.h"
 
 
 SessionManager::SessionManager() = default;
 
 
 SessionManager::~SessionManager() = default;
+
+
+void SessionManager::ControlCamera(Environment& environment, GLFWwindow* getWindow, float deltaTime) const {
+	const float cameraSpeed = 500.0f;
+	float cameraZoomSpeed = environment.camera.zoom <= 1 ? 0.5f : 5.0f;
+
+	if (glfwGetKey(getWindow, GLFW_KEY_A) == GLFW_PRESS) {
+		environment.camera.pos.x -= cameraSpeed * deltaTime;
+	}
+
+	if (glfwGetKey(getWindow, GLFW_KEY_D) == GLFW_PRESS) {
+		environment.camera.pos.x += cameraSpeed * deltaTime;
+	}
+
+	if (glfwGetKey(getWindow, GLFW_KEY_W) == GLFW_PRESS) {
+		environment.camera.pos.y -= cameraSpeed * deltaTime;
+	}
+
+	if (glfwGetKey(getWindow, GLFW_KEY_S) == GLFW_PRESS) {
+		environment.camera.pos.y += cameraSpeed * deltaTime;
+	}
+
+	if (glfwGetKey(getWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		environment.camera.zoom -= cameraZoomSpeed * deltaTime;
+	}
+
+	if (glfwGetKey(getWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+		environment.camera.zoom += cameraZoomSpeed * deltaTime;
+	}
+
+	if (environment.camera.zoom <= -0.49f)
+		environment.camera.zoom = -0.49f;
+}
 
 
 char* SessionManager::FileTime() {
@@ -57,7 +89,6 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 	std::string sessionString;
 	sessionString += "Title: " + longTitle + "\n";
 	sessionString += "Simulated " + std::to_string(environment.particleCount) + " particles with a raidus of: " + std::to_string(environment.particleRadius) + "\n";
-	sessionString += "Quadtree max particles per quad: " + std::to_string(environment.tree->maxParticles) + "\n";
 	sessionString += "Worker threads: " + std::to_string(environment.workerThreadCount) + "\n";
 	sessionString += "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	sessionString += "[\n";
@@ -82,21 +113,21 @@ void SessionManager::Sandbox() const {
 	renderEngine.Start();
 	physicsEngine.Start();
 
-	std::vector<std::string> perSecondStats;
-
 	Timer timer;
 	timer.Start();
 
 	int lastMouseButtonState = GLFW_PRESS;
+	float deltaTime;
 
 	while (!environment.done) {
 		std::this_thread::sleep_for(std::chrono::microseconds(10));
 
+		deltaTime = timer.DeltaTime();
+		
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
 			environment.stats.CompleteLastSecond();
-			std::cout << environment.stats.LastSecondToStringConsole();
-			perSecondStats.push_back(environment.stats.LastSecondToString());
+			//std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
 		glfwPollEvents();
@@ -107,10 +138,15 @@ void SessionManager::Sandbox() const {
 		if (state == GLFW_PRESS && state != lastMouseButtonState) {
 			double x, y;
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
-			environment.explosions.push(glm::vec2(float(x), environment.worldHeight - float(y)));
+
+			glm::vec2 mouseWorldPos = environment.camera.GetWorldPos({ x, y });
+			std::cout << "PixelPos: " << Utils::VecToString({ x, y }) << " WorldPos: " << Utils::VecToString({ mouseWorldPos.x, mouseWorldPos.y }) << "\n\n";			
+			environment.explosions.push(glm::vec2(mouseWorldPos.x, mouseWorldPos.y));
 			++environment.stats.explosionTotalLastSecond;
 		}
 		lastMouseButtonState = state;
+
+		ControlCamera(environment, renderEngine.GetWindow(), deltaTime);
 	}
 
 	physicsEngine.Join();

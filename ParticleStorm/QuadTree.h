@@ -2,16 +2,18 @@
 #include "Environment.h"
 #include "Rect.h"
 #include "MultiIntVector.h"
-
-class Environment;
+#include "ConcurrentVector.h"
 
 class QuadTree {
 public:
-	QuadTree(QuadTree* parent, Environment* environment, Rect rect_);
+	QuadTree(QuadTree* parent, Environment* environment, Rect rect_, ConcurrentVector<QuadTree*>* quads);
 	~QuadTree();
 	int QuadSize() const;
 
 	void BuildRoot();
+
+	QuadTree* tree;
+	ConcurrentVector<QuadTree*>* quads;
 
 	const int maxParticles = 100;
 	const int particlesPerThreadLevel1 = 800;

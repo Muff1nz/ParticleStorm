@@ -1,9 +1,10 @@
 #include "PhysicsEngine.h"
-#include <detail/func_geometric.inl>
 #include <iostream>
 #include "Timer.h"
 #include "Range.h"
 #include <map>
+#include "QuadTree.h"
+#include <detail/func_geometric.inl>
 
 PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->particleRadius * 2) {
 	this->environment = environment;
@@ -24,8 +25,6 @@ void PhysicsEngine::Init() {
 			circleVel[i] = glm::vec2(rng.GenerateFloat(-maxSpeed, maxSpeed), rng.GenerateFloat(-maxSpeed, maxSpeed));
 		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
 	}
-
-	environment->tree = new QuadTree(nullptr, environment, Rect(0, 0, environment->worldWidth, environment->worldHeight));
 }
 
 void PhysicsEngine::Join() {
@@ -139,15 +138,15 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 	}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(const int start, const int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads,const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
-		QuadTreeParticleCollisions(environment->quads[i]);
+		QuadTreeParticleCollisions((*quads)[i]);
 	}
 }
 
-void PhysicsEngine::CalculateQuadTreeOverflow(const int start, const int end) const {
+void PhysicsEngine::CalculateQuadTreeOverflow(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
-		QuadTree* quad = environment->quads[i];
+		QuadTree* quad = (*quads)[i];
 		quad->externalParticle.clear();
 		quad->internalParticle.clear();
 		quad->internalParticlePos.clear();
@@ -202,6 +201,10 @@ void PhysicsEngine::LeadThreadRun() {
 	std::vector<Range> particleSections;
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
+
+	ConcurrentVector<QuadTree*>* quads = new ConcurrentVector<QuadTree*>();
+	QuadTree tree(nullptr, environment, Rect(0, 0, environment->worldWidth, environment->worldHeight), quads);
+
 	while (!environment->done) {
 
 		float deltaTime = timer.DeltaTime();
@@ -215,12 +218,12 @@ void PhysicsEngine::LeadThreadRun() {
 
 		//QUADTREE
 		timer.Restart();
-		environment->tree->BuildRoot();
+		tree.BuildRoot();
 		environment->workerThreads.JoinWorkerThreads();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(environment->quads.size(), quadSections);
+		environment->workerThreads.PartitionForWorkers(quads->size(), quadSections);
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { CalculateQuadTreeOverflow(quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { CalculateQuadTreeOverflow(quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
 		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
@@ -228,7 +231,7 @@ void PhysicsEngine::LeadThreadRun() {
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
 		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();

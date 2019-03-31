@@ -1,9 +1,8 @@
 #pragma once
-#include <limits>
 
 class Timer {
 public:
-	Timer(float maxDeltaTime = std::numeric_limits<float>::max(), float minDeltaTime = 0);
+	Timer(float maxDeltaTime = 99999999.0f, float minDeltaTime = 0);
 	~Timer();
 
 	static bool unhinged;
