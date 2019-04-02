@@ -1072,7 +1072,6 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 
 	for (int i = 0; i < environment->particleCount; ++i) {
 		glm::vec2 pos = particles[i];
-		//pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
 		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
 		MVP_Array[i].MVP = projView * model;
 	}

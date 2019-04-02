@@ -175,7 +175,7 @@ void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 }
 
 void PhysicsEngine::HandleExplosions() const {
-	float const explosionForce = 250000.0f;
+	float const explosionForce = 2500.0f;
 	const auto circlePos = environment->particlePos;
 	const auto circleVel = environment->particleVel;
 

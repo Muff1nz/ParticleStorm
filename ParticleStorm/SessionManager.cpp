@@ -127,7 +127,7 @@ void SessionManager::Sandbox() const {
 		if (timer.ElapsedSeconds() >= 1) {
 			timer.Restart();
 			environment.stats.CompleteLastSecond();
-			//std::cout << environment.stats.LastSecondToStringConsole();
+			std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
 		glfwPollEvents();

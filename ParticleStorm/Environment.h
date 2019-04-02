@@ -15,11 +15,11 @@ public:
 	const int screenWidth = 2300;
 	const int screenHeight = 1200;
 
-	const int particleCount = 4000;
-	const int particleRadius = 6;
+	const int particleCount = 40000;
+	const float particleRadius = 3;
 
-	const int worldWidth = 4000;
-	const int worldHeight = 1000;
+	const int worldWidth = 1500;
+	const int worldHeight = 1500;
 
 	std::mutex renderLock;
 
