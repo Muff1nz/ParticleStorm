@@ -39,7 +39,7 @@ public:
 
 	std::atomic_int* particleQuadCount{};
 
-	const int workerThreadCount = 30;
+	const int workerThreadCount = 14;
 	WorkerThreadPool workerThreads;
 
 	Environment();
