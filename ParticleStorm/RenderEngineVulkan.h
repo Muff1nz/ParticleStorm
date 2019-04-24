@@ -29,7 +29,7 @@ public:
 	void DrawFrame();
 
 	//Accessors
-	GLFWwindow* GetWindow();
+	GLFWwindow* GetWindow() const;
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 private:
 	//Particle Storm Specific Variables

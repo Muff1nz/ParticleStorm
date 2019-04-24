@@ -17,39 +17,6 @@ SessionManager::SessionManager() = default;
 SessionManager::~SessionManager() = default;
 
 
-void SessionManager::ControlCamera(Environment& environment, GLFWwindow* getWindow, float deltaTime) const {
-	const float cameraSpeed = 500.0f;
-	float cameraZoomSpeed = environment.camera.zoom <= 1 ? 0.5f : 5.0f;
-
-	if (glfwGetKey(getWindow, GLFW_KEY_A) == GLFW_PRESS) {
-		environment.camera.pos.x -= cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(getWindow, GLFW_KEY_D) == GLFW_PRESS) {
-		environment.camera.pos.x += cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(getWindow, GLFW_KEY_W) == GLFW_PRESS) {
-		environment.camera.pos.y -= cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(getWindow, GLFW_KEY_S) == GLFW_PRESS) {
-		environment.camera.pos.y += cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(getWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		environment.camera.zoom -= cameraZoomSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(getWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-		environment.camera.zoom += cameraZoomSpeed * deltaTime;
-	}
-
-	if (environment.camera.zoom <= -0.49f)
-		environment.camera.zoom = -0.49f;
-}
-
-
 char* SessionManager::FileTime() {
 	char name[20];
 	time_t now = time(0);
@@ -130,6 +97,7 @@ void SessionManager::Sandbox() const {
 			std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
+		//TODO: Find neat system of handling user input/events triggered by users
 		glfwPollEvents();
 		if (glfwWindowShouldClose(renderEngine.GetWindow()))
 			environment.done = true;
@@ -146,7 +114,7 @@ void SessionManager::Sandbox() const {
 		}
 		lastMouseButtonState = state;
 
-		ControlCamera(environment, renderEngine.GetWindow(), deltaTime);
+		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
 	}
 
 	physicsEngine.Join();

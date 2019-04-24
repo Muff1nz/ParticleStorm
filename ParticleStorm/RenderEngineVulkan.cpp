@@ -1020,7 +1020,7 @@ void RenderEngineVulkan::Dispose() {
 //                                                 
 //                                                 
 
-GLFWwindow* RenderEngineVulkan::GetWindow() {
+GLFWwindow* RenderEngineVulkan::GetWindow() const {
 	return window;
 }
 
