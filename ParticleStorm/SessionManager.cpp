@@ -77,6 +77,8 @@ void SessionManager::Sandbox() const {
 	renderEngine.Init();
 	physicsEngine.Init();
 
+	environment.camera.Init(renderEngine.GetWindow());
+
 	renderEngine.Start();
 	physicsEngine.Start();
 
@@ -108,7 +110,6 @@ void SessionManager::Sandbox() const {
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
 
 			glm::vec2 mouseWorldPos = environment.camera.GetWorldPos({ x, y });
-			std::cout << "PixelPos: " << Utils::VecToString({ x, y }) << " WorldPos: " << Utils::VecToString({ mouseWorldPos.x, mouseWorldPos.y }) << "\n\n";			
 			environment.explosions.push(glm::vec2(mouseWorldPos.x, mouseWorldPos.y));
 			++environment.stats.explosionTotalLastSecond;
 		}

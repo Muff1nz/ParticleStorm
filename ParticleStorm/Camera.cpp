@@ -1,6 +1,10 @@
 #include "Camera.h"
 #include <ext/matrix_transform.inl>
 #include <ext/matrix_clip_space.inl>
+#include <iostream>
+#include "Utils.h"
+
+Queue<double> Camera::scrollEvents{};
 
 Camera::Camera() {
 	zoom = 0;
@@ -12,11 +16,23 @@ Camera::Camera(int worldHeight, int worldWidth, int screenHeight, int screenWidt
 	this->screenHeight = screenHeight;
 	this->screenWidth = screenWidth;
 	zoom = 0;
-	pos = { 0, 0 };	
+	pos = { 0, 0 };
+
+	if (worldHeight / screenHeight > worldWidth / screenWidth) {
+		orthoWidth = (worldHeight / screenHeight) * screenWidth;
+		orthoHeight = (worldHeight / screenHeight) * screenHeight;
+	} else {
+		orthoWidth = worldWidth / screenWidth * screenWidth;
+		orthoHeight = worldWidth / screenWidth * screenHeight;
+	}
+}
+
+Camera::~Camera() {
+	scrollEvents.Clear();
 }
 
 void Camera::Init(GLFWwindow* window) {
-	//glfwSetScrollCallback(window, scroll_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 }
 
 glm::mat4 Camera::GetView() {
@@ -24,9 +40,9 @@ glm::mat4 Camera::GetView() {
 }
 
 glm::mat4 Camera::GetProj() {
-	float wZoom = float(screenWidth) * zoom;
-	float hZoom = float(screenHeight) * zoom;
-	return glm::ortho(float(screenWidth) + wZoom , -wZoom, float(screenHeight) + hZoom, -hZoom);
+	float wZoom = float(orthoWidth) * zoom;
+	float hZoom = float(orthoHeight) * zoom;
+	return glm::ortho(float(orthoWidth) + wZoom , -wZoom, float(orthoHeight) + hZoom, -hZoom);
 }
 
 glm::vec2 Camera::GetWorldPos(glm::vec2 screenPos) {
@@ -56,44 +72,8 @@ glm::vec2 Camera::GetViewPos(glm::vec2 screenPos) {
 }
 
 void Camera::Update(GLFWwindow* window, float deltaTime) {
-	cameraZoomSpeed = zoom <= 1 ? 0.5f : 5.0f;
+	float cameraZoomSpeed = pow(zoom + 1, 2) * 30.0f * deltaTime;
 
-	ProcessKeyboardInput(window, deltaTime);
-	ProcessMouseInput(window, deltaTime);
-	
-	if (zoom <= -0.49f)
-		zoom = -0.49f;
-}
-
-void Camera::ProcessKeyboardInput(GLFWwindow* window, float deltaTime) {
-	//Translation
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		pos.x -= cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		pos.x += cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		pos.y -= cameraSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		pos.y += cameraSpeed * deltaTime;
-	}
-
-	//ZOOM
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		zoom -= cameraZoomSpeed * deltaTime;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-		zoom += cameraZoomSpeed * deltaTime;
-	}
-}
-
-void Camera::ProcessMouseInput(GLFWwindow* window, float deltaTime) {
 	//Translation	
 	auto state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 	if (state == GLFW_PRESS) {
@@ -108,9 +88,19 @@ void Camera::ProcessMouseInput(GLFWwindow* window, float deltaTime) {
 	} else {
 		oldMousePos = oldMouseFlag;
 	}
+
+	while (!scrollEvents.Empty()) {
+		zoom -= scrollEvents.Pop() * cameraZoomSpeed;
+	}
+	
+	if (zoom <= minZoom)
+		zoom = minZoom;
+	if (zoom > maxZoom)
+		zoom = maxZoom;
 }
 
+
 void Camera::scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
-	//zoom += yoffset * cameraZoomSpeed;
+	scrollEvents.Push(yOffset);
 }
 
