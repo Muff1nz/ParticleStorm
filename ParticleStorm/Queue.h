@@ -23,6 +23,10 @@ public:
 		return queue.empty();
 	}
 
+	void Clear() {
+		queue.clear();
+	}
+
 private:
 	std::deque<T> queue;
 };

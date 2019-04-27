@@ -1,15 +1,14 @@
 #pragma once
-#include <thread>
-#include <array>
-#include "Environment.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <optional>
 #include <glm.hpp>
+#include <optional>
 #include <iostream>
+#include <thread>
+#include <array>
 
-class QuadTree;
+#include "Environment.h"
 
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
 class RenderEngineVulkan {
@@ -30,7 +29,7 @@ public:
 	void DrawFrame();
 
 	//Accessors
-	GLFWwindow* GetWindow();
+	GLFWwindow* GetWindow() const;
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 private:
 	//Particle Storm Specific Variables
@@ -72,12 +71,13 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	size_t currentFrame = 0;
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
-	std::vector<VkBuffer> instanceBuffers;
-	std::vector<VkDeviceMemory> instanceMemorys;
+	//Data for the stuff that we draw
+	VkBuffer quadVertexBuffer;
+	VkDeviceMemory quadVertexBufferMemory;
+	VkBuffer quadIndexBuffer;
+	VkDeviceMemory quadIndexBufferMemory;
+	std::vector<VkBuffer> particleInstanceBuffers;
+	std::vector<VkDeviceMemory> particleInstanceMemorys;
 
 	//GLFW
 	GLFWwindow* window{};

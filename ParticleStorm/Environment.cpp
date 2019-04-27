@@ -22,4 +22,5 @@ void Environment::Init() {
 	particleResting = new bool[particleCount];
 	particleQuadCount = new std::atomic_int[particleCount];
 	workerThreads.Init(workerThreadCount);
+	camera = Camera(worldHeight, worldWidth, screenHeight, screenWidth);
 }

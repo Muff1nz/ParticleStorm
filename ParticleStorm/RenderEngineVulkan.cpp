@@ -8,15 +8,16 @@
 //                                             
 
 #include "RenderEngineVulkan.h"
+
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <set>
 #include <limits>
 #include <algorithm>
 #include <fstream>
-#include "Utils.h"
 #include <gtc/matrix_transform.hpp>
 #include <array>
+
 #include "Timer.h"
 
 
@@ -343,7 +344,7 @@ VkExtent2D RenderEngineVulkan::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& 
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 		return capabilities.currentExtent;
 	} else {
-		VkExtent2D actualExtent = { environment->worldWidth, environment->worldHeight };
+		VkExtent2D actualExtent = { environment->screenWidth, environment->screenHeight };
 
 		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -709,13 +710,13 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		VkBuffer vertexBuffers[] = { vertexBuffer };
-		VkBuffer instanceBuffer[] = { instanceBuffers[i] };
+		VkBuffer vertexBuffers[] = { quadVertexBuffer };
+		VkBuffer instanceBuffer[] = { particleInstanceBuffers[i] };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffer, offsets);
 
-		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffers[i], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 		
 		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->particleCount), 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffers[i]);
@@ -806,8 +807,8 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-	CopyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
+	CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
@@ -837,9 +838,9 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadIndexBuffer, quadIndexBufferMemory);
 
-	CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
+	CopyBuffer(stagingBuffer, quadIndexBuffer, bufferSize);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -847,8 +848,8 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 
 void RenderEngineVulkan::CreateInstanceBuffer() {
 	MVP_Array = new InstanceBufferObject[environment->particleCount];
-	instanceBuffers.resize(swapChainImages.size());
-	instanceMemorys.resize(swapChainImages.size());
+	particleInstanceBuffers.resize(swapChainImages.size());
+	particleInstanceMemorys.resize(swapChainImages.size());
 	for (int i = 0; i < swapChainImages.size(); ++i) {
 		for (int j = 0; j < environment->particleCount; ++j) {
 			MVP_Array[j].MVP = glm::mat4(1);
@@ -865,8 +866,8 @@ void RenderEngineVulkan::CreateInstanceBuffer() {
 		memcpy(data, MVP_Array, (size_t)bufferSize);
 		vkUnmapMemory(device, stagingBufferMemory);
 
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, instanceBuffers[i], instanceMemorys[i]);
-		CopyBuffer(stagingBuffer, instanceBuffers[i], bufferSize);
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, particleInstanceBuffers[i], particleInstanceMemorys[i]);
+		CopyBuffer(stagingBuffer, particleInstanceBuffers[i], bufferSize);
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -936,11 +937,11 @@ void RenderEngineVulkan::InitWindow() {
 		glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 		glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-		window = glfwCreateWindow(environment->worldWidth, environment->worldHeight, "Particle Storm", glfwGetPrimaryMonitor(), nullptr);
+		window = glfwCreateWindow(2560, 1440, "Particle Storm", glfwGetPrimaryMonitor(), nullptr);
 
-		glfwSetWindowMonitor(window, monitor, 0, 0, environment->worldWidth, environment->worldHeight, mode->refreshRate);
+		glfwSetWindowMonitor(window, monitor, 0, 0, 2560, 1440, mode->refreshRate);
 	} else
-		window = glfwCreateWindow(environment->worldWidth, environment->worldHeight, "Particle Storm", nullptr, nullptr);
+		window = glfwCreateWindow(environment->screenWidth, environment->screenHeight, "Particle Storm", nullptr, nullptr);
 }
 
 //    _____       _ _   
@@ -980,14 +981,14 @@ void RenderEngineVulkan::Dispose() {
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
 	vkDestroyCommandPool(device, commandPool, nullptr);
-	for (size_t i = 0; i < instanceBuffers.size(); ++i) {
-		vkDestroyBuffer(device, instanceBuffers[i], nullptr);
-		vkFreeMemory(device, instanceMemorys[i], nullptr);
+	for (size_t i = 0; i < particleInstanceBuffers.size(); ++i) {
+		vkDestroyBuffer(device, particleInstanceBuffers[i], nullptr);
+		vkFreeMemory(device, particleInstanceMemorys[i], nullptr);
 	}
-	vkDestroyBuffer(device, indexBuffer, nullptr);
-	vkFreeMemory(device, indexBufferMemory, nullptr);
-	vkDestroyBuffer(device, vertexBuffer, nullptr);
-	vkFreeMemory(device, vertexBufferMemory, nullptr);
+	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
+	vkFreeMemory(device, quadIndexBufferMemory, nullptr);
+	vkDestroyBuffer(device, quadVertexBuffer, nullptr);
+	vkFreeMemory(device, quadVertexBufferMemory, nullptr);
 	for (auto framebuffer : swapChainFrameBuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
@@ -1019,7 +1020,7 @@ void RenderEngineVulkan::Dispose() {
 //                                                 
 //                                                 
 
-GLFWwindow* RenderEngineVulkan::GetWindow() {
+GLFWwindow* RenderEngineVulkan::GetWindow() const {
 	return window;
 }
 
@@ -1067,21 +1068,18 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 
 void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 	glm::vec2* particles = environment->particlePos;
+	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
 
 	for (int i = 0; i < environment->particleCount; ++i) {
 		glm::vec2 pos = particles[i];
-		pos.y = environment->worldHeight - pos.y; //TODO: Temporary hack to deal with the world being flipped
-
-		glm::mat4 view = glm::mat4(1);
-		glm::mat4 proj = glm::ortho(0.0f, float(environment->worldWidth), 0.0f, float(environment->worldHeight));
 		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
-		MVP_Array[i].MVP = proj * view * model;
+		MVP_Array[i].MVP = projView * model;
 	}
 
 	void* data;
-	vkMapMemory(device, instanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
+	vkMapMemory(device, particleInstanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
 	memcpy(data, MVP_Array, SizeOfMVPs());
-	vkUnmapMemory(device, instanceMemorys[imageIndex]);
+	vkUnmapMemory(device, particleInstanceMemorys[imageIndex]);
 }
 
 //    _______ _                        _ _             

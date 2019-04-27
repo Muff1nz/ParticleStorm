@@ -1,48 +1,43 @@
 #pragma once
-#include <vec2.hpp>
+
 #include <queue>
 #include <atomic>
 
 #include "WorkerThreadPool.h"
-#include "QuadTree.h"
 #include "Stats.h"
-#include "ConcurrentVector.h"
-
-
-//#define full
-
-class QuadTree;
+#include "Camera.h"
+#include <vec2.hpp>
 
 class Environment {
 public:
 
-#ifdef full
-	const bool fullScreen = true;
-	const int worldWidth = 2560;
-	const int worldHeight = 1440;
-#else
 	const bool fullScreen = false;
-	const int worldWidth = 2300;
-	const int worldHeight = 1300;
-#endif
+	const int screenWidth = 2300;
+	const int screenHeight = 1200;
 
-	const int particleCount = 80000;
-	const int particleRadius = 2;
+	const int particleCount = 50000;
+	const float particleRadius = 10;
 
-	bool done;
-	int seed;
+	const int worldWidth = 9000;
+	const int worldHeight = 6000;
+
+	std::mutex renderLock;
+
+	Camera camera;
+
+	bool done{};
+	int seed{};
 
 	Stats stats{};
 
-	glm::vec2* particlePos;
-	glm::vec2* particleVel;
-	bool* particleResting;
+	glm::vec2* particlePos{};
+	glm::vec2* particleVel{};
+	bool* particleResting{};
 
 	std::queue<glm::vec2> explosions;
 
-	QuadTree* tree;
-	ConcurrentVector<QuadTree*> quads;
-	std::atomic_int* particleQuadCount;
+
+	std::atomic_int* particleQuadCount{};
 
 	const int workerThreadCount = 14;
 	WorkerThreadPool workerThreads;

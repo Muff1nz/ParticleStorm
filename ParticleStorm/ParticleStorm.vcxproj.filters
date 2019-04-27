@@ -19,9 +19,6 @@
     <Filter Include="Source Files\Utils">
       <UniqueIdentifier>{d0deca75-ae7e-46da-8adf-68a7d9f7e36d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Misc">
-      <UniqueIdentifier>{c1d098a5-80b6-41a6-bcbd-b872547295e0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{4ebcd778-54f1-4450-8867-c694e0e7b89d}</UniqueIdentifier>
     </Filter>
@@ -42,9 +39,6 @@
     <ClCompile Include="PhysicsEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CodeGraveyard.cpp">
-      <Filter>Source Files\Misc</Filter>
-    </ClCompile>
     <ClCompile Include="Rect.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
@@ -64,6 +58,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WorkerThreadPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -107,14 +104,14 @@
     <ClInclude Include="Queue.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="LinearQuad.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Stats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MultiIntVector.h">
       <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

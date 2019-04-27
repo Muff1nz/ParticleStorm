@@ -2,9 +2,11 @@
 #include "Stats.h"
 #include <iostream>
 
-QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_) : radiusSquared(pow(environment->particleRadius, 2)) {
+QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_, ConcurrentVector<QuadTree*>* quads) : radiusSquared(pow(environment->particleRadius, 2)) {
 	this->parent = parent;
 	this->environment = environment;
+	this->quads = quads;
+
 	const int r = environment->particleRadius * 2.0f;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
@@ -33,7 +35,7 @@ int QuadTree::QuadSize() const {
 bool QuadTree::QuadLimitReached() const { return QuadSize() >= maxParticles && depth <= maxDepth; }
 
 void QuadTree::BuildRoot() {
-	environment->quads.clear();
+	quads->clear();
 	HandleSubTrees();
 }
 
@@ -63,7 +65,7 @@ void QuadTree::HandleSubTrees() {
 		CreateSubTrees();
 	} else {
 		subTree = nullptr;
-		environment->quads.push_back(this);
+		quads->push_back(this);
 		for (int i : particlesInQuad) {
 			++environment->particleQuadCount[i];
 		}
@@ -166,10 +168,10 @@ void QuadTree::CreateSubTrees() {
 			subTree = secretSubTree;
 		} else {
 			subTree = new QuadTree*[4];
-			subTree[0] = new QuadTree(this, environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2));
-			subTree[1] = new QuadTree(this, environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2));
-			subTree[2] = new QuadTree(this, environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
-			subTree[3] = new QuadTree(this, environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2));
+			subTree[0] = new QuadTree(this, environment, Rect(rect.x, rect.y, rect.w / 2, rect.h / 2), quads);
+			subTree[1] = new QuadTree(this, environment, Rect(rect.x + rect.w / 2, rect.y, rect.w / 2, rect.h / 2), quads);
+			subTree[2] = new QuadTree(this, environment, Rect(rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2), quads);
+			subTree[3] = new QuadTree(this, environment, Rect(rect.w / 2 + rect.x, rect.y + rect.h / 2, rect.w / 2, rect.h / 2), quads);
 			secretSubTree = subTree;
 		}
 	}
