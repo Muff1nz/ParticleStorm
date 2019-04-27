@@ -200,7 +200,7 @@ void SessionManager::Benchmark() const {
 	const int particleRuns = 3;
 	int threadCounts[] = { 2, 4, 8, 14 };
 	int particleCounts[] = { 20000, 40000, 80000 };
-	int particleRadiuses[] = { 4, 3, 2 };
+	int particleRadiuses[] = { 16, 12, 10 };
 
 	std::string sessionString = "";
 
