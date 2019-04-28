@@ -9,7 +9,6 @@ QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_, Concu
 
 	const int r = environment->particleRadius * 2.0f;
 	rect = rect_;
-	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
 
 	if (parent != nullptr)
 		depth = parent->depth + 1;
@@ -98,13 +97,13 @@ void QuadTree::PopulateQuadTreeWithParticles() {
 	particlesInQuad.clear();
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = 0; i < size; i++) {
-			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
+			if (ParticleBoxCollision(allParticles[i], rect)) {
 				particlesInQuad.push_back(i);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = 0; i < size; i++) {
-			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], rect)) {
 				particlesInQuad.push_back(parent->particlesInQuad[i]);
 			}
 		}
@@ -115,13 +114,13 @@ void QuadTree::PopulateQuadTreeWithParticlesThreaded(const int start, const int 
 	const auto allParticles = environment->particlePos;
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
+			if (ParticleBoxCollision(allParticles[i], rect)) {
 				particlesInQuadThreaded.Add(i, ThreadNumber);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], rect)) {
 				particlesInQuadThreaded.Add(parent->particlesInQuad[i], ThreadNumber);
 			}
 		}

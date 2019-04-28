@@ -40,7 +40,6 @@ public:
 private:
 	const int radiusSquared;
 
-	Rect paddedRect;
 	QuadTree** secretSubTree{};
 
 	Environment* environment;
