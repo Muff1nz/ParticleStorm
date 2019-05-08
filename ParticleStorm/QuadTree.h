@@ -3,6 +3,7 @@
 #include "Rect.h"
 #include "MultiIntVector.h"
 #include "ConcurrentVector.h"
+#include "CollisionChecker.h"
 
 class QuadTree {
 public:
@@ -37,8 +38,9 @@ public:
 	QuadTree* parent = nullptr;
 	QuadTree** subTree = nullptr;
 
+
 private:
-	const int radiusSquared;
+	CollisionChecker collisionChecker;
 
 	Rect paddedRect;
 	QuadTree** secretSubTree{};
@@ -49,7 +51,6 @@ private:
 	void HandleSubTrees();
 	void BuildThreaded(int start, int end, int threadCount, int ThreadNumber);
 	bool QuadLimitReached() const;
-	bool ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const;
 	void BuildBigSubTreesThreaded();
 	void CreateSubTrees();
 	void PopulateQuadTreeWithParticles();

@@ -6,8 +6,9 @@
 #include "QuadTree.h"
 #include <detail/func_geometric.inl>
 
-PhysicsEngine::PhysicsEngine(Environment* environment) : doubleRadius(environment->particleRadius * 2) {
+PhysicsEngine::PhysicsEngine(Environment* environment) {
 	this->environment = environment;
+	collisionChecker = CollisionChecker(environment->particleRadius);
 	rng = NumberGenerator(environment->seed);
 }
 
@@ -32,10 +33,10 @@ void PhysicsEngine::Join() {
 }
 
 void PhysicsEngine::Start() {
-	LeadThread = std::thread([=] {LeadThreadRun();});
+	LeadThread = std::thread([=] {LeadThreadRun(); });
 }
 
-void PhysicsEngine::BoundingBoxCollision(const int particle) const {
+void PhysicsEngine::WorldBoundsCheck(const int particle) const {
 	const auto circlePos = environment->particlePos;
 	const auto circleVel = environment->particleVel;
 
@@ -85,8 +86,8 @@ void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, c
 }
 
 void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
-	const auto dist = distance(tree->internalParticlePos[localParticle1], tree->internalParticlePos[localParticle2]);
-	if (dist < doubleRadius) {
+	float dist = 0;
+	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], tree->internalParticlePos[localParticle2], dist)) {
 		const int globalParticle1 = tree->internalParticle[localParticle1];
 		const int globalParticle2 = tree->internalParticle[localParticle2];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
@@ -97,8 +98,8 @@ void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, cons
 
 void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
 	const int globalParticle2 = tree->externalParticle[localParticle2];
-	const auto dist = distance(tree->internalParticlePos[localParticle1], environment->particlePos[globalParticle2]);
-	if (dist < doubleRadius) {
+	float dist = 0;
+	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], environment->particlePos[globalParticle2], dist)) {
 		const int globalParticle1 = tree->internalParticle[localParticle1];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
 		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
@@ -109,8 +110,8 @@ void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const i
 void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
 	const int globalParticle1 = tree->externalParticle[localParticle1];
 	const int globalParticle2 = tree->externalParticle[localParticle2];
-	const auto dist = distance(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2]);
-	if (dist < doubleRadius) {
+	float dist = 0;
+	if (collisionChecker.CircleCircleCollision(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2], dist)) {
 		ResolveCollision(globalParticle1, globalParticle2, dist);
 	}
 }
@@ -138,7 +139,7 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 	}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads,const int start, const int end) const {
+void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
 		QuadTreeParticleCollisions((*quads)[i]);
 	}
@@ -164,7 +165,7 @@ void PhysicsEngine::CalculateQuadTreeOverflow(ConcurrentVector<QuadTree*>* quads
 
 void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 	for (int i = start; i < end; i++) {
-		BoundingBoxCollision(i);
+		WorldBoundsCheck(i);
 		if (!environment->particleResting[i])
 			environment->particleVel[i] += gravity * deltaTime;
 		environment->particlePos[i] += environment->particleVel[i] * deltaTime;

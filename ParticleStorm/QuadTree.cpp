@@ -1,13 +1,15 @@
 #include "QuadTree.h"
 #include "Stats.h"
 #include <iostream>
+#include "CollisionChecker.h"
 
-QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_, ConcurrentVector<QuadTree*>* quads) : radiusSquared(pow(environment->particleRadius, 2)) {
+QuadTree::QuadTree(QuadTree* parent, Environment* environment, Rect rect_, ConcurrentVector<QuadTree*>* quads) {
 	this->parent = parent;
 	this->environment = environment;
 	this->quads = quads;
+	collisionChecker = CollisionChecker(environment->particleRadius);
 
-	const int r = environment->particleRadius * 2.0f;
+	const int r = environment->particleRadius;
 	rect = rect_;
 	paddedRect = Rect(rect_.x - r, rect_.y - r, rect_.w + r, rect_.h + r);
 
@@ -72,39 +74,19 @@ void QuadTree::HandleSubTrees() {
 	}
 }
 
-bool QuadTree::ParticleBoxCollision(const glm::vec2& circleCenter, const Rect& rect) const {
-	const auto radius = environment->particleRadius;
-	glm::vec2 circleDistance;
-
-	circleDistance.x = abs(circleCenter.x - rect.centerX);
-	circleDistance.y = abs(circleCenter.y - rect.centerY);
-
-	if (circleDistance.x > rect.halfW + radius)  return false; 
-	if (circleDistance.y > rect.halfH)  return false; 
-
-	if (circleDistance.x <= rect.halfW)  return true; 
-	if (circleDistance.y <= rect.halfH)  return true; 
-
-	const auto cornerDistanceSq = 
-		pow(circleDistance.x - rect.halfW, 2) +
-		pow(circleDistance.y - rect.halfH, 2);
-
-	return cornerDistanceSq <= radiusSquared;
-}
-
 void QuadTree::PopulateQuadTreeWithParticles() {
 	const int size = parent->QuadSize();
 	const auto allParticles = environment->particlePos;
 	particlesInQuad.clear();
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = 0; i < size; i++) {
-			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
+			if (collisionChecker.CircleRectCollision(allParticles[i], paddedRect)) {
 				particlesInQuad.push_back(i);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = 0; i < size; i++) {
-			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+			if (collisionChecker.CircleRectCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
 				particlesInQuad.push_back(parent->particlesInQuad[i]);
 			}
 		}
@@ -115,13 +97,13 @@ void QuadTree::PopulateQuadTreeWithParticlesThreaded(const int start, const int 
 	const auto allParticles = environment->particlePos;
 	if (parent->parent == nullptr) { //Parent is root node, containing all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(allParticles[i], paddedRect)) {
+			if (collisionChecker.CircleRectCollision(allParticles[i], paddedRect)) {
 				particlesInQuadThreaded.Add(i, ThreadNumber);
 			}
 		}
 	} else { //Parent contains a subset of all particles
 		for (int i = start; i < end; i++) {
-			if (ParticleBoxCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
+			if (collisionChecker.CircleRectCollision(allParticles[parent->particlesInQuad[i]], paddedRect)) {
 				particlesInQuadThreaded.Add(parent->particlesInQuad[i], ThreadNumber);
 			}
 		}

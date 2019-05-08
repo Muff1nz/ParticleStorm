@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CollisionChecker.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NumberGenerator.cpp" />
@@ -137,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CollisionChecker.h" />
     <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="MultiIntVector.h" />
