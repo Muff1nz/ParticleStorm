@@ -27,7 +27,6 @@ void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads,
 }
 
 void QuadTreeHandler::ResizeLinearQuads(std::vector<LinearQuad*>* linearQuads) {
-	//TODO: Make this scale better with higher particle/thread counts
 	if (quads.size() > linearQuads->size()) {
 		for (int i = linearQuads->size(); i < quads.size(); ++i) {
 			linearQuads->push_back(new LinearQuad());
