@@ -28,6 +28,30 @@
     <Filter Include="Shaders\Fragment">
       <UniqueIdentifier>{f05fa6b4-71d4-42a1-b3d7-d7951feddd11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics">
+      <UniqueIdentifier>{eb89b0d9-1aa3-4740-88a6-94cb6c482370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics">
+      <UniqueIdentifier>{ebf6ecbc-f160-4cef-a336-b103190b8b6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\QuadTree">
+      <UniqueIdentifier>{dee3f45b-a26a-4950-8d38-f7eabd0e4d60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataStructures">
+      <UniqueIdentifier>{bf4c2de3-1aa1-464f-ba7c-7dba094eab86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics">
+      <UniqueIdentifier>{36544852-fd82-48fa-a65f-f1e8bf59ee24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{435abe09-d892-498c-838b-f319cdfcd527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\QaudTree">
+      <UniqueIdentifier>{0ada7e3e-237f-4483-ada9-00b8428948ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataStructures">
+      <UniqueIdentifier>{fb57c695-06aa-4fbe-82bd-34ee6bf12628}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -35,15 +59,6 @@
     </ClCompile>
     <ClCompile Include="Environment.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicsEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Rect.cpp">
-      <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="QuadTree.cpp">
-      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Source Files\Utils</Filter>
@@ -54,31 +69,34 @@
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="RenderEngineVulkan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="WorkerThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QuadTreeHandler.cpp">
+      <Filter>Source Files\Physics\QaudTree</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>Source Files\Physics\QaudTree</Filter>
+    </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="CollisionChecker.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEngineVulkan.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsEngine.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Rect.cpp">
+      <Filter>Source Files\DataStructures</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysicsEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Rect.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="QuadTree.h">
-      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Header Files\Utils</Filter>
@@ -92,32 +110,47 @@
     <ClInclude Include="NumberGenerator.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="RenderEngineVulkan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WorkerThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Range.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="ConcurrentVector.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Queue.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Stats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MultiIntVector.h">
-      <Filter>Header Files\Utils</Filter>
+    <ClInclude Include="QuadTree.h">
+      <Filter>Header Files\Physics\QuadTree</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="QuadTreeHandler.h">
+      <Filter>Header Files\Physics\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsEngine.h">
+      <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEngineVulkan.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="CollisionChecker.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Rect.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Queue.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiIntVector.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ConcurrentVector.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearQuad.h">
+      <Filter>Header Files\Physics\QuadTree</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

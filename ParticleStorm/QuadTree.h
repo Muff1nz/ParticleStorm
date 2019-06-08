@@ -3,59 +3,54 @@
 #include "Rect.h"
 #include "MultiIntVector.h"
 #include "ConcurrentVector.h"
-#include "CollisionChecker.h"
+
 
 class QuadTree {
 public:
-	QuadTree(QuadTree* parent, Environment* environment, Rect rect_, ConcurrentVector<QuadTree*>* quads);
+	QuadTree(QuadTree* parent, Rect rect_);
 	~QuadTree();
-	int QuadSize() const;
 
-	void BuildRoot();
+	bool IsRoot() const;
+	int Size() const;
 
-	QuadTree* tree;
-	ConcurrentVector<QuadTree*>* quads;
+	void AddParticle(int particle);
+	void AddParticle(int particle, int thread);
+	int GetParticle(int index);
 
-	const int maxParticles = 100;
-	const int particlesPerThreadLevel1 = 800;
-	const int particlesPerThreadLevel2 = particlesPerThreadLevel1 * 4;
-	const int particlesPerThreadLevel3 = particlesPerThreadLevel2 * 4;
-	const int maxDepth = 10;
+	QuadTree* GetParent();
+	QuadTree* GetSubTree(int index);
+
+	void ClearContent();
+	void RemoveChildren();
+	void CreateSubTrees();
+
+	void ResetSubTrees();
+	void ResetSubTrees(int threadCount);
+
+	Rect GetRect();
+	int GetDepth();
+
+	void MergeThreadVectors();
+
+	void Lock();
+	void Unlock();
+
+	void CompleteThread();
+	int CompletedThreads();
+
+private:
 	int depth;
 
-	int finishedThreads;
-
 	std::vector<int> particlesInQuad;
-	std::mutex QuadLock;
-	MultiIntVector particlesInQuadThreaded;
 
-	std::vector<int> internalParticle;
-	std::vector<glm::vec2> internalParticlePos;
-	std::vector<int> externalParticle;
+	int finishedThreads;
+	MultiIntVector particlesInQuadThreaded;
+	std::mutex QuadLock;
 
 	Rect rect;
 
 	QuadTree* parent = nullptr;
 	QuadTree** subTree = nullptr;
-
-
-private:
-	CollisionChecker collisionChecker;
-
-	Rect paddedRect;
-	QuadTree** secretSubTree{};
-
-	Environment* environment;
-
-	void Build();
-	void HandleSubTrees();
-	void BuildThreaded(int start, int end, int threadCount, int ThreadNumber);
-	bool QuadLimitReached() const;
-	void BuildBigSubTreesThreaded();
-	void CreateSubTrees();
-	void PopulateQuadTreeWithParticles();
-	void PopulateQuadTreeWithParticlesThreaded(int start, int end, int ThreadNumber);
-	void BuildSubTrees() const;
-	void BuildSubTreesThreaded() const;
+	QuadTree** secretSubTree = nullptr;
 };
 

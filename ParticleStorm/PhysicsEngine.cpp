@@ -2,9 +2,9 @@
 #include <iostream>
 #include "Timer.h"
 #include "Range.h"
-#include <map>
-#include "QuadTree.h"
+#include "LinearQuad.h"
 #include <detail/func_geometric.inl>
+#include "QuadTreeHandler.h"
 
 PhysicsEngine::PhysicsEngine(Environment* environment) {
 	this->environment = environment;
@@ -85,7 +85,7 @@ void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, c
 		particleResting[particle2] = true;
 }
 
-void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, const int localParticle2, LinearQuad* tree) const {
 	float dist = 0;
 	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], tree->internalParticlePos[localParticle2], dist)) {
 		const int globalParticle1 = tree->internalParticle[localParticle1];
@@ -96,7 +96,7 @@ void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, cons
 	}
 }
 
-void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, LinearQuad* tree) const {
 	const int globalParticle2 = tree->externalParticle[localParticle2];
 	float dist = 0;
 	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], environment->particlePos[globalParticle2], dist)) {
@@ -107,7 +107,7 @@ void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const i
 }
 
 
-void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const {
+void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int localParticle2, LinearQuad* tree) const {
 	const int globalParticle1 = tree->externalParticle[localParticle1];
 	const int globalParticle2 = tree->externalParticle[localParticle2];
 	float dist = 0;
@@ -116,13 +116,13 @@ void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int lo
 	}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
+void PhysicsEngine::LinearQuadParticleCollisions(LinearQuad* tree) const {
 	const int internalParticles = tree->internalParticle.size();
 	const int externalParticles = tree->externalParticle.size();
-
-	for (int i = 0; i < internalParticles; ++i) {	//All internal particles against each other
-		for (int j = i + 1; j < internalParticles; ++j) {
-			QuadInternalParticleCollision(i, j, tree);
+	
+	for (int i = 0; i < externalParticles; ++i) {		//All external particles against each other
+		for (int j = i + 1; j < externalParticles; ++j) {
+			QuadExternalCollision(i, j, tree);
 		}
 	}
 
@@ -132,36 +132,19 @@ void PhysicsEngine::QuadTreeParticleCollisions(QuadTree* tree) const {
 		}
 	}
 
-	for (int i = 0; i < externalParticles; ++i) {		//All external particles against each other
-		for (int j = i + 1; j < externalParticles; ++j) {
-			QuadExternalCollision(i, j, tree);
+	for (int i = 0; i < internalParticles; ++i) {	//All internal particles against each other
+		for (int j = i + 1; j < internalParticles; ++j) {
+			QuadInternalParticleCollision(i, j, tree);
 		}
 	}
 }
 
-void PhysicsEngine::QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
+void PhysicsEngine::LinearQuadParticleCollisions(std::vector<LinearQuad*>* quads, const int start, const int end) const {
 	for (int i = start; i < end; ++i) {
-		QuadTreeParticleCollisions((*quads)[i]);
+		LinearQuadParticleCollisions((*quads)[i]);
 	}
 }
 
-void PhysicsEngine::CalculateQuadTreeOverflow(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const {
-	for (int i = start; i < end; ++i) {
-		QuadTree* quad = (*quads)[i];
-		quad->externalParticle.clear();
-		quad->internalParticle.clear();
-		quad->internalParticlePos.clear();
-		for (int j = 0; j < quad->particlesInQuad.size(); ++j) {
-			const int globalParticle = quad->particlesInQuad[j];
-			if (environment->particleQuadCount[globalParticle] > 1) {
-				quad->externalParticle.push_back(globalParticle);
-			} else {
-				quad->internalParticle.push_back(globalParticle);
-				quad->internalParticlePos.push_back(environment->particlePos[globalParticle]);
-			}
-		}
-	}
-}
 
 void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 	for (int i = start; i < end; i++) {
@@ -203,8 +186,8 @@ void PhysicsEngine::LeadThreadRun() {
 	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
 
 
-	ConcurrentVector<QuadTree*>* quads = new ConcurrentVector<QuadTree*>();
-	QuadTree tree(nullptr, environment, Rect(0, 0, environment->worldWidth, environment->worldHeight), quads);
+	QuadTreeHandler quadTreeHandler(environment);
+	auto linearQuads = new std::vector<LinearQuad*>();
 
 	while (!environment->done) {
 
@@ -219,20 +202,15 @@ void PhysicsEngine::LeadThreadRun() {
 
 		//QUADTREE
 		timer.Restart();
-		tree.BuildRoot();
-		environment->workerThreads.JoinWorkerThreads();
 		std::vector<Range> quadSections;
-		environment->workerThreads.PartitionForWorkers(quads->size(), quadSections);
-		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { CalculateQuadTreeOverflow(quads, quadSection.lower, quadSection.upper); });
-		environment->workerThreads.JoinWorkerThreads();
+		quadTreeHandler.BuildLinearQuadTree(linearQuads, quadSections);
 		timer.Stop();
 		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { QuadTreeParticleCollisions(quads, quadSection.lower, quadSection.upper); });
+			environment->workerThreads.AddWork([=] { LinearQuadParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
 		environment->workerThreads.JoinWorkerThreads();
 		timer.Stop();
 		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
