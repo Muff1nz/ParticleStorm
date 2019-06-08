@@ -3,7 +3,8 @@
 
 #include "Environment.h"
 #include "NumberGenerator.h"
-#include "QuadTree.h"
+#include "LinearQuad.h"
+#include "CollisionChecker.h"
 
 class PhysicsEngine {
 public:
@@ -18,25 +19,24 @@ private:
 	const float minPhysicsDeltaTime = 1.0f / 1000.0f; 
 	const glm::vec2 gravity = glm::vec2(0, -400);
 	const float friction = 0.99f;
-	const float doubleRadius;
 
 	NumberGenerator rng;
 
 	Environment* environment;
 
 	std::thread LeadThread;
+	CollisionChecker collisionChecker;
 
 	void ResolveCollision(int particle1, int particle2, float dist) const;
-	void QuadInternalParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
-	void QuadMixedParticleCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
-	void QuadExternalCollision(const int localParticle1, const int localParticle2, QuadTree* tree) const;
-	void QuadTreeParticleCollisions(QuadTree* tree) const;
-	void QuadTreeParticleCollisions(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const;
+	void QuadInternalParticleCollision(int localParticle1, int localParticle2, LinearQuad* tree) const;
+	void QuadMixedParticleCollision(int localParticle1, int localParticle2, LinearQuad* tree) const;
+	void QuadExternalCollision(int localParticle1, int localParticle2, LinearQuad* tree) const;
+	void LinearQuadParticleCollisions(LinearQuad* tree) const;
+	void LinearQuadParticleCollisions(std::vector<LinearQuad*>* quads, int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;
 	void HandleExplosions() const;
-	void BoundingBoxCollision(int particle) const;
+	void WorldBoundsCheck(int particle) const;
 
-	void CalculateQuadTreeOverflow(ConcurrentVector<QuadTree*>* quads, const int start, const int end) const;
 	void LeadThreadRun();
 };
 
