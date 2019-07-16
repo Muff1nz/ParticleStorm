@@ -460,7 +460,7 @@ VkShaderModule RenderEngineVulkan::CreateShaderModule(const std::vector<char>& c
 	return shaderModule;
 }
 
-void RenderEngineVulkan::CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline) {
+void RenderEngineVulkan::CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing) {
 	auto vertShaderCode = ReadFile(vert);
 	auto fragShaderCode = ReadFile(frag);
 	auto vertShaderModule = CreateShaderModule(vertShaderCode);
@@ -481,8 +481,8 @@ void RenderEngineVulkan::CreateGraphicsPipeline(std::string vert, std::string fr
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	auto bindingDescriptions = CreateVertexBindingDescription();
-	auto attributeDescriptions = CreateVertexAttributeDescription();
+	auto bindingDescriptions = CreateVertexBindingDescription(instancing);
+	auto attributeDescriptions = CreateVertexAttributeDescription(instancing);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -716,8 +716,8 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, backgroundPipeline);
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(commandBuffers[i], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->particleCount), 0, 0, 0);
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, backgroundPipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 		//Particles
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, particlesPipeline);		
@@ -789,21 +789,25 @@ void RenderEngineVulkan::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usag
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
-std::vector<VkVertexInputBindingDescription> RenderEngineVulkan::CreateVertexBindingDescription() {
+std::vector<VkVertexInputBindingDescription> RenderEngineVulkan::CreateVertexBindingDescription(bool instancing) {
 	std::vector<VkVertexInputBindingDescription> bindingDescriptions = {};
 	bindingDescriptions.push_back(Vertex::getBindingDescription());
-	bindingDescriptions.push_back(InstanceBufferObject::getBindingDescription());
+	if (instancing)
+		bindingDescriptions.push_back(InstanceBufferObject::getBindingDescription());
 	return bindingDescriptions;
 }
 
-std::vector<VkVertexInputAttributeDescription> RenderEngineVulkan::CreateVertexAttributeDescription() {
+std::vector<VkVertexInputAttributeDescription> RenderEngineVulkan::CreateVertexAttributeDescription(bool instancing) {
 	std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
 	for (auto attributeDescription : Vertex::getAttributeDescriptions()) {
 		attributeDescriptions.push_back(attributeDescription);
 	}
-	for (auto description : InstanceBufferObject::getAttributeDescriptions()) {
-		attributeDescriptions.push_back(description);
-	}
+
+	if (instancing) {
+		for (auto description : InstanceBufferObject::getAttributeDescriptions()) {
+			attributeDescriptions.push_back(description);
+		}
+	}	
 	return attributeDescriptions;
 }
 
@@ -968,6 +972,7 @@ void RenderEngineVulkan::CreateDescriptorSets() {
 std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->particleCount; }
 
 void RenderEngineVulkan::InitVulkan() {
+	//Move this into VulkanBackend
 	CreateInstance();
 	SetupDebugCallback();
 	CreateSurface();
@@ -976,9 +981,10 @@ void RenderEngineVulkan::InitVulkan() {
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
+
 	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline("particleVert.spv", "particleFrag.spv", particlesPipeline);
-	CreateGraphicsPipeline("backgroundVert.spv", "backgroundFrag.spv", backgroundPipeline);
+	CreateGraphicsPipeline("particleVert.spv", "particleFrag.spv", particlesPipeline, particlesPipelineLayout, true);
+	CreateGraphicsPipeline("backgroundVert.spv", "backgroundFrag.spv", backgroundPipeline, backgroundPipelineLayout, false);
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateVertexBuffer();
@@ -1075,7 +1081,8 @@ void RenderEngineVulkan::Dispose() {
 	}
 	vkDestroyPipeline(device, particlesPipeline, nullptr);
 	vkDestroyPipeline(device, backgroundPipeline, nullptr);
-	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+	vkDestroyPipelineLayout(device, particlesPipelineLayout, nullptr);
+	vkDestroyPipelineLayout(device, backgroundPipelineLayout, nullptr);
 	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 	for (auto imageView : swapChainImageViews) {
@@ -1167,7 +1174,7 @@ void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
 void RenderEngineVulkan::UpdateUniformBuffer(uint32_t imageIndex) {
 	UniformBufferObject ubo = {};
 	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
-	glm::mat4 model = glm::mat4(1) * scale(glm::mat4(1), { environment->worldWidth, environment->worldHeight, 1 });
+	glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->worldWidth / 2, environment->worldHeight / 2, 0)) * scale(glm::mat4(1), { environment->worldWidth / 2, environment->worldHeight / 2, 1 });
 	ubo.MVP = projView * model;
 
 	void* data;

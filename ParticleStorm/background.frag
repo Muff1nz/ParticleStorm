@@ -7,8 +7,9 @@ layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 pos;
 
 void main() {
-	vec4 outlineColor = {0.5, 0.5, 0.5, 1};
-	vec3 color = {1, 1, 1};
-	float outlineSize = 0.25f;
-    outColor = vec4(color, 1.0);
+	vec3 outlineColor = {0.5, 0.5, 0.5};
+	vec3 color = {0.75, 0.75, 0.75};
+	float outlineSize = 0.99f;
+	float inside = float(pos.x > -outlineSize && pos.x < outlineSize && pos.y > -outlineSize && pos.y < outlineSize);
+    outColor = vec4(color * inside + outlineColor * (1 - inside), 1.0);
 }

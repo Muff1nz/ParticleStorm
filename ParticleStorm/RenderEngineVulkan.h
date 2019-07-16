@@ -48,6 +48,7 @@ private:
 	VkDebugUtilsMessengerEXT callback;
 
 	//Vulkan
+	//What could be moved into "VulkanBackend"
 	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME	};
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -61,11 +62,14 @@ private:
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline particlesPipeline;
-	VkPipeline backgroundPipeline;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
+
+
+	VkPipelineLayout particlesPipelineLayout;
+	VkPipeline particlesPipeline;
+	VkPipelineLayout backgroundPipelineLayout;
+	VkPipeline backgroundPipeline;
+
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -79,6 +83,8 @@ private:
 	std::vector<VkDeviceMemory> particleInstanceMemorys;
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
+
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
 
@@ -132,15 +138,15 @@ private:
 	void CreateImageViews();
 	static std::vector<char> ReadFile(const std::string& filename);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
-	void CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline);
+	void CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing);
 	void CreateRenderPass();
 	void CreateFrameBuffers();
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	std::vector<VkVertexInputBindingDescription>CreateVertexBindingDescription();
-	std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription();
+	std::vector<VkVertexInputBindingDescription>CreateVertexBindingDescription(bool instancing);
+	std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription(bool instancing);
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
@@ -164,7 +170,6 @@ private:
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription;
 			bindingDescription.binding = 0;
-			std::cout << "vertex binding: " << bindingDescription.binding << "\n";
 			bindingDescription.stride = sizeof(Vertex);
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
@@ -213,25 +218,25 @@ private:
 	struct UniformBufferObject {
 		glm::mat4 MVP;
 
-		static VkDescriptorSetLayoutBinding getBindingDescription() {
-			VkDescriptorSetLayoutBinding bindingDescription = {};
-			bindingDescription.binding = 0;
-			bindingDescription.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			bindingDescription.descriptorCount = 1;
+		//static VkDescriptorSetLayoutBinding getBindingDescription() {
+		//	VkDescriptorSetLayoutBinding bindingDescription = {};
+		//	bindingDescription.binding = 0;
+		//	bindingDescription.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		//	bindingDescription.descriptorCount = 1;
 
-			return bindingDescription;
-		}
+		//	return bindingDescription;
+		//}
 
-		static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
-			for (int i = 0; i < 4; ++i) {
-				attributeDescriptions[i].binding = 1;
-				attributeDescriptions[i].location = i + 2;
-				attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-				attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
-			}
-			return attributeDescriptions;
-		}
+		//static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+		//	std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
+		//	for (int i = 0; i < 4; ++i) {
+		//		attributeDescriptions[i].binding = 1;
+		//		attributeDescriptions[i].location = i + 2;
+		//		attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		//		attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
+		//	}
+		//	return attributeDescriptions;
+		//}
 	};
 
 	const glm::vec3 color = { 0.0f, 1.0f, 0.0f };
