@@ -159,6 +159,8 @@
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="background.frag" />
+    <None Include="background.vert" />
     <None Include="test.frag" />
     <None Include="test.vert" />
   </ItemGroup>

@@ -63,14 +63,13 @@ private:
 	VkRenderPass renderPass;
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
+	VkPipeline particlesPipeline;
+	VkPipeline backgroundPipeline;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
+
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
-	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
-	size_t currentFrame = 0;
+
 	//Data for the stuff that we draw
 	VkBuffer quadVertexBuffer;
 	VkDeviceMemory quadVertexBufferMemory;
@@ -78,6 +77,15 @@ private:
 	VkDeviceMemory quadIndexBufferMemory;
 	std::vector<VkBuffer> particleInstanceBuffers;
 	std::vector<VkDeviceMemory> particleInstanceMemorys;
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSet> descriptorSets;
+
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	size_t currentFrame = 0;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -124,7 +132,7 @@ private:
 	void CreateImageViews();
 	static std::vector<char> ReadFile(const std::string& filename);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
-	void CreateGraphicsPipeline();
+	void CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline);
 	void CreateRenderPass();
 	void CreateFrameBuffers();
 	void CreateCommandPool();
@@ -139,10 +147,14 @@ private:
 	void CreateInstanceBuffer();
 	void CreateDescriptorSetLayout();
 	std::size_t SizeOfMVPs() const;
+	void CreateUniformBuffers();
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
 	void InitVulkan();
 
 	//Vulkan/Engine
 	void UpdateInstanceBuffer(uint32_t imageIndex);
+	void UpdateUniformBuffer(uint32_t imageIndex);
 
 	//Vertex data
 	struct Vertex {
@@ -180,9 +192,32 @@ private:
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription;
 			bindingDescription.binding = 1;
-			std::cout << "instance binding: " << bindingDescription.binding << "\n";;
 			bindingDescription.stride = sizeof(InstanceBufferObject);
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+			return bindingDescription;
+		}
+
+		static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+			std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
+			for (int i = 0; i < 4; ++i) {
+				attributeDescriptions[i].binding = 1;
+				attributeDescriptions[i].location = i + 2;
+				attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+				attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
+			}
+			return attributeDescriptions;
+		}
+	};
+
+	struct UniformBufferObject {
+		glm::mat4 MVP;
+
+		static VkDescriptorSetLayoutBinding getBindingDescription() {
+			VkDescriptorSetLayoutBinding bindingDescription = {};
+			bindingDescription.binding = 0;
+			bindingDescription.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			bindingDescription.descriptorCount = 1;
 
 			return bindingDescription;
 		}

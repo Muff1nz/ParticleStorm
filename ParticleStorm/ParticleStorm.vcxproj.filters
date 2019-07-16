@@ -160,5 +160,11 @@
     <None Include="test.vert">
       <Filter>Shaders\Vertex</Filter>
     </None>
+    <None Include="background.vert">
+      <Filter>Shaders\Vertex</Filter>
+    </None>
+    <None Include="background.frag">
+      <Filter>Shaders\Fragment</Filter>
+    </None>
   </ItemGroup>
 </Project>
