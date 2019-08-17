@@ -1,10 +1,9 @@
 #include "RenderEntityFactory.h"
 
+RenderEntityFactory::RenderEntityFactory() = default;
 
+RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntityFactory::RenderEntityFactory() {
-}
-
-
-RenderEntityFactory::~RenderEntityFactory() {
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderTransform transform, bool isStatic, std::string vertexShader, std::string fragmentShader) {
+	return nullptr;
 }

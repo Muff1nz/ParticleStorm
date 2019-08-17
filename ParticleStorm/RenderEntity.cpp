@@ -10,7 +10,7 @@ RenderEntity::~RenderEntity() {
 	Dispose();
 }
 
-bool RenderEntity::IsStatic() {
+bool RenderEntity::IsStatic() const {
 	return isStatic;
 }
 

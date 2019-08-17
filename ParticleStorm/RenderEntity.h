@@ -8,6 +8,7 @@ public:
 	RenderEntity(RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, bool isStatic);
 	~RenderEntity();
 
+	bool IsStatic() const;
 	void Dispose();
 private:
 	bool isDisposed = false;

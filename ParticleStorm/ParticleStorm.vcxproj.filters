@@ -99,16 +99,22 @@
     <ClCompile Include="Rect.cpp">
       <Filter>Source Files\DataStructures</Filter>
     </ClCompile>
-    <ClCompile Include="RenderEntitySingular.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderEntityInstanced.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
     <ClCompile Include="RenderEntity.cpp">
       <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
     <ClCompile Include="RenderEntityFactory.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDataCore.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDataInstanced.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDataSingular.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTransform.cpp">
       <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
   </ItemGroup>
@@ -170,16 +176,22 @@
     <ClInclude Include="LinearQuad.h">
       <Filter>Header Files\Physics\QuadTree</Filter>
     </ClInclude>
-    <ClInclude Include="RenderEntitySingular.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderEntityInstanced.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
-    </ClInclude>
     <ClInclude Include="RenderEntity.h">
       <Filter>Header Files\Graphics\RenderEntity</Filter>
     </ClInclude>
     <ClInclude Include="RenderEntityFactory.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataCore.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataInstanced.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataSingular.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTransform.h">
       <Filter>Header Files\Graphics\RenderEntity</Filter>
     </ClInclude>
   </ItemGroup>
