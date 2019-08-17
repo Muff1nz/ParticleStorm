@@ -52,6 +52,12 @@
     <Filter Include="Source Files\DataStructures">
       <UniqueIdentifier>{fb57c695-06aa-4fbe-82bd-34ee6bf12628}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\RenderEntity">
+      <UniqueIdentifier>{bf2ac1bd-e4b2-4a6a-bc84-036b5aefaae1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\RenderEntity">
+      <UniqueIdentifier>{5d2e3e08-f516-4799-86d9-6d43b40b9330}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -92,6 +98,18 @@
     </ClCompile>
     <ClCompile Include="Rect.cpp">
       <Filter>Source Files\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntitySingular.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntityInstanced.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntity.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntityFactory.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +169,18 @@
     </ClInclude>
     <ClInclude Include="LinearQuad.h">
       <Filter>Header Files\Physics\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntitySingular.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntityInstanced.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntity.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntityFactory.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

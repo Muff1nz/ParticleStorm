@@ -15,8 +15,8 @@ public:
 	const int screenWidth = 2300;
 	const int screenHeight = 1200;
 
-	const int particleCount = 50000;
-	const float particleRadius = 10;
+	const int particleCount = 2000;
+	const float particleRadius = 50;
 
 	const int worldWidth = 9000;
 	const int worldHeight = 6000;

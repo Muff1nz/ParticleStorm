@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <optional>
-#include <iostream>
 #include <thread>
 #include <array>
 
@@ -217,26 +216,6 @@ private:
 
 	struct UniformBufferObject {
 		glm::mat4 MVP;
-
-		//static VkDescriptorSetLayoutBinding getBindingDescription() {
-		//	VkDescriptorSetLayoutBinding bindingDescription = {};
-		//	bindingDescription.binding = 0;
-		//	bindingDescription.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		//	bindingDescription.descriptorCount = 1;
-
-		//	return bindingDescription;
-		//}
-
-		//static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
-		//	std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
-		//	for (int i = 0; i < 4; ++i) {
-		//		attributeDescriptions[i].binding = 1;
-		//		attributeDescriptions[i].location = i + 2;
-		//		attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		//		attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
-		//	}
-		//	return attributeDescriptions;
-		//}
 	};
 
 	const glm::vec3 color = { 0.0f, 1.0f, 0.0f };
