@@ -7,7 +7,7 @@ public:
 	RenderEntityFactory();
 	~RenderEntityFactory();
 
-	RenderEntity* CreateRenderEntity(RenderDataVulkanContext renderDataVulkanBackend, RenderTransform transform, bool isStatic, std::string vertexShader, std::string fragmentShader);
+	RenderEntity* CreateRenderEntity(RenderDataVulkanContext* renderDataVulkanBackend, RenderTransform* transform, bool isStatic, std::string vertexShader, std::string fragmentShader);
 
 private:
 	std::vector<char> ReadFile(const std::string& filename);
@@ -18,8 +18,7 @@ private:
 	void CreateInstanceBuffer(RenderDataVulkanContext& renderDataVulkanContext, RenderDataInstanced* renderDataInstanced);
 	uint32_t FindMemoryType(RenderDataVulkanContext& vulkanContext, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CopyBuffer(RenderDataVulkanContext& vulkanContext, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-	void CreateDescriptorSetLayout(RenderDataVulkanContext& renderDataVulkanContext,
-	                               RenderDataSingular* renderDataSingular);
+	void CreateDescriptorSetLayout(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
 	void CreateUniformBuffers(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
 	void CreateDescriptorPool(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
 	void CreateDescriptorSets(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);

@@ -21,8 +21,6 @@ public:
 	const int worldWidth = 9000;
 	const int worldHeight = 3600;
 
-	std::mutex renderLock;
-
 	Camera camera;
 
 	bool done{};

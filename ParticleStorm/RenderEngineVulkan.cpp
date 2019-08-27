@@ -19,6 +19,7 @@
 #include <array>
 
 #include "Timer.h"
+#include "RenderEntityFactory.h"
 
 
 //     _____                _                   _                   __  _____            _                   _             
@@ -460,141 +461,6 @@ VkShaderModule RenderEngineVulkan::CreateShaderModule(const std::vector<char>& c
 	return shaderModule;
 }
 
-void RenderEngineVulkan::CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing) {
-	auto vertShaderCode = ReadFile(vert);
-	auto fragShaderCode = ReadFile(frag);
-	auto vertShaderModule = CreateShaderModule(vertShaderCode);
-	auto fragShaderModule = CreateShaderModule(fragShaderCode);
-
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = vertShaderModule;
-	vertShaderStageInfo.pName = "main";
-
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = fragShaderModule;
-	fragShaderStageInfo.pName = "main";
-
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	auto bindingDescriptions = CreateVertexBindingDescription(instancing);
-	auto attributeDescriptions = CreateVertexAttributeDescription(instancing);
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)swapChainExtent.width;
-	viewport.height = (float)swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = swapChainExtent;
-
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
-	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
-
-	VkPipelineRasterizationStateCreateInfo rasterizer = {};
-	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = VK_FALSE;
-	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	//rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	//rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterizer.depthBiasEnable = VK_FALSE;
-	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-	rasterizer.depthBiasClamp = 0.0f; // Optional
-	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
-
-	VkPipelineMultisampleStateCreateInfo multisampling = {};
-	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	multisampling.minSampleShading = 1.0f; // Optional
-	multisampling.pSampleMask = nullptr; // Optional
-	multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-	multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
-	VkPipelineColorBlendAttachmentState colorBlendAttachment;
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-	VkPipelineColorBlendStateCreateInfo colorBlending = {};
-	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlending.logicOpEnable = VK_FALSE;
-	colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
-	colorBlending.blendConstants[0] = 0.0f; // Optional
-	colorBlending.blendConstants[1] = 0.0f; // Optional
-	colorBlending.blendConstants[2] = 0.0f; // Optional
-	colorBlending.blendConstants[3] = 0.0f; // Optional
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create pipeline layout!");
-	}
-
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr; // Optional
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr; // Optional
-	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = renderPass;
-	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	pipelineInfo.basePipelineIndex = -1; // Optional
-
-	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create graphics pipeline!");
-	}
-
-	vkDestroyShaderModule(device, fragShaderModule, nullptr);
-	vkDestroyShaderModule(device, vertShaderModule, nullptr);
-}
-
 void RenderEngineVulkan::CreateRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = swapChainImageFormat;
@@ -709,27 +575,9 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkBuffer vertexBuffers[] = { quadVertexBuffer };
-		VkBuffer instanceBuffer[] = { particleInstanceBuffers[i] };
-		VkDeviceSize offsets[] = { 0 };
 
-		//Background
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, backgroundPipeline);
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffers[i], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, backgroundPipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-
-		//Particles
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, particlesPipeline);		
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindVertexBuffers(commandBuffers[i], 1, 1, instanceBuffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffers[i], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);		
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(environment->particleCount), 0, 0, 0);
-
-
-		//vkCmdBindVertexBuffers()
-		//
-
+		renderEntityBackground->BindToCommandPool(commandBuffers, vertexBuffers, quadIndexBuffer, indices, i);
+		renderEntityParticles->BindToCommandPool(commandBuffers, vertexBuffers, quadIndexBuffer, indices, i);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -862,115 +710,6 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-void RenderEngineVulkan::CreateInstanceBuffer() {
-	MVP_Array = new InstanceBufferObject[environment->particleCount];
-	particleInstanceBuffers.resize(swapChainImages.size());
-	particleInstanceMemorys.resize(swapChainImages.size());
-	for (int i = 0; i < swapChainImages.size(); ++i) {
-		for (int j = 0; j < environment->particleCount; ++j) {
-			MVP_Array[j].MVP = glm::mat4(1);
-		}
-
-
-		VkDeviceSize bufferSize = SizeOfMVPs();
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		void* data;
-		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, MVP_Array, (size_t)bufferSize);
-		vkUnmapMemory(device, stagingBufferMemory);
-
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, particleInstanceBuffers[i], particleInstanceMemorys[i]);
-		CopyBuffer(stagingBuffer, particleInstanceBuffers[i], bufferSize);
-
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
-	}
-}
-
-void RenderEngineVulkan::CreateDescriptorSetLayout() {
-	VkDescriptorSetLayoutBinding uboLayoutBinding;
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
-
-	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
-}
-
-void RenderEngineVulkan::CreateUniformBuffers() {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	uniformBuffers.resize(swapChainImages.size());
-	uniformBuffersMemory.resize(swapChainImages.size());
-
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
-	}
-}
-
-void RenderEngineVulkan::CreateDescriptorPool() {
-	VkDescriptorPoolSize poolSize;
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size());
-
-	VkDescriptorPoolCreateInfo poolInfo;
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
-	poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
-
-	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
-}
-
-void RenderEngineVulkan::CreateDescriptorSets() {
-	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
-	allocInfo.pSetLayouts = layouts.data();
-
-	descriptorSets.resize(swapChainImages.size());
-	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
-
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = uniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = descriptorSets[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr; // Optional
-		descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-	}
-}
-
-std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->particleCount; }
-
 void RenderEngineVulkan::InitVulkan() {
 	//VulkanBackend
 	CreateInstance();
@@ -989,13 +728,26 @@ void RenderEngineVulkan::InitVulkan() {
 	CreateIndexBuffer();
 
 	//RenderEntity / RenderEntityFactory
-	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline("particleVert.spv", "particleFrag.spv", particlesPipeline, particlesPipelineLayout, true);
-	CreateGraphicsPipeline("backgroundVert.spv", "backgroundFrag.spv", backgroundPipeline, backgroundPipelineLayout, false);	
-	CreateInstanceBuffer();	
-	CreateUniformBuffers();
-	CreateDescriptorPool();
-	CreateDescriptorSets();
+	RenderEntityFactory renderEntityFactory;
+
+	RenderDataVulkanContext renderDataVulkanContext;
+	renderDataVulkanContext.physicalDevice = physicalDevice;
+	renderDataVulkanContext.device = device;
+	renderDataVulkanContext.graphicsQueue = graphicsQueue;
+	renderDataVulkanContext.renderPass = renderPass;
+	renderDataVulkanContext.swapChainExtent = swapChainExtent;
+	renderDataVulkanContext.swapChainImages = swapChainImages;
+	renderDataVulkanContext.commandPool = commandPool;
+
+	RenderTransform renderTransform;
+	renderTransform.pos = environment->particlePos;
+	renderTransform.posCount = environment->particleCount;
+	renderEntityParticles = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform, false, "particleVert.spv", "particleFrag.spv");
+
+	RenderTransform renderTransform2;
+	renderTransform.pos = new glm::vec2(0, 0);
+	renderTransform.posCount = 1;
+	renderEntityBackground = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform2, false, "backgroundVert.spv", "backgroundFrag.spv");
 
 	//RenderEngineVulkan
 	CreateCommandBuffers();
@@ -1057,7 +809,8 @@ void RenderEngineVulkan::Init() {
 //                                   |_|    
 
 void RenderEngineVulkan::Dispose() {
-	if (isDisposed) return;
+	if (isDisposed)
+		return;
 
 	delete MVP_Array;
 
@@ -1068,15 +821,9 @@ void RenderEngineVulkan::Dispose() {
 		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
-	vkDestroyCommandPool(device, commandPool, nullptr);
-	for (size_t i = 0; i < swapChainImages.size(); ++i) {
-		vkDestroyBuffer(device, particleInstanceBuffers[i], nullptr);
-		vkFreeMemory(device, particleInstanceMemorys[i], nullptr);
 
-		vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-		vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-	}
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+	vkDestroyCommandPool(device, commandPool, nullptr);
+
 	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
 	vkFreeMemory(device, quadIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadVertexBuffer, nullptr);
@@ -1084,24 +831,27 @@ void RenderEngineVulkan::Dispose() {
 	for (auto framebuffer : swapChainFrameBuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
-	vkDestroyPipeline(device, particlesPipeline, nullptr);
-	vkDestroyPipeline(device, backgroundPipeline, nullptr);
-	vkDestroyPipelineLayout(device, particlesPipelineLayout, nullptr);
-	vkDestroyPipelineLayout(device, backgroundPipelineLayout, nullptr);
-	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+
+	delete renderEntityParticles;
+	delete renderEntityBackground;
+
     vkDestroyRenderPass(device, renderPass, nullptr);
 	for (auto imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
+
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyDevice(device, nullptr);
+
 	if (enableValidationLayers) {
 		DestroyDebugUtilsMessengerEXT(instance, callback, nullptr);
 	}
+
 	vkDestroyInstance(instance, nullptr);
 	glfwDestroyWindow(window);
 	glfwTerminate();
+
 	isDisposed = true;
 }
 
@@ -1160,34 +910,6 @@ void RenderEngineVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void RenderEngineVulkan::UpdateInstanceBuffer(uint32_t imageIndex) {
-	glm::vec2* particles = environment->particlePos;
-	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
-
-	for (int i = 0; i < environment->particleCount; ++i) {
-		glm::vec2 pos = particles[i];
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
-		MVP_Array[i].MVP = projView * model;
-	}
-
-	void* data;
-	vkMapMemory(device, particleInstanceMemorys[imageIndex], 0, SizeOfMVPs(), 0, &data);
-	memcpy(data, MVP_Array, SizeOfMVPs());
-	vkUnmapMemory(device, particleInstanceMemorys[imageIndex]);
-}
-
-void RenderEngineVulkan::UpdateUniformBuffer(uint32_t imageIndex) {
-	UniformBufferObject ubo = {};
-	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
-	glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->worldWidth / 2, environment->worldHeight / 2, 0)) * scale(glm::mat4(1), { environment->worldWidth / 2, environment->worldHeight / 2, 1 });
-	ubo.MVP = projView * model;
-
-	void* data;
-	vkMapMemory(device, uniformBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(device, uniformBuffersMemory[imageIndex]);
-}
-
 //    _______ _                        _ _             
 //   |__   __| |                      | (_)            
 //      | |  | |__  _ __ ___  __ _  __| |_ _ __   __ _ 
@@ -1212,8 +934,8 @@ void RenderEngineVulkan::DrawFrame() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	UpdateInstanceBuffer(imageIndex);
-	UpdateUniformBuffer(imageIndex);
+	renderEntityBackground->UpdateBuffers(imageIndex, environment);
+	renderEntityParticles->UpdateBuffers(imageIndex, environment);	
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

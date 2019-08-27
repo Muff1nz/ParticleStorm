@@ -8,6 +8,7 @@
 #include <array>
 
 #include "Environment.h"
+#include "RenderEntity.h"
 
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
 class RenderEngineVulkan {
@@ -63,13 +64,6 @@ private:
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
-
-	VkPipelineLayout particlesPipelineLayout;
-	VkPipeline particlesPipeline;
-	VkPipelineLayout backgroundPipelineLayout;
-	VkPipeline backgroundPipeline;
-
-
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
@@ -78,14 +72,9 @@ private:
 	VkDeviceMemory quadVertexBufferMemory;
 	VkBuffer quadIndexBuffer;
 	VkDeviceMemory quadIndexBufferMemory;
-	std::vector<VkBuffer> particleInstanceBuffers;
-	std::vector<VkDeviceMemory> particleInstanceMemorys;
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
 
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
+	RenderEntity* renderEntityParticles;
+	RenderEntity* renderEntityBackground;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -137,7 +126,6 @@ private:
 	void CreateImageViews();
 	static std::vector<char> ReadFile(const std::string& filename);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
-	void CreateGraphicsPipeline(std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing);
 	void CreateRenderPass();
 	void CreateFrameBuffers();
 	void CreateCommandPool();
@@ -149,17 +137,7 @@ private:
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
-	void CreateInstanceBuffer();
-	void CreateDescriptorSetLayout();
-	std::size_t SizeOfMVPs() const;
-	void CreateUniformBuffers();
-	void CreateDescriptorPool();
-	void CreateDescriptorSets();
 	void InitVulkan();
-
-	//Vulkan/Engine
-	void UpdateInstanceBuffer(uint32_t imageIndex);
-	void UpdateUniformBuffer(uint32_t imageIndex);
 
 	//Vertex data
 	struct Vertex {
