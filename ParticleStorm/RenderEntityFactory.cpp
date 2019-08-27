@@ -11,24 +11,25 @@ RenderEntityFactory::RenderEntityFactory() = default;
 RenderEntityFactory::~RenderEntityFactory() = default;
 
 RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, bool isStatic, std::string vertexShader, std::string fragmentShader) {
-	RenderDataCore renderDataCore{};
-	renderDataCore.transform = *transform;
+	RenderDataCore* renderDataCore = new RenderDataCore();
+	renderDataCore->transform = *transform;
 
 	if (transform->posCount > 1) {
-		RenderDataInstanced renderDataInstanced;
-		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore.pipeline, renderDataCore.pipelineLayout, true);		
-		CreateInstanceBuffer(*renderDataVulkanContext, &renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, &renderDataCore, nullptr, &renderDataInstanced, isStatic);
+		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
+		renderDataInstanced->objectCount = transform->posCount;
+		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, true);
+		CreateInstanceBuffer(*renderDataVulkanContext, renderDataInstanced);
+		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, isStatic);
 	}
 
-	RenderDataSingular renderDataSingular;
-	CreateDescriptorSetLayout(*renderDataVulkanContext, &renderDataSingular);
-	CreateGraphicsPipeline(*renderDataVulkanContext, &renderDataSingular, vertexShader, fragmentShader, renderDataCore.pipeline, renderDataCore.pipelineLayout, false);
-	CreateUniformBuffers(*renderDataVulkanContext, &renderDataSingular);
-	CreateDescriptorPool(*renderDataVulkanContext, &renderDataSingular);
-	CreateDescriptorSets(*renderDataVulkanContext, &renderDataSingular);
+	RenderDataSingular* renderDataSingular = new RenderDataSingular();
+	CreateDescriptorSetLayout(*renderDataVulkanContext, renderDataSingular);
+	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, false);
+	CreateUniformBuffers(*renderDataVulkanContext, renderDataSingular);
+	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
+	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
 	
-	return new RenderEntity(renderDataVulkanContext, &renderDataCore, &renderDataSingular, nullptr, isStatic);
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, isStatic);
 }
 
 std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {
@@ -185,8 +186,8 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &renderDataSingular->descriptorSetLayout;
+	pipelineLayoutInfo.setLayoutCount = renderDataSingular != nullptr ? 1 : 0;
+	pipelineLayoutInfo.pSetLayouts = renderDataSingular != nullptr ? &renderDataSingular->descriptorSetLayout : nullptr;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
