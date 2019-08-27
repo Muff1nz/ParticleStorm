@@ -185,8 +185,8 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &renderDataSingular->descriptorSetLayout;
+	pipelineLayoutInfo.setLayoutCount = renderDataSingular != nullptr ? 1 : 0;
+	pipelineLayoutInfo.pSetLayouts = renderDataSingular != nullptr ? &renderDataSingular->descriptorSetLayout : nullptr;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 

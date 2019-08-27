@@ -747,7 +747,7 @@ void RenderEngineVulkan::InitVulkan() {
 	RenderTransform renderTransform2;
 	renderTransform.pos = new glm::vec2(0, 0);
 	renderTransform.posCount = 1;
-	renderEntityBackground = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform2, false, "backgroundVert.spv", "backgroundFrag.spv");
+	renderEntityBackground = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform2, true, "backgroundVert.spv", "backgroundFrag.spv");
 
 	//RenderEngineVulkan
 	CreateCommandBuffers();
