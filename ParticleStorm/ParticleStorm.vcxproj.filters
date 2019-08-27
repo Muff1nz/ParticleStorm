@@ -58,6 +58,12 @@
     <Filter Include="Source Files\Graphics\RenderEntity">
       <UniqueIdentifier>{5d2e3e08-f516-4799-86d9-6d43b40b9330}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Data">
+      <UniqueIdentifier>{803b4b30-a7ee-4789-9616-3507db4ea756}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\RenderEntity\Data">
+      <UniqueIdentifier>{8b352e24-5860-45ac-979b-6c8b983af107}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -103,18 +109,6 @@
       <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
     <ClCompile Include="RenderEntityFactory.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataCore.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataInstanced.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataSingular.cpp">
-      <Filter>Source Files\Graphics\RenderEntity</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderTransform.cpp">
       <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
   </ItemGroup>
@@ -182,17 +176,29 @@
     <ClInclude Include="RenderEntityFactory.h">
       <Filter>Header Files\Graphics\RenderEntity</Filter>
     </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="InstanceBufferObject.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformBufferObject.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
     <ClInclude Include="RenderDataCore.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataInstanced.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataSingular.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
     <ClInclude Include="RenderTransform.h">
-      <Filter>Header Files\Graphics\RenderEntity</Filter>
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataVulkanContext.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

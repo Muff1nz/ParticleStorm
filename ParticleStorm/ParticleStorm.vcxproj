@@ -132,13 +132,9 @@
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="QuadTreeHandler.cpp" />
     <ClCompile Include="Rect.cpp" />
-    <ClCompile Include="RenderDataCore.cpp" />
     <ClCompile Include="RenderEngineVulkan.cpp" />
     <ClCompile Include="RenderEntity.cpp" />
     <ClCompile Include="RenderEntityFactory.cpp" />
-    <ClCompile Include="RenderDataInstanced.cpp" />
-    <ClCompile Include="RenderDataSingular.cpp" />
-    <ClCompile Include="RenderTransform.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorkerThreadPool.cpp" />
@@ -148,6 +144,7 @@
     <ClInclude Include="CollisionChecker.h" />
     <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="Environment.h" />
+    <ClInclude Include="InstanceBufferObject.h" />
     <ClInclude Include="LinearQuad.h" />
     <ClInclude Include="MultiIntVector.h" />
     <ClInclude Include="NumberGenerator.h" />
@@ -158,6 +155,7 @@
     <ClInclude Include="Range.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderDataCore.h" />
+    <ClInclude Include="RenderDataVulkanContext.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="RenderEntity.h" />
     <ClInclude Include="RenderEntityFactory.h" />
@@ -167,7 +165,9 @@
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="UniformBufferObject.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <ItemGroup>

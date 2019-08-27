@@ -5,11 +5,7 @@
 #include "RenderTransform.h"
 
 struct RenderDataCore {
-	RenderDataCore();
-	~RenderDataCore();
-
 	RenderTransform transform;
-
 	VkPipelineLayout pipelineLayout;
 	VkPipeline pipeline;
 };

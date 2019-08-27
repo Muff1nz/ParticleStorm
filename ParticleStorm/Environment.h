@@ -12,14 +12,14 @@ class Environment {
 public:
 
 	const bool fullScreen = false;
-	const int screenWidth = 2300;
+	const int screenWidth = 3000;
 	const int screenHeight = 1200;
 
-	const int particleCount = 2000;
-	const float particleRadius = 50;
+	const int particleCount = 20000;
+	const float particleRadius = 15;
 
 	const int worldWidth = 9000;
-	const int worldHeight = 6000;
+	const int worldHeight = 3600;
 
 	std::mutex renderLock;
 

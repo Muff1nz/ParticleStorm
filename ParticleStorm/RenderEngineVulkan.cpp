@@ -972,7 +972,7 @@ void RenderEngineVulkan::CreateDescriptorSets() {
 std::size_t RenderEngineVulkan::SizeOfMVPs() const { return sizeof(InstanceBufferObject) * environment->particleCount; }
 
 void RenderEngineVulkan::InitVulkan() {
-	//Move this into VulkanBackend
+	//VulkanBackend
 	CreateInstance();
 	SetupDebugCallback();
 	CreateSurface();
@@ -982,17 +982,22 @@ void RenderEngineVulkan::InitVulkan() {
 	CreateImageViews();
 	CreateRenderPass();
 
-	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline("particleVert.spv", "particleFrag.spv", particlesPipeline, particlesPipelineLayout, true);
-	CreateGraphicsPipeline("backgroundVert.spv", "backgroundFrag.spv", backgroundPipeline, backgroundPipelineLayout, false);
+	//RenderEngineVulkan
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateVertexBuffer();
-	CreateInstanceBuffer();
 	CreateIndexBuffer();
+
+	//RenderEntity / RenderEntityFactory
+	CreateDescriptorSetLayout();
+	CreateGraphicsPipeline("particleVert.spv", "particleFrag.spv", particlesPipeline, particlesPipelineLayout, true);
+	CreateGraphicsPipeline("backgroundVert.spv", "backgroundFrag.spv", backgroundPipeline, backgroundPipelineLayout, false);	
+	CreateInstanceBuffer();	
 	CreateUniformBuffers();
 	CreateDescriptorPool();
 	CreateDescriptorSets();
+
+	//RenderEngineVulkan
 	CreateCommandBuffers();
 	CreateSyncObjects();
 }
