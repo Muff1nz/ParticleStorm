@@ -574,10 +574,8 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkBuffer vertexBuffers[] = { quadVertexBuffer };
-
-		renderEntityBackground->BindToCommandPool(commandBuffers, vertexBuffers, quadIndexBuffer, indices, i);
-		renderEntityParticles->BindToCommandPool(commandBuffers, vertexBuffers, quadIndexBuffer, indices, i);
+		renderEntityBackground->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
+		renderEntityParticles->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -730,24 +728,24 @@ void RenderEngineVulkan::InitVulkan() {
 	//RenderEntity / RenderEntityFactory
 	RenderEntityFactory renderEntityFactory;
 
-	RenderDataVulkanContext renderDataVulkanContext;
-	renderDataVulkanContext.physicalDevice = physicalDevice;
-	renderDataVulkanContext.device = device;
-	renderDataVulkanContext.graphicsQueue = graphicsQueue;
-	renderDataVulkanContext.renderPass = renderPass;
-	renderDataVulkanContext.swapChainExtent = swapChainExtent;
-	renderDataVulkanContext.swapChainImages = swapChainImages;
-	renderDataVulkanContext.commandPool = commandPool;
+	RenderDataVulkanContext* renderDataVulkanContext = new RenderDataVulkanContext();
+	renderDataVulkanContext->physicalDevice = physicalDevice;
+	renderDataVulkanContext->device = device;
+	renderDataVulkanContext->graphicsQueue = graphicsQueue;
+	renderDataVulkanContext->renderPass = renderPass;
+	renderDataVulkanContext->swapChainExtent = swapChainExtent;
+	renderDataVulkanContext->swapChainImages = swapChainImages;
+	renderDataVulkanContext->commandPool = commandPool;
 
-	RenderTransform renderTransform;
-	renderTransform.pos = environment->particlePos;
-	renderTransform.posCount = environment->particleCount;
-	renderEntityParticles = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform, false, "particleVert.spv", "particleFrag.spv");
+	RenderTransform* renderTransform = new RenderTransform();
+	renderTransform->pos = environment->particlePos;
+	renderTransform->posCount = environment->particleCount;
+	renderEntityParticles = renderEntityFactory.CreateRenderEntity(renderDataVulkanContext, renderTransform, false, "particleVert.spv", "particleFrag.spv");
 
-	RenderTransform renderTransform2;
-	renderTransform.pos = new glm::vec2(0, 0);
-	renderTransform.posCount = 1;
-	renderEntityBackground = renderEntityFactory.CreateRenderEntity(&renderDataVulkanContext, &renderTransform2, true, "backgroundVert.spv", "backgroundFrag.spv");
+	RenderTransform* renderTransform2 = new RenderTransform();
+	renderTransform2->pos = new glm::vec2(0, 0);
+	renderTransform2->posCount = 1;
+	renderEntityBackground = renderEntityFactory.CreateRenderEntity(renderDataVulkanContext, renderTransform2, true, "backgroundVert.spv", "backgroundFrag.spv");
 
 	//RenderEngineVulkan
 	CreateCommandBuffers();

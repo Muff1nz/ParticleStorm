@@ -59,8 +59,9 @@ void RenderEntity::UpdateBuffers(uint32_t imageIndex, Environment* environment) 
 	}
 }
 
-void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, VkBuffer* vertexBuffers, VkBuffer &quadIndexBuffer, const std::vector<uint16_t> &indices, int index) {
+void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, VkBuffer &quadVertexBuffer, VkBuffer &quadIndexBuffer, const std::vector<uint16_t> &indices, int index) const {
 	VkDeviceSize offsets[] = { 0 };
+	VkBuffer vertexBuffers[] = { quadVertexBuffer };
 
 	if (renderDataSingular != nullptr) {
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
@@ -80,7 +81,7 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 	}
 }
 
-void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* environment) {
+void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* environment) const {
 	glm::vec2* particles = renderDataCore->transform.pos;
 	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
 
