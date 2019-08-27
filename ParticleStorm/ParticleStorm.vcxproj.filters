@@ -52,6 +52,18 @@
     <Filter Include="Source Files\DataStructures">
       <UniqueIdentifier>{fb57c695-06aa-4fbe-82bd-34ee6bf12628}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\RenderEntity">
+      <UniqueIdentifier>{bf2ac1bd-e4b2-4a6a-bc84-036b5aefaae1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\RenderEntity">
+      <UniqueIdentifier>{5d2e3e08-f516-4799-86d9-6d43b40b9330}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Data">
+      <UniqueIdentifier>{803b4b30-a7ee-4789-9616-3507db4ea756}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\RenderEntity\Data">
+      <UniqueIdentifier>{8b352e24-5860-45ac-979b-6c8b983af107}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -92,6 +104,12 @@
     </ClCompile>
     <ClCompile Include="Rect.cpp">
       <Filter>Source Files\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntity.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEntityFactory.cpp">
+      <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +170,36 @@
     <ClInclude Include="LinearQuad.h">
       <Filter>Header Files\Physics\QuadTree</Filter>
     </ClInclude>
+    <ClInclude Include="RenderEntity.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntityFactory.h">
+      <Filter>Header Files\Graphics\RenderEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="InstanceBufferObject.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformBufferObject.h">
+      <Filter>Header Files\Graphics\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataCore.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataInstanced.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataSingular.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTransform.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataVulkanContext.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.frag">
@@ -159,6 +207,12 @@
     </None>
     <None Include="test.vert">
       <Filter>Shaders\Vertex</Filter>
+    </None>
+    <None Include="background.vert">
+      <Filter>Shaders\Vertex</Filter>
+    </None>
+    <None Include="background.frag">
+      <Filter>Shaders\Fragment</Filter>
     </None>
   </ItemGroup>
 </Project>

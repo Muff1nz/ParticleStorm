@@ -4,11 +4,11 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <optional>
-#include <iostream>
 #include <thread>
 #include <array>
 
 #include "Environment.h"
+#include "RenderEntity.h"
 
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
 class RenderEngineVulkan {
@@ -48,6 +48,7 @@ private:
 	VkDebugUtilsMessengerEXT callback;
 
 	//Vulkan
+	//What could be moved into "VulkanBackend"
 	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME	};
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -61,23 +62,24 @@ private:
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
+
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
-	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
-	size_t currentFrame = 0;
+
 	//Data for the stuff that we draw
 	VkBuffer quadVertexBuffer;
 	VkDeviceMemory quadVertexBufferMemory;
 	VkBuffer quadIndexBuffer;
 	VkDeviceMemory quadIndexBufferMemory;
-	std::vector<VkBuffer> particleInstanceBuffers;
-	std::vector<VkDeviceMemory> particleInstanceMemorys;
+
+	RenderEntity* renderEntityParticles;
+	RenderEntity* renderEntityBackground;
+
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	size_t currentFrame = 0;
 
 	//GLFW
 	GLFWwindow* window{};
@@ -124,25 +126,18 @@ private:
 	void CreateImageViews();
 	static std::vector<char> ReadFile(const std::string& filename);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
-	void CreateGraphicsPipeline();
 	void CreateRenderPass();
 	void CreateFrameBuffers();
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	std::vector<VkVertexInputBindingDescription>CreateVertexBindingDescription();
-	std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription();
+	std::vector<VkVertexInputBindingDescription>CreateVertexBindingDescription(bool instancing);
+	std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription(bool instancing);
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
-	void CreateInstanceBuffer();
-	void CreateDescriptorSetLayout();
-	std::size_t SizeOfMVPs() const;
 	void InitVulkan();
-
-	//Vulkan/Engine
-	void UpdateInstanceBuffer(uint32_t imageIndex);
 
 	//Vertex data
 	struct Vertex {
@@ -152,7 +147,6 @@ private:
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription;
 			bindingDescription.binding = 0;
-			std::cout << "vertex binding: " << bindingDescription.binding << "\n";
 			bindingDescription.stride = sizeof(Vertex);
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
@@ -180,7 +174,6 @@ private:
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription;
 			bindingDescription.binding = 1;
-			std::cout << "instance binding: " << bindingDescription.binding << "\n";;
 			bindingDescription.stride = sizeof(InstanceBufferObject);
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
@@ -197,6 +190,10 @@ private:
 			}
 			return attributeDescriptions;
 		}
+	};
+
+	struct UniformBufferObject {
+		glm::mat4 MVP;
 	};
 
 	const glm::vec3 color = { 0.0f, 1.0f, 0.0f };
