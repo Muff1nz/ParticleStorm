@@ -3,7 +3,6 @@
 #include "RenderDataSingular.h"
 #include "RenderDataInstanced.h"
 #include "RenderDataVulkanContext.h"
-#include "Camera.h"
 #include "Environment.h"
 
 class RenderEntity {
