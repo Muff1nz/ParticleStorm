@@ -73,8 +73,7 @@ private:
 	VkBuffer quadIndexBuffer;
 	VkDeviceMemory quadIndexBufferMemory;
 
-	RenderEntity* renderEntityParticles;
-	RenderEntity* renderEntityBackground;
+	std::vector<RenderEntity*> renderEntities;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -137,6 +136,7 @@ private:
 	void CreateVertexBuffer();
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateIndexBuffer();
+	void CreateRenderEntities();
 	void InitVulkan();
 
 	//Vertex data
