@@ -10,7 +10,7 @@ RenderEntityFactory::RenderEntityFactory() = default;
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, bool isStatic, std::string vertexShader, std::string fragmentShader) {
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, const std::string& vertexShader, const std::string& fragmentShader) {
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
 
@@ -19,7 +19,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderDataVulkanContext* r
 		renderDataInstanced->objectCount = transform->posCount;
 		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, true);
 		CreateInstanceBuffer(*renderDataVulkanContext, renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, isStatic);
+		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced);
 	}
 
 	RenderDataSingular* renderDataSingular = new RenderDataSingular();
@@ -28,8 +28,8 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderDataVulkanContext* r
 	CreateUniformBuffers(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
-	
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, isStatic);
+
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr);
 }
 
 std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {

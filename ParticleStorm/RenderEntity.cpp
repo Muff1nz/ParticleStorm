@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "Environment.h"
 
-RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular,	RenderDataInstanced* renderDataInstanced, const bool isStatic) : isStatic(isStatic) {
+RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced) {
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
 	this->renderDataSingular = renderDataSingular;
@@ -12,10 +12,6 @@ RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, Ren
 
 RenderEntity::~RenderEntity() {
 	Dispose();
-}
-
-bool RenderEntity::IsStatic() const {
-	return isStatic;
 }
 
 void RenderEntity::Dispose() {
@@ -49,7 +45,7 @@ void RenderEntity::Dispose() {
 	isDisposed = true;
 }
 
-void RenderEntity::UpdateBuffers(uint32_t imageIndex, Environment* environment) {
+void RenderEntity::UpdateBuffers(uint32_t imageIndex, Environment* environment) const {
 	if (renderDataSingular != nullptr) {
 		UpdateUniformBuffer(imageIndex, environment);
 	}
@@ -87,7 +83,7 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* enviro
 
 	for (int i = 0; i < renderDataInstanced->objectCount; ++i) {
 		glm::vec2 pos = particles[i];
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { environment->particleRadius, environment->particleRadius, 1 });
+		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
 		renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
 	}
 
@@ -99,10 +95,10 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* enviro
 	vkUnmapMemory(renderDataVulkanContext->device, renderDataInstanced->instanceMemory[imageIndex]);
 }
 
-void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Environment* environment) {
+void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Environment* environment) const {
 	UniformBufferObject ubo = {};
 	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
-	glm::mat4 model = translate(glm::mat4(1), glm::vec3(environment->worldWidth / 2, environment->worldHeight / 2, 0)) * scale(glm::mat4(1), { environment->worldWidth / 2, environment->worldHeight / 2, 1 });
+	glm::mat4 model = translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
 	ubo.MVP = projView * model;
 
 	void* data;

@@ -574,8 +574,8 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		renderEntityBackground->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
-		renderEntityParticles->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
+		for (auto renderEntity : renderEntities) 
+			renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -708,6 +708,29 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
+void RenderEngineVulkan::CreateRenderEntities() {
+	RenderDataVulkanContext* renderDataVulkanContext = new RenderDataVulkanContext();
+	renderDataVulkanContext->physicalDevice = physicalDevice;
+	renderDataVulkanContext->device = device;
+	renderDataVulkanContext->graphicsQueue = graphicsQueue;
+	renderDataVulkanContext->renderPass = renderPass;
+	renderDataVulkanContext->swapChainExtent = swapChainExtent;
+	renderDataVulkanContext->swapChainImages = swapChainImages;
+	renderDataVulkanContext->commandPool = commandPool;
+
+	RenderTransform* backgroundTransform = new RenderTransform();
+	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
+	backgroundTransform->posCount = 1;
+	backgroundTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
+	
+	RenderTransform* particlesTransform = new RenderTransform();
+	particlesTransform->pos = environment->particlePos;
+	particlesTransform->posCount = environment->particleCount;
+	particlesTransform->scale = { environment->particleRadius, environment->particleRadius };
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+}
+
 void RenderEngineVulkan::InitVulkan() {
 	//VulkanBackend
 	CreateInstance();
@@ -726,26 +749,7 @@ void RenderEngineVulkan::InitVulkan() {
 	CreateIndexBuffer();
 
 	//RenderEntity / RenderEntityFactory
-	RenderEntityFactory renderEntityFactory;
-
-	RenderDataVulkanContext* renderDataVulkanContext = new RenderDataVulkanContext();
-	renderDataVulkanContext->physicalDevice = physicalDevice;
-	renderDataVulkanContext->device = device;
-	renderDataVulkanContext->graphicsQueue = graphicsQueue;
-	renderDataVulkanContext->renderPass = renderPass;
-	renderDataVulkanContext->swapChainExtent = swapChainExtent;
-	renderDataVulkanContext->swapChainImages = swapChainImages;
-	renderDataVulkanContext->commandPool = commandPool;
-
-	RenderTransform* renderTransform = new RenderTransform();
-	renderTransform->pos = environment->particlePos;
-	renderTransform->posCount = environment->particleCount;
-	renderEntityParticles = renderEntityFactory.CreateRenderEntity(renderDataVulkanContext, renderTransform, false, "particleVert.spv", "particleFrag.spv");
-
-	RenderTransform* renderTransform2 = new RenderTransform();
-	renderTransform2->pos = new glm::vec2(0, 0);
-	renderTransform2->posCount = 1;
-	renderEntityBackground = renderEntityFactory.CreateRenderEntity(renderDataVulkanContext, renderTransform2, true, "backgroundVert.spv", "backgroundFrag.spv");
+	CreateRenderEntities();
 
 	//RenderEngineVulkan
 	CreateCommandBuffers();
@@ -830,8 +834,9 @@ void RenderEngineVulkan::Dispose() {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
 
-	delete renderEntityParticles;
-	delete renderEntityBackground;
+	for (int i = 0; i < renderEntities.size(); ++i) {
+		delete renderEntities[i];
+	}
 
     vkDestroyRenderPass(device, renderPass, nullptr);
 	for (auto imageView : swapChainImageViews) {
@@ -932,8 +937,8 @@ void RenderEngineVulkan::DrawFrame() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	renderEntityBackground->UpdateBuffers(imageIndex, environment);
-	renderEntityParticles->UpdateBuffers(imageIndex, environment);	
+	for (auto renderEntity : renderEntities)
+		renderEntity->UpdateBuffers(imageIndex, environment);
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
