@@ -46,6 +46,7 @@ void RenderEntity::Dispose() {
 }
 
 void RenderEntity::UpdateBuffers(uint32_t imageIndex, Environment* environment) const {
+	//TODO: Change the environment input to a camera.
 	if (renderDataSingular != nullptr) {
 		UpdateUniformBuffer(imageIndex, environment);
 	}

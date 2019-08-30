@@ -111,6 +111,12 @@
     <ClCompile Include="RenderEntityFactory.cpp">
       <Filter>Source Files\Graphics\RenderEntity</Filter>
     </ClCompile>
+    <ClCompile Include="RenderEngineVulkanBackend.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h">
@@ -199,6 +205,12 @@
     </ClInclude>
     <ClInclude Include="RenderDataVulkanContext.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEngineVulkanBackend.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

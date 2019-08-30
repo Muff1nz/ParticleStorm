@@ -133,10 +133,12 @@
     <ClCompile Include="QuadTreeHandler.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="RenderEngineVulkan.cpp" />
+    <ClCompile Include="RenderEngineVulkanBackend.cpp" />
     <ClCompile Include="RenderEntity.cpp" />
     <ClCompile Include="RenderEntityFactory.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Window.cpp" />
     <ClCompile Include="WorkerThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +159,7 @@
     <ClInclude Include="RenderDataCore.h" />
     <ClInclude Include="RenderDataVulkanContext.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
+    <ClInclude Include="RenderEngineVulkanBackend.h" />
     <ClInclude Include="RenderEntity.h" />
     <ClInclude Include="RenderEntityFactory.h" />
     <ClInclude Include="RenderDataInstanced.h" />
@@ -168,6 +171,7 @@
     <ClInclude Include="UniformBufferObject.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Window.h" />
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
