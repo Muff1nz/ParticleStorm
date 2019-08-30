@@ -5,15 +5,20 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <optional>
+#include "Window.h"
+#include "RenderDataVulkanContext.h"
 
 class Environment;
 
 class RenderEngineVulkanBackend {
 public:
-	RenderEngineVulkanBackend(Environment* environment);	
+	RenderEngineVulkanBackend();	
 	~RenderEngineVulkanBackend();
 
-	void Init(GLFWwindow* window);
+	void Init(Window* window);
+	RenderDataVulkanContext* GetRenderDataVulkanContext() const;
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 private:
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
@@ -24,12 +29,10 @@ private:
 	};
 	
 	struct SwapChainSupportDetails {
-		VkSurfaceCapabilitiesKHR capabilities;
+		VkSurfaceCapabilitiesKHR capabilities{};
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
 	};
-
-	Environment* environment;
 
 	const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
 #ifdef NDEBUG
@@ -38,7 +41,9 @@ private:
 	const bool enableValidationLayers = true;
 #endif
 	VkDebugUtilsMessengerEXT callback;
-	
+
+	Window* window;
+
 	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -53,6 +58,8 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> swapChainFrameBuffers;	
+
+	VkCommandPool commandPool;
 
 	void Dispose();
 	void CreateInstance();
@@ -74,4 +81,8 @@ private:
 	bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
 	std::vector<const char*> GetRequiredExtensions() const;
 	static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback);
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void CreateCommandPool();
+	void CreateFrameBuffers();
+
 };

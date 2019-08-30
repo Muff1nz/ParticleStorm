@@ -23,7 +23,7 @@ void Window::InitWindow(int height, int width, bool fullscreen) {
 
 		glfwSetWindowMonitor(window, monitor, 0, 0, 2560, 1440, mode->refreshRate);
 	} else
-		window = glfwCreateWindow(height, width, "Particle Storm", nullptr, nullptr);
+		window = glfwCreateWindow(width, height, "Particle Storm", nullptr, nullptr);
 }
 
 int Window::GetHeight() {

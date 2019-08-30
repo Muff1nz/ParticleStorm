@@ -11,4 +11,7 @@ struct  RenderDataVulkanContext {
 	VkExtent2D swapChainExtent;		
 	std::vector<VkImage> swapChainImages;
 	VkCommandPool commandPool;
+	std::vector<VkFramebuffer> swapChainFrameBuffers;
+	VkSwapchainKHR swapChain;
+	VkQueue presentQueue;
 };

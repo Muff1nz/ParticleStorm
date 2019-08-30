@@ -3,8 +3,7 @@
 #include "RenderEngineVulkan.h"
 #include <iostream>
 
-RenderEngineVulkanBackend::RenderEngineVulkanBackend(Environment* environment) {
-	this->environment = environment;
+RenderEngineVulkanBackend::RenderEngineVulkanBackend() {
 }
 
 RenderEngineVulkanBackend::~RenderEngineVulkanBackend() {
@@ -12,19 +11,21 @@ RenderEngineVulkanBackend::~RenderEngineVulkanBackend() {
 }
 
 
-void RenderEngineVulkanBackend::Init(GLFWwindow* window) {
+void RenderEngineVulkanBackend::Init(Window* window) {
 	CreateInstance();
 	SetupDebugCallback();
-	CreateSurface(window);
+	CreateSurface(window->GetWindow());
 	PickPhysicalDevice();
 	CreateLogicalDevice();
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
+	CreateFrameBuffers();
+	CreateCommandPool();
 }
 
 void RenderEngineVulkanBackend::Dispose() {
-	
+	//TODO: Implement
 }
 
 void RenderEngineVulkanBackend::CreateInstance() {
@@ -377,7 +378,7 @@ VkExtent2D RenderEngineVulkanBackend::ChooseSwapExtent(const VkSurfaceCapabiliti
 		return capabilities.currentExtent;
 	}
 
-	VkExtent2D actualExtent = { environment->screenWidth, environment->screenHeight };
+	VkExtent2D actualExtent = { window->GetWidth(), window->GetHeight() };
 
 	actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 	actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -432,4 +433,128 @@ VkResult RenderEngineVulkanBackend::CreateDebugUtilsMessengerEXT(VkInstance inst
 		return func(instance, pCreateInfo, pAllocator, pCallback);
 	}
 	return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+void RenderEngineVulkanBackend::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate buffer memory!");
+	}
+
+	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+}
+
+uint32_t RenderEngineVulkanBackend::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type!");
+}
+
+void RenderEngineVulkanBackend::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion = {};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+void RenderEngineVulkanBackend::CreateCommandPool() {
+	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(physicalDevice);
+
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.flags = 0; // Optional
+
+	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create command pool!");
+	}
+}
+
+void RenderEngineVulkanBackend::CreateFrameBuffers() {
+	swapChainFrameBuffers.resize(swapChainImageViews.size());
+	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+		VkImageView attachments[] = {
+			swapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = swapChainExtent.width;
+		framebufferInfo.height = swapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFrameBuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
+		}
+	}
+}
+
+RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() const {
+	RenderDataVulkanContext* renderDataVulkanContext = new RenderDataVulkanContext();
+	renderDataVulkanContext->physicalDevice = physicalDevice;
+	renderDataVulkanContext->device = device;
+	renderDataVulkanContext->graphicsQueue = graphicsQueue;
+	renderDataVulkanContext->renderPass = renderPass;
+	renderDataVulkanContext->swapChainExtent = swapChainExtent;
+	renderDataVulkanContext->swapChainImages = swapChainImages;
+	renderDataVulkanContext->commandPool = commandPool;
+	renderDataVulkanContext->presentQueue = presentQueue;
+	renderDataVulkanContext->swapChain = swapChain;
+	renderDataVulkanContext->swapChainFrameBuffers = swapChainFrameBuffers;
+	return renderDataVulkanContext;
 }
