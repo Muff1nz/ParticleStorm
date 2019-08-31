@@ -16,10 +16,18 @@ public:
 	~RenderEngineVulkanBackend();
 
 	void Init(Window* window);
+	void Dispose();
+
 	RenderDataVulkanContext* GetRenderDataVulkanContext() const;
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	
 private:
+	bool isDisposed = false;
+
+	Window* window;
+	
+	//Internal structs
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
 		std::optional<uint32_t> presentFamily;
@@ -34,6 +42,7 @@ private:
 		std::vector<VkPresentModeKHR> presentModes;
 	};
 
+	//Debug
 	const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
 #ifdef NDEBUG
 	const bool enableValidationLayers = false;
@@ -42,8 +51,7 @@ private:
 #endif
 	VkDebugUtilsMessengerEXT callback;
 
-	Window* window;
-
+	//Backend variables
 	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -57,32 +65,54 @@ private:
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
-	std::vector<VkFramebuffer> swapChainFrameBuffers;	
-
+	std::vector<VkFramebuffer> swapChainFrameBuffers;
 	VkCommandPool commandPool;
 
-	void Dispose();
+	//Functions
+
+
+	//Init step 1
 	void CreateInstance();
-	static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-	void SetupDebugCallback();
-	void CreateSurface(GLFWwindow* window);
-	void PickPhysicalDevice();
-	void CreateLogicalDevice();
-	void CreateSwapChain();
-	void CreateImageViews();
-	void CreateRenderPass();
+	std::vector<const char*> GetRequiredExtensions() const;
 	bool CheckValidationLayerSupport() const;
-	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
+
+	//Init step 2
+	void SetupDebugCallback();
+	static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+	static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback);
+	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
+
+	//Init step 3
+	void CreateSurface(GLFWwindow* window);
+
+	//Init step 4
+	void PickPhysicalDevice();
+	bool IsDeviceSuitable(VkPhysicalDevice device) const;
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
+
+	//Init step 5
+	void CreateLogicalDevice();
+
+	//Init step 6
+	void CreateSwapChain();
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device) const;
 	static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	static VkPresentModeKHR ChooseSwapPresentMode(std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) const;
-	bool IsDeviceSuitable(VkPhysicalDevice device) const;
-	bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
-	std::vector<const char*> GetRequiredExtensions() const;
-	static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback);
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void CreateCommandPool();
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
+
+	//Init step 7
+	void CreateImageViews();
+
+	//Init step 8
+	void CreateRenderPass();
+
+	//Init step 9
 	void CreateFrameBuffers();
 
+	//Init step 10
+	void CreateCommandPool();
+
+	//Util
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };

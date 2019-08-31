@@ -10,10 +10,8 @@
 #include "RenderEngineVulkan.h"
 
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <set>
 #include <limits>
-#include <algorithm>
 #include <fstream>
 #include <gtc/matrix_transform.hpp>
 #include <array>
@@ -52,8 +50,6 @@ RenderEngineVulkan::~RenderEngineVulkan() {
 
 
 void RenderEngineVulkan::CreateCommandBuffers() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-
 	commandBuffers.resize(renderDataVulkanContext->swapChainFrameBuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -103,8 +99,6 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 }
 
 void RenderEngineVulkan::CreateSyncObjects() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-
 	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -127,8 +121,6 @@ void RenderEngineVulkan::CreateSyncObjects() {
 }
 
 void RenderEngineVulkan::CreateVertexBuffer() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
 	VkBuffer stagingBuffer;
@@ -147,8 +139,6 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 }
 
 void RenderEngineVulkan::CreateIndexBuffer() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	VkBuffer stagingBuffer;
@@ -169,46 +159,26 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 }
 
 void RenderEngineVulkan::CreateRenderEntities() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->posCount = 1;
 	backgroundTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
 	
 	RenderTransform* particlesTransform = new RenderTransform();
 	particlesTransform->pos = environment->particlePos;
 	particlesTransform->posCount = environment->particleCount;
 	particlesTransform->scale = { environment->particleRadius, environment->particleRadius };
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
 }
 
 void RenderEngineVulkan::InitVulkan() {
-	//VulkanBackend
-
-	//RenderEngineVulkan
 	CreateVertexBuffer();
 	CreateIndexBuffer();
-
-	//RenderEntity / RenderEntityFactory
 	CreateRenderEntities();
-
-	//RenderEngineVulkan
 	CreateCommandBuffers();
 	CreateSyncObjects();
 }
-
-//     _____ _      ________          __  _____       _ _   
-//    / ____| |    |  ____\ \        / / |_   _|     (_) |  
-//   | |  __| |    | |__   \ \  /\  / /    | |  _ __  _| |_ 
-//   | | |_ | |    |  __|   \ \/  \/ /     | | | '_ \| | __|
-//   | |__| | |____| |       \  /\  /     _| |_| | | | | |_ 
-//    \_____|______|_|        \/  \/     |_____|_| |_|_|\__|
-//                                                          
-//                                                          
-
-
 
 //    _____       _ _   
 //   |_   _|     (_) |  
@@ -221,11 +191,14 @@ void RenderEngineVulkan::InitVulkan() {
 
 void RenderEngineVulkan::Init() {
 	isDisposed = false;
-	
+
 	window = new Window();
 	window->InitWindow(environment->screenHeight, environment->screenWidth, environment->fullScreen);
+
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
+	renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
+
 	InitVulkan();
 }
 
@@ -242,48 +215,35 @@ void RenderEngineVulkan::Dispose() {
 	if (isDisposed)
 		return;
 
-	delete MVP_Array;
+	auto device = renderDataVulkanContext->device;
 
-	//vkDeviceWaitIdle(device);
+	vkDeviceWaitIdle(device);
 
-	//for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-	//	vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-	//	vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-	//	vkDestroyFence(device, inFlightFences[i], nullptr);
-	//}
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+		vkDestroyFence(device, inFlightFences[i], nullptr);
+	}
 
-	//vkDestroyCommandPool(device, commandPool, nullptr);
 
-	//vkDestroyBuffer(device, quadIndexBuffer, nullptr);
-	//vkFreeMemory(device, quadIndexBufferMemory, nullptr);
-	//vkDestroyBuffer(device, quadVertexBuffer, nullptr);
-	//vkFreeMemory(device, quadVertexBufferMemory, nullptr);
-	//for (auto framebuffer : swapChainFrameBuffers) {
-	//	vkDestroyFramebuffer(device, framebuffer, nullptr);
-	//}
 
-	//for (int i = 0; i < renderEntities.size(); ++i) {
-	//	delete renderEntities[i];
-	//}
+	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
+	vkFreeMemory(device, quadIndexBufferMemory, nullptr);
+	vkDestroyBuffer(device, quadVertexBuffer, nullptr);
+	vkFreeMemory(device, quadVertexBufferMemory, nullptr);
 
- //   vkDestroyRenderPass(device, renderPass, nullptr);
-	//for (auto imageView : swapChainImageViews) {
-	//	vkDestroyImageView(device, imageView, nullptr);
-	//}
 
-	//vkDestroySwapchainKHR(device, swapChain, nullptr);
-	//vkDestroySurfaceKHR(instance, surface, nullptr);
-	//vkDestroyDevice(device, nullptr);
+	for (int i = 0; i < renderEntities.size(); ++i) {
+		delete renderEntities[i];
+	}
 
-	//if (enableValidationLayers) {
-	//	DestroyDebugUtilsMessengerEXT(instance, callback, nullptr);
-	//}
-
-	//vkDestroyInstance(instance, nullptr);
-	//glfwDestroyWindow(window);
-	//glfwTerminate();
+	vulkanBackend->Dispose();
+	window->Dispose();
 
 	isDisposed = true;
+
+	delete renderDataVulkanContext;
+	delete window;
 }
 
 //                                                 
@@ -318,7 +278,6 @@ void RenderEngineVulkan::Join() {
 }
 
 void RenderEngineVulkan::DrawFrame() {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
 	auto device = renderDataVulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
@@ -328,7 +287,7 @@ void RenderEngineVulkan::DrawFrame() {
 	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	for (auto renderEntity : renderEntities)
-		renderEntity->UpdateBuffers(imageIndex, environment);
+		renderEntity->UpdateBuffers(imageIndex, &environment->camera);
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

@@ -3,7 +3,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
-#include <optional>
 #include <thread>
 #include <array>
 
@@ -41,6 +40,7 @@ private:
 
 	Window*  window;
 	RenderEngineVulkanBackend* vulkanBackend;
+	RenderDataVulkanContext* renderDataVulkanContext;
 
 	//Vulkan
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -64,6 +64,9 @@ private:
 
 	//Threading
 	std::thread renderThead;
+
+	//Threading
+	void RenderThreadRun();
 
 	//Vulkan Init
 	void CreateCommandBuffers();
@@ -141,11 +144,6 @@ private:
 	const std::vector<uint16_t> indices = {
 		0, 1, 2, 2, 3, 0
 	};
-
-	InstanceBufferObject* MVP_Array;
-
-	//Threading
-	void RenderThreadRun();
 };
 
 

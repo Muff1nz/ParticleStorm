@@ -24,6 +24,18 @@ void Window::InitWindow(int height, int width, bool fullscreen) {
 		glfwSetWindowMonitor(window, monitor, 0, 0, 2560, 1440, mode->refreshRate);
 	} else
 		window = glfwCreateWindow(width, height, "Particle Storm", nullptr, nullptr);
+
+	isDisposed = false;
+}
+
+void Window::Dispose() {
+	if (isDisposed)
+		return;
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
+
+	isDisposed = true;
 }
 
 int Window::GetHeight() {

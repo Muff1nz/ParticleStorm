@@ -8,6 +8,8 @@ RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, Ren
 	this->renderDataCore = renderDataCore;
 	this->renderDataSingular = renderDataSingular;
 	this->renderDataInstanced = renderDataInstanced;
+
+	isDisposed = false;
 }
 
 RenderEntity::~RenderEntity() {
@@ -45,14 +47,13 @@ void RenderEntity::Dispose() {
 	isDisposed = true;
 }
 
-void RenderEntity::UpdateBuffers(uint32_t imageIndex, Environment* environment) const {
-	//TODO: Change the environment input to a camera.
+void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
 	if (renderDataSingular != nullptr) {
-		UpdateUniformBuffer(imageIndex, environment);
+		UpdateUniformBuffer(imageIndex, camera);
 	}
 
 	if (renderDataInstanced != nullptr) {
-		UpdateInstanceBuffer(imageIndex, environment);
+		UpdateInstanceBuffer(imageIndex, camera);
 	}
 }
 
@@ -78,9 +79,9 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 	}
 }
 
-void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* environment) const {
+void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const {
 	glm::vec2* particles = renderDataCore->transform.pos;
-	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
+	glm::mat4 projView = camera->GetProj() * camera->GetView();
 
 	for (int i = 0; i < renderDataInstanced->objectCount; ++i) {
 		glm::vec2 pos = particles[i];
@@ -96,9 +97,9 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Environment* enviro
 	vkUnmapMemory(renderDataVulkanContext->device, renderDataInstanced->instanceMemory[imageIndex]);
 }
 
-void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Environment* environment) const {
+void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) const {
 	UniformBufferObject ubo = {};
-	glm::mat4 projView = environment->camera.GetProj() * environment->camera.GetView();
+	glm::mat4 projView = camera->GetProj() * camera->GetView();
 	glm::mat4 model = translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
 	ubo.MVP = projView * model;
 
