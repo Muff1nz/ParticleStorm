@@ -41,7 +41,7 @@ public:
 	WorkerThreadPool workerThreads;
 
 	Environment();
-	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount);
+	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh);
 	~Environment(); 
 private:
 	void Init();

@@ -26,8 +26,8 @@ char* SessionManager::FileTime() {
 	return name;
 }
 
-void SessionManager::OutputMultiRunToFile(const std::string& sessionString) const {
-	const std::string fileLeadText = "Benchmark_";
+void SessionManager::OutputPhysBenchRunToFile(const std::string& sessionString) const {
+	const std::string fileLeadText = "PhysBench_";
 	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
 	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
 
@@ -43,11 +43,25 @@ void SessionManager::OutputMultiRunToFile(const std::string& sessionString) cons
 	std::cout << command + "\n";
 	system(command.c_str());
 
-	command = "python \"" + singleStatsGrapherDir + "\" \"" + statsOutputFilePath + "\"";
+	command = "python \"" + physicsDetailedGrapherDir + "\" \"" + statsOutputFilePath + "\"";
 	std::cout << command + "\n";
 	system(command.c_str());
+}
 
-	command = "python \"" + physicsDetailedGrapherDir + "\" \"" + statsOutputFilePath + "\"";
+void SessionManager::OutputGraphBenchRunToFile(const std::string& sessionString) const {
+	const std::string fileLeadText = "GraphBench_";
+	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shorTitle + "_" + FileTime();
+	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shorTitle + "_" + FileTime() + ".txt";
+
+	std::cout << "Results are saved to: " + statsOutputFolder + "\n";
+	CreateDirectory(statsOutputFolder.c_str(), nullptr);
+	std::ofstream statsFile(statsOutputFilePath);
+
+	statsFile << sessionString;
+
+	statsFile.close();
+
+	auto command = "python \"" + graphicsBenchGrapherDir + "\" \"" + statsOutputFilePath + "\"";
 	std::cout << command + "\n";
 	system(command.c_str());
 }
@@ -131,7 +145,7 @@ void SessionManager::Sandbox() const {
 std::string SessionManager::Benchmark(int particleCount, int particleRadius, int threadCount) const {
 	Timer::unhinged = true;
 
-	Environment environment(particleCount, particleRadius, 1337, threadCount);
+	Environment environment(particleCount, particleRadius, 1337, threadCount, 2200, 1200, 10000, 5450);
 	RenderEngineVulkan renderEngine(&environment);
 	PhysicsEngine physicsEngine(&environment);
 	renderEngine.Init();
@@ -195,7 +209,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 	return SessionToString(perSecondStats, environment);
 }
 
-void SessionManager::Benchmark() const {
+void SessionManager::PhysBench() const {
 	const int threadRuns = 4;
 	const int particleRuns = 3;
 	int threadCounts[] = { 2, 4, 8, 14 };
@@ -207,13 +221,25 @@ void SessionManager::Benchmark() const {
 	for (int i = 0; i < particleRuns; ++i) {
 		for (int j = 0; j < threadRuns; ++j) {
 			sessionString += "<\n";
-			if (j == threadRuns - 1 && i == particleRuns - 1)
-				sessionString += "(\n";
 			sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCounts[j]);
-			if (j == threadRuns - 1 && i == particleRuns - 1)
-				sessionString += ")\n";
 			sessionString += ">\n";
 		}
 	}
-	OutputMultiRunToFile(sessionString);
+	OutputPhysBenchRunToFile(sessionString);
+}
+
+void SessionManager::GraphBench() const {
+	const int particleRuns = 3;
+	int threadCount = 6;
+	int particleCounts[] = { 20000, 40000, 80000 };
+	int particleRadiuses[] = { 16, 12, 10 };
+
+	std::string sessionString = "";
+
+	for (int i = 0; i < particleRuns; ++i) {
+		sessionString += "<\n";
+		sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCount);
+		sessionString += ">\n";		
+	}
+	OutputGraphBenchRunToFile(sessionString);
 }
