@@ -7,7 +7,8 @@ void PrintMenu() {
 	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 	std::cout << "ParticleStorm Main Menu:\n";	
 	std::cout << "Sandbox(1):\n";
-	std::cout << "Benchmark(2)\n";
+	std::cout << "Physics Benchmark(2)\n";
+	std::cout << "Graphics Benchmark(3)\n";
 	std::cout << "Quit(X)\n";
 }
 
@@ -24,7 +25,10 @@ void MainMenu() {
 			session.Sandbox();
 			break;
 		case '2':
-			session.Benchmark();
+			session.PhysBench();
+			break;
+		case '3':
+			session.GraphBench();
 			break;
 		case 'X':
 			break;
