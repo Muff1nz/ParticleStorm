@@ -177,8 +177,10 @@
   <ItemGroup>
     <None Include="background.frag" />
     <None Include="background.vert" />
-    <None Include="test.frag" />
-    <None Include="test.vert" />
+    <None Include="particle.vert" />
+    <None Include="particle.frag" />
+    <None Include="quad.frag" />
+    <None Include="quad.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

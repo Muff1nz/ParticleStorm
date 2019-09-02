@@ -7,6 +7,8 @@
 
 class RenderEntity {
 public:
+	std::string name{};
+
 	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced);
 	~RenderEntity();
 

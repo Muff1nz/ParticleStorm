@@ -27,8 +27,7 @@ public:
 	//Threading
 	void Start();
 	void Join();
-	void DrawFrame();
-
+	
 	//Accessors
 	GLFWwindow* GetWindow() const;
 private:
@@ -58,6 +57,8 @@ private:
 	std::vector<VkFence> inFlightFences;
 	size_t currentFrame = 0;
 
+	void UpdateCommandBuffer(int imageIndex);
+	void DrawFrame();
 
 	//Cleanup
 	bool isDisposed;

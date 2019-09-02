@@ -85,16 +85,15 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		for (auto renderEntity : renderEntities) 
-			renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
+		for (auto renderEntity : renderEntities)
+			if (renderEntity->name != "QuadTree" || environment->renderQuadTree)
+				renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to record command buffer!");
 		}
-
-
 	}
 }
 
@@ -161,13 +160,21 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 void RenderEngineVulkan::CreateRenderEntities() {
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->posCount = 1;
+	backgroundTransform->instanceCount = 1;
 	backgroundTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
+
+	RenderTransform* quadTreeTransform = new RenderTransform();
+	quadTreeTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
+	quadTreeTransform->instanceCount = 1;
+	quadTreeTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
+	auto quadTree = RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, quadTreeTransform, "quadVert.spv", "quadFrag.spv");
+	quadTree->name = "QuadTree";
+	renderEntities.push_back(quadTree);
 	
 	RenderTransform* particlesTransform = new RenderTransform();
 	particlesTransform->pos = environment->particlePos;
-	particlesTransform->posCount = environment->particleCount;
+	particlesTransform->instanceCount = environment->particleCount;
 	particlesTransform->scale = { environment->particleRadius, environment->particleRadius };
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
 }
@@ -277,14 +284,50 @@ void RenderEngineVulkan::Join() {
 	renderThead.join();
 }
 
+void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.pInheritanceInfo = nullptr; // Optional
+
+	if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
+		throw std::runtime_error("failed to begin recording command buffer!");
+	}
+
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = renderDataVulkanContext->renderPass;
+	renderPassInfo.framebuffer = renderDataVulkanContext->swapChainFrameBuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderDataVulkanContext->swapChainExtent;
+
+	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	for (auto renderEntity : renderEntities)
+		if (renderEntity->name != "QuadTree" || environment->renderQuadTree)
+			renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, imageIndex);
+
+	vkCmdEndRenderPass(commandBuffers[imageIndex]);
+
+	if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
+		throw std::runtime_error("failed to record command buffer!");
+	}
+}
+
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
+		
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	UpdateCommandBuffer(imageIndex);
 
 	for (auto renderEntity : renderEntities)
 		renderEntity->UpdateBuffers(imageIndex, &environment->camera);

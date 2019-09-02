@@ -100,6 +100,7 @@ void SessionManager::Sandbox() const {
 	timer.Start();
 
 	int lastMouseButtonState = GLFW_PRESS;
+	int lastQ = GLFW_PRESS;
 	float deltaTime;
 
 	while (!environment.done) {
@@ -113,7 +114,7 @@ void SessionManager::Sandbox() const {
 			std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
-		//TODO: Find neat system of handling user input/events triggered by users
+		//TODO: Find neat system of handling user input/events triggered by users!
 		glfwPollEvents();
 		if (glfwWindowShouldClose(renderEngine.GetWindow()))
 			environment.done = true;
@@ -128,6 +129,11 @@ void SessionManager::Sandbox() const {
 			++environment.stats.explosionTotalLastSecond;
 		}
 		lastMouseButtonState = state;
+
+		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_Q);
+		if (state == GLFW_PRESS && state != lastQ)
+			environment.renderQuadTree = !environment.renderQuadTree;
+		lastQ = state;
 
 		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
 	}

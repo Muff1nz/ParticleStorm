@@ -15,8 +15,8 @@ public:
 	const int screenWidth = 3000;
 	const int screenHeight = 1200;
 
-	const int particleCount = 20000;
-	const float particleRadius = 15;
+	const int particleCount = 10000;
+	const float particleRadius = 20;
 
 	const int worldWidth = 9000;
 	const int worldHeight = 3600;
@@ -39,6 +39,8 @@ public:
 
 	const int workerThreadCount = 14;
 	WorkerThreadPool workerThreads;
+
+	bool renderQuadTree = false;
 
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh);

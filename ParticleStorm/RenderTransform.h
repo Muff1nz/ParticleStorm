@@ -3,7 +3,7 @@
 #include <vec2.hpp>
 
 struct RenderTransform {
-	int posCount;
+	int instanceCount;
 	glm::vec2* pos;
 	glm::vec2 scale;
 };

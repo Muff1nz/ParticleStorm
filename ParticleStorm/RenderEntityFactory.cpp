@@ -15,9 +15,9 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEngineVulkanBackend*
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
 
-	if (transform->posCount > 1) {
+	if (transform->instanceCount > 1) {
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
-		renderDataInstanced->objectCount = transform->posCount;
+		renderDataInstanced->objectCount = transform->instanceCount;
 		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, true);
 		CreateInstanceBuffer(vulkanBackend, *renderDataVulkanContext, renderDataInstanced);
 		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced);
