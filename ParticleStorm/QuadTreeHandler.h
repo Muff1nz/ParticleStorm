@@ -11,7 +11,7 @@ public:
 
 
 	void BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections);
-
+	void GetQuadRects(std::vector<Rect>& quadRects);
 
 private:
 	Environment* environment;

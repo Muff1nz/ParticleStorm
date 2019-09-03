@@ -16,6 +16,8 @@ public:
 
 	void UpdateBuffers(uint32_t imageIndex, Camera* camera) const;
 	void BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, VkBuffer &quadVertexBuffer, VkBuffer &quadIndexBuffer, const std::vector<uint16_t> &indices, int index) const;
+	RenderDataCore* GetRenderDataCore();
+
 private:
 	bool isDisposed = false;
 

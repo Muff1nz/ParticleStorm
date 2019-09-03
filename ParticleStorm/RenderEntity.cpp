@@ -47,6 +47,10 @@ void RenderEntity::Dispose() {
 	isDisposed = true;
 }
 
+RenderDataCore* RenderEntity::GetRenderDataCore() {
+	return renderDataCore;
+}
+
 void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
 	if (renderDataSingular != nullptr) {
 		UpdateUniformBuffer(imageIndex, camera);
@@ -80,12 +84,12 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 }
 
 void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const {
-	glm::vec2* particles = renderDataCore->transform.pos;
+	glm::vec2* pos = renderDataCore->transform.pos;
+	glm::vec2* scale = renderDataCore->transform.scale;
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
 
 	for (int i = 0; i < renderDataInstanced->objectCount; ++i) {
-		glm::vec2 pos = particles[i];
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
+		glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(scale[i], 1));
 		renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
 	}
 
@@ -100,7 +104,7 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) con
 void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) const {
 	UniformBufferObject ubo = {};
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
-	glm::mat4 model = translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
+	glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * glm::scale(glm::mat4(1), glm::vec3(*renderDataCore->transform.scale, 1));
 	ubo.MVP = projView * model;
 
 	void* data;

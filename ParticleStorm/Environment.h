@@ -7,6 +7,7 @@
 #include "Stats.h"
 #include "Camera.h"
 #include <vec2.hpp>
+#include "Rect.h"
 
 class Environment {
 public:
@@ -41,6 +42,7 @@ public:
 	WorkerThreadPool workerThreads;
 
 	bool renderQuadTree = false;
+	std::vector<Rect> quadRects;
 
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh);

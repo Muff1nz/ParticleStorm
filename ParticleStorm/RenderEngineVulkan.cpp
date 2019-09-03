@@ -160,23 +160,26 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 void RenderEngineVulkan::CreateRenderEntities() {
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->instanceCount = 1;
-	backgroundTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
+	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
+	backgroundTransform->instanceCount = 1;	
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
 
+	RenderTransform* particlesTransform = new RenderTransform();
+	particlesTransform->pos = environment->particlePos;
+	particlesTransform->scale = new glm::vec2[environment->particleCount];
+	std::fill_n(particlesTransform->scale, environment->particleCount, glm::vec2(environment->particleRadius, environment->particleRadius));
+	particlesTransform->instanceCount = environment->particleCount;
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+
 	RenderTransform* quadTreeTransform = new RenderTransform();
-	quadTreeTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	quadTreeTransform->instanceCount = 1;
-	quadTreeTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
+	const int quadCount = 1000;
+	quadTreeTransform->pos = new glm::vec2[quadCount];
+	quadTreeTransform->scale = new glm::vec2[quadCount];
+	quadTreeTransform->instanceCount = quadCount;
 	auto quadTree = RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, quadTreeTransform, "quadVert.spv", "quadFrag.spv");
 	quadTree->name = "QuadTree";
 	renderEntities.push_back(quadTree);
-	
-	RenderTransform* particlesTransform = new RenderTransform();
-	particlesTransform->pos = environment->particlePos;
-	particlesTransform->instanceCount = environment->particleCount;
-	particlesTransform->scale = { environment->particleRadius, environment->particleRadius };
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+
 }
 
 void RenderEngineVulkan::InitVulkan() {
@@ -318,6 +321,18 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	}
 }
 
+void RenderEngineVulkan::CalculateQuadTreeTransform(RenderDataCore* renderDataCore) {
+	for (int i = 0; i < renderDataCore->transform.instanceCount; ++i) {
+		if (i < environment->quadRects.size()) {
+			renderDataCore->transform.pos[i] = { environment->quadRects[i].x + environment->quadRects[i].halfW, environment->quadRects[i].y + environment->quadRects[i].halfH };
+			renderDataCore->transform.scale[i] = { environment->quadRects[i].halfW, environment->quadRects[i].halfH };
+		} else {
+			renderDataCore->transform.pos[i] = { 0, 0 };
+			renderDataCore->transform.scale[i] = { 0, 0 };
+		}
+	}	
+}
+
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
@@ -329,8 +344,11 @@ void RenderEngineVulkan::DrawFrame() {
 
 	UpdateCommandBuffer(imageIndex);
 
-	for (auto renderEntity : renderEntities)
+	for (auto renderEntity : renderEntities) {
+		if (environment->renderQuadTree && renderEntity->name == "QuadTree")
+			CalculateQuadTreeTransform(renderEntity->GetRenderDataCore());
 		renderEntity->UpdateBuffers(imageIndex, &environment->camera);
+	}
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
