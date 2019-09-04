@@ -207,7 +207,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Stop();
 		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
-		if (environment->renderQuadTree)
+		if (environment->runtimeDebugMode)
 			quadTreeHandler.GetQuadRects(environment->quadRects);
 
 		//PARTICLE COLLISIONS

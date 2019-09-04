@@ -2,15 +2,16 @@
 #include "RenderEntity.h"
 #include "RenderDataVulkanContext.h"
 #include "RenderEngineVulkanBackend.h"
+#include "RenderEntityCreateInfo.h"
 
 class RenderEntityFactory {
 public:
 	RenderEntityFactory();
 	~RenderEntityFactory();
 
-	static RenderEntity* CreateRenderEntity(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, const std::string& vertexShader, const std::string& fragmentShader);
+	static RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderEngineVulkanBackend* vulkanBackend, RenderTransform* transform, bool debugEntity);
 private:
-	static void CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing);
+	static void CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
 	static VkShaderModule CreateShaderModule(const std::vector<char>& code, VkDevice& device);
 	static std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription(bool instancing);
 	static std::vector<VkVertexInputBindingDescription> CreateVertexBindingDescription(bool instancing);

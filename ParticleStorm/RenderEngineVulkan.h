@@ -49,6 +49,8 @@ private:
 	VkDeviceMemory quadVertexBufferMemory;
 	VkBuffer quadIndexBuffer;
 	VkDeviceMemory quadIndexBufferMemory;
+	VkBuffer quadLineIndexBuffer;
+	VkDeviceMemory quadLineIndexBufferMemory;
 
 	std::vector<RenderEntity*> renderEntities;
 
@@ -58,7 +60,7 @@ private:
 	size_t currentFrame = 0;
 
 	void UpdateCommandBuffer(int imageIndex);
-	void CalculateQuadTreeTransform(RenderDataCore* renderDataCore);
+	void CalculateQuadTreeTransform(RenderDataCore* renderDataCore) const;
 	void DrawFrame();
 
 	//Cleanup
@@ -74,7 +76,7 @@ private:
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
 	void CreateVertexBuffer();
-	void CreateIndexBuffer();
+	void CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory);
 	void CreateRenderEntities();
 	void InitVulkan();
 
@@ -143,8 +145,11 @@ private:
 		{ { -1.0f, 1.0f }, color }
 	};
 	
-	const std::vector<uint16_t> indices = {
+	const std::vector<uint16_t> QuadIndices = {
 		0, 1, 2, 2, 3, 0
+	};
+	const std::vector<uint16_t> LineQuadIndices = {
+		0, 1, 2, 3, 0
 	};
 };
 

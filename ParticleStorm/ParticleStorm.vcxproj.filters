@@ -212,6 +212,12 @@
     <ClInclude Include="Window.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="RenderMode.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntityCreateInfo.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="background.vert">

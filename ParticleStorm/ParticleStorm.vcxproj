@@ -161,9 +161,11 @@
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="RenderEngineVulkanBackend.h" />
     <ClInclude Include="RenderEntity.h" />
+    <ClInclude Include="RenderEntityCreateInfo.h" />
     <ClInclude Include="RenderEntityFactory.h" />
     <ClInclude Include="RenderDataInstanced.h" />
     <ClInclude Include="RenderDataSingular.h" />
+    <ClInclude Include="RenderMode.h" />
     <ClInclude Include="RenderTransform.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />

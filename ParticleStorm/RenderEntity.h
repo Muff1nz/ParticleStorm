@@ -7,19 +7,19 @@
 
 class RenderEntity {
 public:
-	std::string name{};
-
-	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced);
+	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, bool debugEntity);
 	~RenderEntity();
 
 	void Dispose();
 
 	void UpdateBuffers(uint32_t imageIndex, Camera* camera) const;
-	void BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, VkBuffer &quadVertexBuffer, VkBuffer &quadIndexBuffer, const std::vector<uint16_t> &indices, int index) const;
-	RenderDataCore* GetRenderDataCore();
+	void BindToCommandPool(std::vector<VkCommandBuffer>& commandBuffers, int index) const;
+	RenderDataCore* GetRenderDataCore() const; //TODO: Can this be avoided?
+	bool IsDebugEntity() const;
 
 private:
 	bool isDisposed = false;
+	bool debugEntity = false;
 
 	RenderDataVulkanContext* renderDataVulkanContext;
 	RenderDataCore* renderDataCore;

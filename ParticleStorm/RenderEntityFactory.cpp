@@ -6,31 +6,37 @@
 #include "Vertex.h"
 #include "InstanceBufferObject.h"
 #include "RenderEngineVulkanBackend.h"
+#include "RenderEntityCreateInfo.h"
 
 RenderEntityFactory::RenderEntityFactory() = default;
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, const std::string& vertexShader, const std::string& fragmentShader) {
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderEngineVulkanBackend* vulkanBackend, RenderTransform* transform, bool debugEntity) {
+	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
+	
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
+	renderDataCore->renderMode = createInfo.renderMode;
+	renderDataCore->vertexBuffer = createInfo.vertexBuffer;
+	renderDataCore->indexBuffer = createInfo.indexBuffer;
+	renderDataCore->indexCount = createInfo.indexCount;
 
 	if (transform->instanceCount > 1) {
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
 		renderDataInstanced->objectCount = transform->instanceCount;
-		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, true);
+		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
 		CreateInstanceBuffer(vulkanBackend, *renderDataVulkanContext, renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced);
+		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, debugEntity);
 	}
 
 	RenderDataSingular* renderDataSingular = new RenderDataSingular();
 	CreateDescriptorSetLayout(*renderDataVulkanContext, renderDataSingular);
-	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, false);
+	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
 	CreateUniformBuffers(vulkanBackend, *renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
-
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr);
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, debugEntity);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +47,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEngineVulkanBackend*
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing) {
+void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
 	auto vertShaderCode = ReadFile(vert);
 	auto fragShaderCode = ReadFile(frag);
 	auto vertShaderModule = CreateShaderModule(vertShaderCode, renderDataVulkanContext.device);
@@ -72,7 +78,7 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.topology = renderMode == Triangles ? VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST : VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport = {};
@@ -98,10 +104,8 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	//rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	//rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.polygonMode = renderMode == Triangles ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = Triangles ? 1.0f : 2.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;

@@ -270,6 +270,8 @@ void RenderEngineVulkanBackend::CreateLogicalDevice() {
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.wideLines = true;
+	deviceFeatures.fillModeNonSolid = true;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

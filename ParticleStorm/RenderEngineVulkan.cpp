@@ -63,37 +63,7 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 	}
 
 	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		beginInfo.pInheritanceInfo = nullptr; // Optional
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderDataVulkanContext->renderPass;
-		renderPassInfo.framebuffer = renderDataVulkanContext->swapChainFrameBuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = renderDataVulkanContext->swapChainExtent;
-
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		for (auto renderEntity : renderEntities)
-			if (renderEntity->name != "QuadTree" || environment->renderQuadTree)
-				renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
-		}
+		UpdateCommandBuffer(i);
 	}
 }
 
@@ -137,7 +107,7 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
 
-void RenderEngineVulkan::CreateIndexBuffer() {
+void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	VkBuffer stagingBuffer;
@@ -149,42 +119,69 @@ void RenderEngineVulkan::CreateIndexBuffer() {
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadIndexBuffer, quadIndexBufferMemory);
+	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
-	vulkanBackend->CopyBuffer(stagingBuffer, quadIndexBuffer, bufferSize);
+	vulkanBackend->CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
 	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
 
 void RenderEngineVulkan::CreateRenderEntities() {
+	RenderEntityCreateInfo createInfoBackground;
+	createInfoBackground.vertexShader = "backgroundVert.spv";
+	createInfoBackground.fragmentShader = "backgroundFrag.spv";
+	createInfoBackground.renderMode = Triangles;
+	createInfoBackground.vertexBuffer = quadVertexBuffer;
+	createInfoBackground.indexBuffer = quadIndexBuffer;
+	createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
+
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->instanceCount = 1;	
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, vulkanBackend, backgroundTransform, false));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	RenderEntityCreateInfo createInfoParticles;
+	createInfoParticles.vertexShader = "particleVert.spv";
+	createInfoParticles.fragmentShader = "particleFrag.spv";
+	createInfoParticles.renderMode = Triangles;
+	createInfoParticles.vertexBuffer = quadVertexBuffer;
+	createInfoParticles.indexBuffer = quadIndexBuffer;
+	createInfoParticles.indexCount = static_cast<uint32_t>(QuadIndices.size());
 
 	RenderTransform* particlesTransform = new RenderTransform();
 	particlesTransform->pos = environment->particlePos;
 	particlesTransform->scale = new glm::vec2[environment->particleCount];
 	std::fill_n(particlesTransform->scale, environment->particleCount, glm::vec2(environment->particleRadius, environment->particleRadius));
 	particlesTransform->instanceCount = environment->particleCount;
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, vulkanBackend, particlesTransform, false));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	RenderEntityCreateInfo createInfoQuadTree;
+	createInfoQuadTree.vertexShader = "quadVert.spv";
+	createInfoQuadTree.fragmentShader = "quadFrag.spv";
+	createInfoQuadTree.renderMode = Lines;
+	createInfoQuadTree.vertexBuffer = quadVertexBuffer;
+	createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
+	createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
 
 	RenderTransform* quadTreeTransform = new RenderTransform();
-	const int quadCount = 1000;
+	const int quadCount = 10000;
 	quadTreeTransform->pos = new glm::vec2[quadCount];
 	quadTreeTransform->scale = new glm::vec2[quadCount];
 	quadTreeTransform->instanceCount = quadCount;
-	auto quadTree = RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, quadTreeTransform, "quadVert.spv", "quadFrag.spv");
-	quadTree->name = "QuadTree";
-	renderEntities.push_back(quadTree);
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, vulkanBackend, quadTreeTransform, true));
 
 }
 
 void RenderEngineVulkan::InitVulkan() {
 	CreateVertexBuffer();
-	CreateIndexBuffer();
+	CreateIndexBuffer(QuadIndices, quadIndexBuffer, quadIndexBufferMemory);
+	CreateIndexBuffer(LineQuadIndices, quadLineIndexBuffer, quadLineIndexBufferMemory);
 	CreateRenderEntities();
 	CreateCommandBuffers();
 	CreateSyncObjects();
@@ -236,7 +233,8 @@ void RenderEngineVulkan::Dispose() {
 	}
 
 
-
+	vkDestroyBuffer(device, quadLineIndexBuffer, nullptr);
+	vkFreeMemory(device, quadLineIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
 	vkFreeMemory(device, quadIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadVertexBuffer, nullptr);
@@ -311,8 +309,8 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	for (auto renderEntity : renderEntities)
-		if (renderEntity->name != "QuadTree" || environment->renderQuadTree)
-			renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, imageIndex);
+		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+			renderEntity->BindToCommandPool(commandBuffers, imageIndex);
 
 	vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
@@ -321,7 +319,7 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	}
 }
 
-void RenderEngineVulkan::CalculateQuadTreeTransform(RenderDataCore* renderDataCore) {
+void RenderEngineVulkan::CalculateQuadTreeTransform(RenderDataCore* renderDataCore) const {
 	for (int i = 0; i < renderDataCore->transform.instanceCount; ++i) {
 		if (i < environment->quadRects.size()) {
 			renderDataCore->transform.pos[i] = { environment->quadRects[i].x + environment->quadRects[i].halfW, environment->quadRects[i].y + environment->quadRects[i].halfH };
@@ -345,7 +343,7 @@ void RenderEngineVulkan::DrawFrame() {
 	UpdateCommandBuffer(imageIndex);
 
 	for (auto renderEntity : renderEntities) {
-		if (environment->renderQuadTree && renderEntity->name == "QuadTree")
+		if (environment->runtimeDebugMode && renderEntity->IsDebugEntity()) //TODO: This stops working once there are more/different debug render entities then QuadTree
 			CalculateQuadTreeTransform(renderEntity->GetRenderDataCore());
 		renderEntity->UpdateBuffers(imageIndex, &environment->camera);
 	}

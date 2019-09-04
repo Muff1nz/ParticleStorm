@@ -132,7 +132,7 @@ void SessionManager::Sandbox() const {
 
 		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_Q);
 		if (state == GLFW_PRESS && state != lastQ)
-			environment.renderQuadTree = !environment.renderQuadTree;
+			environment.runtimeDebugMode = !environment.runtimeDebugMode;
 		lastQ = state;
 
 		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
