@@ -40,6 +40,7 @@ private:
 	Window*  window;
 	RenderEngineVulkanBackend* vulkanBackend;
 	RenderDataVulkanContext* renderDataVulkanContext;
+	VulkanAllocator* vulkanAllocator;
 
 	//Vulkan
 	std::vector<VkCommandBuffer> commandBuffers;

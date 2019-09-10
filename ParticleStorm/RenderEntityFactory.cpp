@@ -5,16 +5,14 @@
 #include "RenderEntityFactory.h"
 #include "Vertex.h"
 #include "InstanceBufferObject.h"
-#include "RenderEngineVulkanBackend.h"
+#include "VulkanAllocator.h"
 #include "RenderEntityCreateInfo.h"
 
 RenderEntityFactory::RenderEntityFactory() = default;
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderEngineVulkanBackend* vulkanBackend, RenderTransform* transform, bool debugEntity) {
-	RenderDataVulkanContext* renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-	
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity) {	
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
 	renderDataCore->renderMode = createInfo.renderMode;
@@ -26,14 +24,14 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
 		renderDataInstanced->objectCount = transform->instanceCount;
 		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
-		CreateInstanceBuffer(vulkanBackend, *renderDataVulkanContext, renderDataInstanced);
+		CreateInstanceBuffer(vulkanAllocator, *renderDataVulkanContext, renderDataInstanced);
 		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, debugEntity);
 	}
 
 	RenderDataSingular* renderDataSingular = new RenderDataSingular();
 	CreateDescriptorSetLayout(*renderDataVulkanContext, renderDataSingular);
 	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
-	CreateUniformBuffers(vulkanBackend, *renderDataVulkanContext, renderDataSingular);
+	CreateUniformBuffers(vulkanAllocator, *renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
 	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, debugEntity);
@@ -243,7 +241,7 @@ std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void RenderEntityFactory::CreateInstanceBuffer(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
+void RenderEntityFactory::CreateInstanceBuffer(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
 	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->objectCount];
 	renderDataInstanced->instanceBuffers.resize(renderDataVulkanContext.swapChainImages.size());
 	renderDataInstanced->instanceMemory.resize(renderDataVulkanContext.swapChainImages.size());
@@ -256,15 +254,15 @@ void RenderEntityFactory::CreateInstanceBuffer(RenderEngineVulkanBackend* vulkan
 		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->objectCount;
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		void* data;
 		vkMapMemory(renderDataVulkanContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, renderDataInstanced->instanceBufferObjects, (size_t)bufferSize);
 		vkUnmapMemory(renderDataVulkanContext.device, stagingBufferMemory);
 
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, renderDataInstanced->instanceBuffers[i], renderDataInstanced->instanceMemory[i]);
-		vulkanBackend->CopyBuffer(stagingBuffer, renderDataInstanced->instanceBuffers[i], bufferSize);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, renderDataInstanced->instanceBuffers[i], renderDataInstanced->instanceMemory[i]);
+		vulkanAllocator->CopyBuffer(stagingBuffer, renderDataInstanced->instanceBuffers[i], bufferSize);
 
 		vkDestroyBuffer(renderDataVulkanContext.device, stagingBuffer, nullptr);
 		vkFreeMemory(renderDataVulkanContext.device, stagingBufferMemory, nullptr);
@@ -297,14 +295,14 @@ void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataVulkanContext &ren
 	}
 }
 
-void RenderEntityFactory::CreateUniformBuffers(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
+void RenderEntityFactory::CreateUniformBuffers(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 	renderDataSingular->uniformBuffers.resize(renderDataVulkanContext.swapChainImages.size());
 	renderDataSingular->uniformBuffersMemory.resize(renderDataVulkanContext.swapChainImages.size());
 
 	for (size_t i = 0; i < renderDataVulkanContext.swapChainImages.size(); i++) {
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderDataSingular->uniformBuffers[i], renderDataSingular->uniformBuffersMemory[i]);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderDataSingular->uniformBuffers[i], renderDataSingular->uniformBuffersMemory[i]);
 	}
 }
 

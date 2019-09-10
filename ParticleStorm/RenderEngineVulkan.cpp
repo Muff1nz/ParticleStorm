@@ -94,15 +94,15 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
-	vulkanBackend->CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
+	vulkanAllocator->CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
 	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
@@ -112,16 +112,16 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
-	vulkanBackend->CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
+	vulkanAllocator->CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
 	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
@@ -140,7 +140,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->instanceCount = 1;	
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, vulkanBackend, backgroundTransform, false));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, renderDataVulkanContext, vulkanAllocator, backgroundTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -157,7 +157,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	particlesTransform->scale = new glm::vec2[environment->particleCount];
 	std::fill_n(particlesTransform->scale, environment->particleCount, glm::vec2(environment->particleRadius, environment->particleRadius));
 	particlesTransform->instanceCount = environment->particleCount;
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, vulkanBackend, particlesTransform, false));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, renderDataVulkanContext, vulkanAllocator, particlesTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -174,7 +174,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	quadTreeTransform->pos = new glm::vec2[quadCount];
 	quadTreeTransform->scale = new glm::vec2[quadCount];
 	quadTreeTransform->instanceCount = quadCount;
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, vulkanBackend, quadTreeTransform, true));
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, renderDataVulkanContext, vulkanAllocator, quadTreeTransform, true));
 
 }
 
@@ -205,6 +205,7 @@ void RenderEngineVulkan::Init() {
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
 	renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
+	vulkanAllocator = vulkanBackend->GetVulkanAllocator();
 
 	InitVulkan();
 }
@@ -250,7 +251,6 @@ void RenderEngineVulkan::Dispose() {
 
 	isDisposed = true;
 
-	delete renderDataVulkanContext;
 	delete window;
 }
 

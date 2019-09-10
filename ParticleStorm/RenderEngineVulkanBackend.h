@@ -7,6 +7,7 @@
 #include <optional>
 #include "Window.h"
 #include "RenderDataVulkanContext.h"
+#include "VulkanAllocator.h"
 
 class Environment;
 
@@ -18,14 +19,15 @@ public:
 	void Init(Window* window);
 	void Dispose();
 
-	RenderDataVulkanContext* GetRenderDataVulkanContext() const;
-	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	RenderDataVulkanContext* GetRenderDataVulkanContext();
+	VulkanAllocator* GetVulkanAllocator();
 	
 private:
 	bool isDisposed = false;
 
 	Window* window;
+	RenderDataVulkanContext* vulkanContext;
+	VulkanAllocator* vulkanAllocator;
 	
 	//Internal structs
 	struct QueueFamilyIndices {
@@ -33,7 +35,7 @@ private:
 		std::optional<uint32_t> presentFamily;
 		bool IsComplete() const {
 			return graphicsFamily.has_value() && presentFamily.has_value();
-	}
+		}
 	};
 	
 	struct SwapChainSupportDetails {
@@ -112,7 +114,4 @@ private:
 
 	//Init step 10
 	void CreateCommandPool();
-
-	//Util
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };
