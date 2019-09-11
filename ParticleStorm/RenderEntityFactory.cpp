@@ -12,7 +12,7 @@ RenderEntityFactory::RenderEntityFactory() = default;
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity) {	
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity) {		
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
 	renderDataCore->renderMode = createInfo.renderMode;
@@ -20,9 +20,9 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	renderDataCore->indexBuffer = createInfo.indexBuffer;
 	renderDataCore->indexCount = createInfo.indexCount;
 
-	if (transform->instanceCount > 1) {
+	if (transform->objectCount > 1) {
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
-		renderDataInstanced->objectCount = transform->instanceCount;
+		renderDataInstanced->instanceCount = transform->objectCount;
 		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
 		CreateInstanceBuffer(vulkanAllocator, *renderDataVulkanContext, renderDataInstanced);
 		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, debugEntity);
@@ -36,6 +36,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
 	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, debugEntity);
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,16 +243,16 @@ std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {
 
 
 void RenderEntityFactory::CreateInstanceBuffer(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
-	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->objectCount];
+	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->instanceCount];
 	renderDataInstanced->instanceBuffers.resize(renderDataVulkanContext.swapChainImages.size());
 	renderDataInstanced->instanceMemory.resize(renderDataVulkanContext.swapChainImages.size());
 
-	for (int j = 0; j < renderDataInstanced->objectCount; ++j) {
+	for (int j = 0; j < renderDataInstanced->instanceCount; ++j) {
 		renderDataInstanced->instanceBufferObjects[j].MVP = glm::mat4(1);
 	}
 
 	for (int i = 0; i < renderDataVulkanContext.swapChainImages.size(); ++i) {
-		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->objectCount;
+		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->instanceCount;
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
 		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);

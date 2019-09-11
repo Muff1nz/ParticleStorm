@@ -9,6 +9,6 @@ struct RenderDataInstanced {
 	std::vector<VkBuffer> instanceBuffers;
 	std::vector<VkDeviceMemory> instanceMemory;
 	InstanceBufferObject* instanceBufferObjects;
-	int objectCount;
+	int instanceCount;	
 };
 

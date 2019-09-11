@@ -48,10 +48,6 @@ void RenderEntity::Dispose() {
 	isDisposed = true;
 }
 
-RenderDataCore* RenderEntity::GetRenderDataCore() const {
-	return renderDataCore;
-}
-
 bool RenderEntity::IsDebugEntity() const {
 	return debugEntity;
 }
@@ -84,7 +80,7 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
 		vkCmdBindVertexBuffers(commandBuffers[index], 1, 1, instanceBuffer, offsets);
 		vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, static_cast<uint32_t>(renderDataInstanced->objectCount), 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, static_cast<uint32_t>(renderDataInstanced->instanceCount), 0, 0, 0);
 	}
 }
 
@@ -93,12 +89,19 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) con
 	glm::vec2* scale = renderDataCore->transform.scale;
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
 
-	for (int i = 0; i < renderDataInstanced->objectCount; ++i) {
-		glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(scale[i], 1));
-		renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+	if (!renderDataCore->transform.staticScale) {
+		for (int i = 0; i < renderDataInstanced->instanceCount; ++i) {
+			glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(scale[i], 1));
+			renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+		}
+	} else {
+		for (int i = 0; i < renderDataInstanced->instanceCount; ++i) {
+			glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(*scale, 1));
+			renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+		}
 	}
 
-	auto size = sizeof(InstanceBufferObject) * renderDataInstanced->objectCount;
+	auto size = sizeof(InstanceBufferObject) * renderDataInstanced->instanceCount;
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, renderDataInstanced->instanceMemory[imageIndex], 0, size, 0, &data);

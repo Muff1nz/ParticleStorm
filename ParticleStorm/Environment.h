@@ -7,7 +7,6 @@
 #include "Stats.h"
 #include "Camera.h"
 #include <vec2.hpp>
-#include "Rect.h"
 
 //TODO: Split into more classes, all contained inside Environment
 //TODO: Try to have as little as possible inside here
@@ -48,7 +47,9 @@ public:
 
 	//Debugging domain
 	bool runtimeDebugMode = false;
-	std::vector<Rect> quadRects;
+	int debugQuadSize = 1000;
+	glm::vec2* quadPos;
+	glm::vec2* quadScale;
 
 	Environment();
 	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh);

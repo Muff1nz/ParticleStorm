@@ -26,10 +26,16 @@ void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads,
 	environment->workerThreads.JoinWorkerThreads();
 }
 
-void QuadTreeHandler::GetQuadRects(std::vector<Rect>& quadRects) {
-	quadRects.clear();
-	for (int i = 0; i < quads.size(); ++i) {
-		quadRects.push_back(quads[i]->GetRect());
+void QuadTreeHandler::PopulateQuadData() {
+	for (int i = 0; i < environment->debugQuadSize; ++i) {
+		if (i < quads.size()) {
+			auto rect = quads[i]->GetRect();
+			environment->quadPos[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
+			environment->quadScale[i] = {rect.halfW, rect.halfH};
+		} else {
+			environment->quadPos[i] = { 0, 0 };
+			environment->quadScale[i] = { 0, 0 };
+		}
 	}
 }
 

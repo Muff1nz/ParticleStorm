@@ -11,7 +11,7 @@ public:
 
 
 	void BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections);
-	void GetQuadRects(std::vector<Rect>& quadRects);
+	void PopulateQuadData();
 
 private:
 	Environment* environment;
@@ -44,8 +44,5 @@ private:
 	void HandleSubTrees(QuadTree* tree);
 
 	bool QuadLimitReached(QuadTree* tree) const;
-
-
-
 };
 

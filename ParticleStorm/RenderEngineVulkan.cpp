@@ -139,7 +139,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->instanceCount = 1;	
+	backgroundTransform->objectCount = 1;	
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, renderDataVulkanContext, vulkanAllocator, backgroundTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,9 +154,9 @@ void RenderEngineVulkan::CreateRenderEntities() {
 
 	RenderTransform* particlesTransform = new RenderTransform();
 	particlesTransform->pos = environment->particlePos;
-	particlesTransform->scale = new glm::vec2[environment->particleCount];
-	std::fill_n(particlesTransform->scale, environment->particleCount, glm::vec2(environment->particleRadius, environment->particleRadius));
-	particlesTransform->instanceCount = environment->particleCount;
+	particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
+	particlesTransform->staticScale = true;
+	particlesTransform->objectCount = environment->particleCount;
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, renderDataVulkanContext, vulkanAllocator, particlesTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,12 +170,10 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
 
 	RenderTransform* quadTreeTransform = new RenderTransform();
-	const int quadCount = 10000;
-	quadTreeTransform->pos = new glm::vec2[quadCount];
-	quadTreeTransform->scale = new glm::vec2[quadCount];
-	quadTreeTransform->instanceCount = quadCount;
+	quadTreeTransform->pos = environment->quadPos;
+	quadTreeTransform->scale = environment->quadScale;
+	quadTreeTransform->objectCount = environment->debugQuadSize;
 	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, renderDataVulkanContext, vulkanAllocator, quadTreeTransform, true));
-
 }
 
 void RenderEngineVulkan::InitVulkan() {
@@ -319,18 +317,6 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	}
 }
 
-void RenderEngineVulkan::CalculateQuadTreeTransform(RenderDataCore* renderDataCore) const {
-	for (int i = 0; i < renderDataCore->transform.instanceCount; ++i) {
-		if (i < environment->quadRects.size()) {
-			renderDataCore->transform.pos[i] = { environment->quadRects[i].x + environment->quadRects[i].halfW, environment->quadRects[i].y + environment->quadRects[i].halfH };
-			renderDataCore->transform.scale[i] = { environment->quadRects[i].halfW, environment->quadRects[i].halfH };
-		} else {
-			renderDataCore->transform.pos[i] = { 0, 0 };
-			renderDataCore->transform.scale[i] = { 0, 0 };
-		}
-	}	
-}
-
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
@@ -340,12 +326,12 @@ void RenderEngineVulkan::DrawFrame() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
+	//TODO: Have this be triggered by events
 	UpdateCommandBuffer(imageIndex);
 
 	for (auto renderEntity : renderEntities) {
-		if (environment->runtimeDebugMode && renderEntity->IsDebugEntity()) //TODO: This stops working once there are more/different debug render entities then QuadTree
-			CalculateQuadTreeTransform(renderEntity->GetRenderDataCore());
-		renderEntity->UpdateBuffers(imageIndex, &environment->camera);
+		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+			renderEntity->UpdateBuffers(imageIndex, &environment->camera);
 	}
 
 	VkSubmitInfo submitInfo = {};

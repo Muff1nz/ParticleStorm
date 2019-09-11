@@ -14,7 +14,6 @@ public:
 
 	void UpdateBuffers(uint32_t imageIndex, Camera* camera) const;
 	void BindToCommandPool(std::vector<VkCommandBuffer>& commandBuffers, int index) const;
-	RenderDataCore* GetRenderDataCore() const; //TODO: Can this be avoided?
 	bool IsDebugEntity() const;
 
 private:

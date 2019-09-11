@@ -61,7 +61,6 @@ private:
 	size_t currentFrame = 0;
 
 	void UpdateCommandBuffer(int imageIndex);
-	void CalculateQuadTreeTransform(RenderDataCore* renderDataCore) const;
 	void DrawFrame();
 
 	//Cleanup

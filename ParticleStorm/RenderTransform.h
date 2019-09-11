@@ -3,7 +3,9 @@
 #include <vec2.hpp>
 
 struct RenderTransform {
-	int instanceCount;
+	int objectCount;
+	bool staticScale;
+
 	glm::vec2* pos;
 	glm::vec2* scale;
 };
