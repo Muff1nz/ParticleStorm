@@ -138,6 +138,7 @@
     <ClCompile Include="RenderEntityFactory.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="VulkanAllocator.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="WorkerThreadPool.cpp" />
   </ItemGroup>
@@ -161,9 +162,11 @@
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="RenderEngineVulkanBackend.h" />
     <ClInclude Include="RenderEntity.h" />
+    <ClInclude Include="RenderEntityCreateInfo.h" />
     <ClInclude Include="RenderEntityFactory.h" />
     <ClInclude Include="RenderDataInstanced.h" />
     <ClInclude Include="RenderDataSingular.h" />
+    <ClInclude Include="RenderMode.h" />
     <ClInclude Include="RenderTransform.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
@@ -171,14 +174,17 @@
     <ClInclude Include="UniformBufferObject.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="VulkanAllocator.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="background.frag" />
     <None Include="background.vert" />
-    <None Include="test.frag" />
-    <None Include="test.vert" />
+    <None Include="particle.vert" />
+    <None Include="particle.frag" />
+    <None Include="quad.frag" />
+    <None Include="quad.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

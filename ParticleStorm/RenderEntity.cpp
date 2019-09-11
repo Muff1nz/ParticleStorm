@@ -3,11 +3,12 @@
 #include "Camera.h"
 #include "Environment.h"
 
-RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced) {
+RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, bool debugEntity) {
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
 	this->renderDataSingular = renderDataSingular;
 	this->renderDataInstanced = renderDataInstanced;
+	this->debugEntity = debugEntity;
 
 	isDisposed = false;
 }
@@ -47,6 +48,10 @@ void RenderEntity::Dispose() {
 	isDisposed = true;
 }
 
+bool RenderEntity::IsDebugEntity() const {
+	return debugEntity;
+}
+
 void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
 	if (renderDataSingular != nullptr) {
 		UpdateUniformBuffer(imageIndex, camera);
@@ -57,16 +62,16 @@ void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
 	}
 }
 
-void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, VkBuffer &quadVertexBuffer, VkBuffer &quadIndexBuffer, const std::vector<uint16_t> &indices, int index) const {
+void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, int index) const {
 	VkDeviceSize offsets[] = { 0 };
-	VkBuffer vertexBuffers[] = { quadVertexBuffer };
+	VkBuffer vertexBuffers[] = { renderDataCore->vertexBuffer };
 
 	if (renderDataSingular != nullptr) {
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
 		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffers[index], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipelineLayout, 0, 1, &renderDataSingular->descriptorSets[index], 0, nullptr);
-		vkCmdDrawIndexed(commandBuffers[index], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, 1, 0, 0, 0);
 	}
 
 	if (renderDataInstanced != nullptr) {
@@ -74,22 +79,29 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
 		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
 		vkCmdBindVertexBuffers(commandBuffers[index], 1, 1, instanceBuffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffers[index], quadIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(commandBuffers[index], static_cast<uint32_t>(indices.size()), static_cast<uint32_t>(renderDataInstanced->objectCount), 0, 0, 0);
+		vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, static_cast<uint32_t>(renderDataInstanced->instanceCount), 0, 0, 0);
 	}
 }
 
 void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const {
-	glm::vec2* particles = renderDataCore->transform.pos;
+	glm::vec2* pos = renderDataCore->transform.pos;
+	glm::vec2* scale = renderDataCore->transform.scale;
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
 
-	for (int i = 0; i < renderDataInstanced->objectCount; ++i) {
-		glm::vec2 pos = particles[i];
-		glm::mat4 model = translate(glm::mat4(1), glm::vec3(pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
-		renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+	if (!renderDataCore->transform.staticScale) {
+		for (int i = 0; i < renderDataInstanced->instanceCount; ++i) {
+			glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(scale[i], 1));
+			renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+		}
+	} else {
+		for (int i = 0; i < renderDataInstanced->instanceCount; ++i) {
+			glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(*scale, 1));
+			renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
+		}
 	}
 
-	auto size = sizeof(InstanceBufferObject) * renderDataInstanced->objectCount;
+	auto size = sizeof(InstanceBufferObject) * renderDataInstanced->instanceCount;
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, renderDataInstanced->instanceMemory[imageIndex], 0, size, 0, &data);
@@ -100,7 +112,7 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) con
 void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) const {
 	UniformBufferObject ubo = {};
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
-	glm::mat4 model = translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * scale(glm::mat4(1), { renderDataCore->transform.scale, 1 });
+	glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * glm::scale(glm::mat4(1), glm::vec3(*renderDataCore->transform.scale, 1));
 	ubo.MVP = projView * model;
 
 	void* data;

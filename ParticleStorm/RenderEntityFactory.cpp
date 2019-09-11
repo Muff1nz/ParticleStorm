@@ -5,34 +5,39 @@
 #include "RenderEntityFactory.h"
 #include "Vertex.h"
 #include "InstanceBufferObject.h"
-#include "RenderEngineVulkanBackend.h"
+#include "VulkanAllocator.h"
+#include "RenderEntityCreateInfo.h"
 
 RenderEntityFactory::RenderEntityFactory() = default;
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext* renderDataVulkanContext, RenderTransform* transform, const std::string& vertexShader, const std::string& fragmentShader) {
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity) {		
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
+	renderDataCore->renderMode = createInfo.renderMode;
+	renderDataCore->vertexBuffer = createInfo.vertexBuffer;
+	renderDataCore->indexBuffer = createInfo.indexBuffer;
+	renderDataCore->indexCount = createInfo.indexCount;
 
-	if (transform->posCount > 1) {
+	if (transform->objectCount > 1) {
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
-		renderDataInstanced->objectCount = transform->posCount;
-		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, true);
-		CreateInstanceBuffer(vulkanBackend, *renderDataVulkanContext, renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced);
+		renderDataInstanced->instanceCount = transform->objectCount;
+		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
+		CreateInstanceBuffer(vulkanAllocator, *renderDataVulkanContext, renderDataInstanced);
+		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, debugEntity);
 	}
 
 	RenderDataSingular* renderDataSingular = new RenderDataSingular();
 	CreateDescriptorSetLayout(*renderDataVulkanContext, renderDataSingular);
-	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, vertexShader, fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, false);
-	CreateUniformBuffers(vulkanBackend, *renderDataVulkanContext, renderDataSingular);
+	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
+	CreateUniformBuffers(vulkanAllocator, *renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
-
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr);
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, debugEntity);
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +46,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEngineVulkanBackend*
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, bool instancing) {
+void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
 	auto vertShaderCode = ReadFile(vert);
 	auto fragShaderCode = ReadFile(frag);
 	auto vertShaderModule = CreateShaderModule(vertShaderCode, renderDataVulkanContext.device);
@@ -72,7 +77,7 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.topology = renderMode == Triangles ? VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST : VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport = {};
@@ -98,10 +103,8 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	//rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	//rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.polygonMode = renderMode == Triangles ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = Triangles ? 1.0f : 2.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
@@ -239,28 +242,28 @@ std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void RenderEntityFactory::CreateInstanceBuffer(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
-	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->objectCount];
+void RenderEntityFactory::CreateInstanceBuffer(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
+	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->instanceCount];
 	renderDataInstanced->instanceBuffers.resize(renderDataVulkanContext.swapChainImages.size());
 	renderDataInstanced->instanceMemory.resize(renderDataVulkanContext.swapChainImages.size());
 
-	for (int j = 0; j < renderDataInstanced->objectCount; ++j) {
+	for (int j = 0; j < renderDataInstanced->instanceCount; ++j) {
 		renderDataInstanced->instanceBufferObjects[j].MVP = glm::mat4(1);
 	}
 
 	for (int i = 0; i < renderDataVulkanContext.swapChainImages.size(); ++i) {
-		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->objectCount;
+		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->instanceCount;
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		void* data;
 		vkMapMemory(renderDataVulkanContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, renderDataInstanced->instanceBufferObjects, (size_t)bufferSize);
 		vkUnmapMemory(renderDataVulkanContext.device, stagingBufferMemory);
 
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, renderDataInstanced->instanceBuffers[i], renderDataInstanced->instanceMemory[i]);
-		vulkanBackend->CopyBuffer(stagingBuffer, renderDataInstanced->instanceBuffers[i], bufferSize);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, renderDataInstanced->instanceBuffers[i], renderDataInstanced->instanceMemory[i]);
+		vulkanAllocator->CopyBuffer(stagingBuffer, renderDataInstanced->instanceBuffers[i], bufferSize);
 
 		vkDestroyBuffer(renderDataVulkanContext.device, stagingBuffer, nullptr);
 		vkFreeMemory(renderDataVulkanContext.device, stagingBufferMemory, nullptr);
@@ -293,14 +296,14 @@ void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataVulkanContext &ren
 	}
 }
 
-void RenderEntityFactory::CreateUniformBuffers(RenderEngineVulkanBackend* vulkanBackend, RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
+void RenderEntityFactory::CreateUniformBuffers(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 	renderDataSingular->uniformBuffers.resize(renderDataVulkanContext.swapChainImages.size());
 	renderDataSingular->uniformBuffersMemory.resize(renderDataVulkanContext.swapChainImages.size());
 
 	for (size_t i = 0; i < renderDataVulkanContext.swapChainImages.size(); i++) {
-		vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderDataSingular->uniformBuffers[i], renderDataSingular->uniformBuffersMemory[i]);
+		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderDataSingular->uniformBuffers[i], renderDataSingular->uniformBuffersMemory[i]);
 	}
 }
 

@@ -51,6 +51,9 @@ void RenderEngineVulkanBackend::Dispose() {
 
 	vkDestroyInstance(instance, nullptr);
 
+	delete vulkanContext;
+	delete vulkanAllocator;
+
 	isDisposed = true;
 }
 
@@ -270,6 +273,8 @@ void RenderEngineVulkanBackend::CreateLogicalDevice() {
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.wideLines = true;
+	deviceFeatures.fillModeNonSolid = true;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -575,7 +580,7 @@ void RenderEngineVulkanBackend::CreateCommandPool() {
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-	poolInfo.flags = 0; // Optional
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Optional
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create command pool!");
@@ -590,91 +595,28 @@ void RenderEngineVulkanBackend::CreateCommandPool() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEngineVulkanBackend::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = size;
-	bufferInfo.usage = usage;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() {
+	if (vulkanContext != nullptr)
+		return vulkanContext;
 
-	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create buffer!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
-
-	if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate buffer memory!");
-	}
-
-	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+	vulkanContext = new RenderDataVulkanContext();
+	vulkanContext->physicalDevice = physicalDevice;
+	vulkanContext->device = device;
+	vulkanContext->graphicsQueue = graphicsQueue;
+	vulkanContext->renderPass = renderPass;
+	vulkanContext->swapChainExtent = swapChainExtent;
+	vulkanContext->swapChainImages = swapChainImages;
+	vulkanContext->commandPool = commandPool;
+	vulkanContext->presentQueue = presentQueue;
+	vulkanContext->swapChain = swapChain;
+	vulkanContext->swapChainFrameBuffers = swapChainFrameBuffers;
+	return vulkanContext;
 }
 
-void RenderEngineVulkanBackend::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
-	allocInfo.commandBufferCount = 1;
+VulkanAllocator* RenderEngineVulkanBackend::GetVulkanAllocator() {
+	if (vulkanAllocator != nullptr)
+		return vulkanAllocator;
 
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-	VkCommandBufferBeginInfo beginInfo = {};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-	VkBufferCopy copyRegion = {};
-	copyRegion.srcOffset = 0; // Optional
-	copyRegion.dstOffset = 0; // Optional
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(graphicsQueue);
-
-	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
-uint32_t RenderEngineVulkanBackend::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-			return i;
-		}
-	}
-
-	throw std::runtime_error("failed to find suitable memory type!");
-}
-
-RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() const {
-	RenderDataVulkanContext* renderDataVulkanContext = new RenderDataVulkanContext();
-	renderDataVulkanContext->physicalDevice = physicalDevice;
-	renderDataVulkanContext->device = device;
-	renderDataVulkanContext->graphicsQueue = graphicsQueue;
-	renderDataVulkanContext->renderPass = renderPass;
-	renderDataVulkanContext->swapChainExtent = swapChainExtent;
-	renderDataVulkanContext->swapChainImages = swapChainImages;
-	renderDataVulkanContext->commandPool = commandPool;
-	renderDataVulkanContext->presentQueue = presentQueue;
-	renderDataVulkanContext->swapChain = swapChain;
-	renderDataVulkanContext->swapChainFrameBuffers = swapChainFrameBuffers;
-	return renderDataVulkanContext;
+	vulkanAllocator = new VulkanAllocator(physicalDevice, device, graphicsQueue, commandPool);
+	return vulkanAllocator;
 }

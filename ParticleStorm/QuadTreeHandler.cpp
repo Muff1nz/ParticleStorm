@@ -26,6 +26,19 @@ void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads,
 	environment->workerThreads.JoinWorkerThreads();
 }
 
+void QuadTreeHandler::PopulateQuadData() {
+	for (int i = 0; i < environment->debugQuadSize; ++i) {
+		if (i < quads.size()) {
+			auto rect = quads[i]->GetRect();
+			environment->quadPos[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
+			environment->quadScale[i] = {rect.halfW, rect.halfH};
+		} else {
+			environment->quadPos[i] = { 0, 0 };
+			environment->quadScale[i] = { 0, 0 };
+		}
+	}
+}
+
 void QuadTreeHandler::ResizeLinearQuads(std::vector<LinearQuad*>* linearQuads) {
 	//TODO: Make this scale better with higher particle/thread counts
 	if (quads.size() > linearQuads->size()) {

@@ -117,6 +117,9 @@
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="VulkanAllocator.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h">
@@ -212,18 +215,33 @@
     <ClInclude Include="Window.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="RenderMode.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEntityCreateInfo.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanAllocator.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="test.frag">
-      <Filter>Shaders\Fragment</Filter>
-    </None>
-    <None Include="test.vert">
-      <Filter>Shaders\Vertex</Filter>
-    </None>
     <None Include="background.vert">
       <Filter>Shaders\Vertex</Filter>
     </None>
     <None Include="background.frag">
+      <Filter>Shaders\Fragment</Filter>
+    </None>
+    <None Include="particle.frag">
+      <Filter>Shaders\Fragment</Filter>
+    </None>
+    <None Include="particle.vert">
+      <Filter>Shaders\Vertex</Filter>
+    </None>
+    <None Include="quad.vert">
+      <Filter>Shaders\Vertex</Filter>
+    </None>
+    <None Include="quad.frag">
       <Filter>Shaders\Fragment</Filter>
     </None>
   </ItemGroup>

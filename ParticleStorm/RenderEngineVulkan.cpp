@@ -63,38 +63,7 @@ void RenderEngineVulkan::CreateCommandBuffers() {
 	}
 
 	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		beginInfo.pInheritanceInfo = nullptr; // Optional
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderDataVulkanContext->renderPass;
-		renderPassInfo.framebuffer = renderDataVulkanContext->swapChainFrameBuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = renderDataVulkanContext->swapChainExtent;
-
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		for (auto renderEntity : renderEntities) 
-			renderEntity->BindToCommandPool(commandBuffers, quadVertexBuffer, quadIndexBuffer, indices, i);
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
-		}
-
-
+		UpdateCommandBuffer(i);
 	}
 }
 
@@ -125,56 +94,92 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
-	vulkanBackend->CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
+	vulkanAllocator->CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
 	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
 
-void RenderEngineVulkan::CreateIndexBuffer() {
+void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
 	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
-	vulkanBackend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadIndexBuffer, quadIndexBufferMemory);
+	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
-	vulkanBackend->CopyBuffer(stagingBuffer, quadIndexBuffer, bufferSize);
+	vulkanAllocator->CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
 	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
 
 void RenderEngineVulkan::CreateRenderEntities() {
+	RenderEntityCreateInfo createInfoBackground;
+	createInfoBackground.vertexShader = "backgroundVert.spv";
+	createInfoBackground.fragmentShader = "backgroundFrag.spv";
+	createInfoBackground.renderMode = Triangles;
+	createInfoBackground.vertexBuffer = quadVertexBuffer;
+	createInfoBackground.indexBuffer = quadIndexBuffer;
+	createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
+
 	RenderTransform* backgroundTransform = new RenderTransform();
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->posCount = 1;
-	backgroundTransform->scale = { environment->worldWidth / 2, environment->worldHeight / 2 };
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, backgroundTransform, "backgroundVert.spv", "backgroundFrag.spv"));
-	
+	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
+	backgroundTransform->objectCount = 1;	
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, renderDataVulkanContext, vulkanAllocator, backgroundTransform, false));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	RenderEntityCreateInfo createInfoParticles;
+	createInfoParticles.vertexShader = "particleVert.spv";
+	createInfoParticles.fragmentShader = "particleFrag.spv";
+	createInfoParticles.renderMode = Triangles;
+	createInfoParticles.vertexBuffer = quadVertexBuffer;
+	createInfoParticles.indexBuffer = quadIndexBuffer;
+	createInfoParticles.indexCount = static_cast<uint32_t>(QuadIndices.size());
+
 	RenderTransform* particlesTransform = new RenderTransform();
 	particlesTransform->pos = environment->particlePos;
-	particlesTransform->posCount = environment->particleCount;
-	particlesTransform->scale = { environment->particleRadius, environment->particleRadius };
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(vulkanBackend, renderDataVulkanContext, particlesTransform, "particleVert.spv", "particleFrag.spv"));
+	particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
+	particlesTransform->staticScale = true;
+	particlesTransform->objectCount = environment->particleCount;
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, renderDataVulkanContext, vulkanAllocator, particlesTransform, false));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	RenderEntityCreateInfo createInfoQuadTree;
+	createInfoQuadTree.vertexShader = "quadVert.spv";
+	createInfoQuadTree.fragmentShader = "quadFrag.spv";
+	createInfoQuadTree.renderMode = Lines;
+	createInfoQuadTree.vertexBuffer = quadVertexBuffer;
+	createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
+	createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
+
+	RenderTransform* quadTreeTransform = new RenderTransform();
+	quadTreeTransform->pos = environment->quadPos;
+	quadTreeTransform->scale = environment->quadScale;
+	quadTreeTransform->objectCount = environment->debugQuadSize;
+	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, renderDataVulkanContext, vulkanAllocator, quadTreeTransform, true));
 }
 
 void RenderEngineVulkan::InitVulkan() {
 	CreateVertexBuffer();
-	CreateIndexBuffer();
+	CreateIndexBuffer(QuadIndices, quadIndexBuffer, quadIndexBufferMemory);
+	CreateIndexBuffer(LineQuadIndices, quadLineIndexBuffer, quadLineIndexBufferMemory);
 	CreateRenderEntities();
 	CreateCommandBuffers();
 	CreateSyncObjects();
@@ -198,6 +203,7 @@ void RenderEngineVulkan::Init() {
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
 	renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
+	vulkanAllocator = vulkanBackend->GetVulkanAllocator();
 
 	InitVulkan();
 }
@@ -226,7 +232,8 @@ void RenderEngineVulkan::Dispose() {
 	}
 
 
-
+	vkDestroyBuffer(device, quadLineIndexBuffer, nullptr);
+	vkFreeMemory(device, quadLineIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
 	vkFreeMemory(device, quadIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadVertexBuffer, nullptr);
@@ -242,7 +249,6 @@ void RenderEngineVulkan::Dispose() {
 
 	isDisposed = true;
 
-	delete renderDataVulkanContext;
 	delete window;
 }
 
@@ -277,17 +283,56 @@ void RenderEngineVulkan::Join() {
 	renderThead.join();
 }
 
+void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.pInheritanceInfo = nullptr; // Optional
+
+	if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
+		throw std::runtime_error("failed to begin recording command buffer!");
+	}
+
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = renderDataVulkanContext->renderPass;
+	renderPassInfo.framebuffer = renderDataVulkanContext->swapChainFrameBuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderDataVulkanContext->swapChainExtent;
+
+	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	for (auto renderEntity : renderEntities)
+		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+			renderEntity->BindToCommandPool(commandBuffers, imageIndex);
+
+	vkCmdEndRenderPass(commandBuffers[imageIndex]);
+
+	if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
+		throw std::runtime_error("failed to record command buffer!");
+	}
+}
+
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
+		
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	for (auto renderEntity : renderEntities)
-		renderEntity->UpdateBuffers(imageIndex, &environment->camera);
+	//TODO: Have this be triggered by events
+	UpdateCommandBuffer(imageIndex);
+
+	for (auto renderEntity : renderEntities) {
+		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+			renderEntity->UpdateBuffers(imageIndex, &environment->camera);
+	}
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
