@@ -10,12 +10,13 @@
 #include "RenderEntity.h"
 #include "RenderEngineVulkanBackend.h"
 #include "Window.h"
+#include "MessageQueue.h"
 
 //TODO: https://vulkan-tutorial.com/Drawing_a_triangle/Swap_chain_recreation
 class RenderEngineVulkan {
 public:
 	//Constructor / Destructor
-	RenderEngineVulkan(Environment* environment);
+	RenderEngineVulkan(Environment* environment, MessageQueue* messageQueue);
 	~RenderEngineVulkan();
 
 	//Init
@@ -33,17 +34,20 @@ public:
 private:
 	//Particle Storm Specific Variables
 	Environment* environment;
+	MessageQueue* messageQueue;
+	bool debugMode;
 
 	//General
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
-	Window*  window;
+	Window* window;
 	RenderEngineVulkanBackend* vulkanBackend;
 	RenderDataVulkanContext* renderDataVulkanContext;
 	VulkanAllocator* vulkanAllocator;
 
 	//Vulkan
 	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<bool> commandBuffersValidState;
 
 	//Data for the stuff that we draw
 	VkBuffer quadVertexBuffer;
@@ -68,6 +72,8 @@ private:
 
 	//Threading
 	std::thread renderThead;
+
+	void HandleMessages();
 
 	//Threading
 	void RenderThreadRun();

@@ -64,6 +64,12 @@
     <Filter Include="Header Files\Graphics\RenderEntity\Data">
       <UniqueIdentifier>{8b352e24-5860-45ac-979b-6c8b983af107}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\MessageSystem">
+      <UniqueIdentifier>{58455cc1-3db5-44e9-be02-8d914612cb23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MessageSystem">
+      <UniqueIdentifier>{5d6167c7-9c71-4cda-af77-19db9e107caa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -119,6 +125,12 @@
     </ClCompile>
     <ClCompile Include="VulkanAllocator.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageQueue.cpp">
+      <Filter>Source Files\MessageSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstStrings.cpp">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -223,6 +235,24 @@
     </ClInclude>
     <ClInclude Include="VulkanAllocator.h">
       <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageQueue.h">
+      <Filter>Header Files\MessageSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemComponent.h">
+      <Filter>Header Files\MessageSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Message.h">
+      <Filter>Header Files\MessageSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstStrings.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumUtils.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageType.h">
+      <Filter>Header Files\MessageSystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
