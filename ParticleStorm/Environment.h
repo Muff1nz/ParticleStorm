@@ -34,9 +34,6 @@ public:
 	glm::vec2* particleVel{};
 	bool* particleResting{};
 
-	//Event domain
-	std::queue<glm::vec2> explosions;
-
 	//Why is this here?
 	std::atomic_int* particleQuadCount{};
 
@@ -46,7 +43,6 @@ public:
 	WorkerThreadPool workerThreads;
 
 	//Debugging domain
-	bool runtimeDebugMode = false;
 	int debugQuadSize = 1000;
 	glm::vec2* quadPos;
 	glm::vec2* quadScale;

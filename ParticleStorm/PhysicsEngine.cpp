@@ -1,13 +1,16 @@
 #include "PhysicsEngine.h"
-#include <iostream>
+
+#include <detail/func_geometric.inl>
+
 #include "Timer.h"
 #include "Range.h"
 #include "LinearQuad.h"
-#include <detail/func_geometric.inl>
 #include "QuadTreeHandler.h"
+#include "ConstStrings.h"
 
-PhysicsEngine::PhysicsEngine(Environment* environment) {
+PhysicsEngine::PhysicsEngine(Environment* environment, MessageQueue* messageQueue) {
 	this->environment = environment;
+	this->messageQueue = messageQueue;
 	collisionChecker = CollisionChecker(environment->particleRadius);
 	rng = NumberGenerator(environment->seed);
 }
@@ -158,20 +161,34 @@ void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 	}
 }
 
-void PhysicsEngine::HandleExplosions() const {
+void PhysicsEngine::HandleExplosion(Message message) const {
 	float const explosionForce = 500000.0f;
 	const auto circlePos = environment->particlePos;
 	const auto circleVel = environment->particleVel;
 
-	while (!environment->explosions.empty()) {
-		glm::vec2 impactPoint = environment->explosions.front();
-		for (int i = 0; i < environment->particleCount; i++) {
-			glm::vec2 lineBetween = circlePos[i] - impactPoint;
-			const float distance = length(lineBetween);
-			lineBetween /= distance;
-			circleVel[i] += lineBetween / distance * explosionForce;
+	glm::vec2 impactPoint = *static_cast<glm::vec2*>(message.payload);
+	for (int i = 0; i < environment->particleCount; i++) {
+		glm::vec2 lineBetween = circlePos[i] - impactPoint;
+		const float distance = length(lineBetween);
+		lineBetween /= distance;
+		circleVel[i] += lineBetween / distance * explosionForce;
+	}
+	delete static_cast<glm::vec2*>(message.payload);
+}
+
+void PhysicsEngine::HandleMessages() {
+	Message message = messageQueue->PS_GetMessage(SYSTEM_PhysicsEngine);
+	while (!message.IsEmpty()) {
+		switch (message.messageType) {
+		case MT_Explosion:
+			HandleExplosion(message);
+			break;
+		case MT_DebugModeStateChange:
+			debugMode = message.message == ConstStrings::PS_TRUE;
+			break;
+		default: ;
 		}
-		environment->explosions.pop();
+		message = messageQueue->PS_GetMessage(SYSTEM_PhysicsEngine);
 	}
 }
 
@@ -196,7 +213,7 @@ void PhysicsEngine::LeadThreadRun() {
 
 		//EXPLOSIONS
 		timer.Restart();
-		HandleExplosions();
+		HandleMessages();
 		timer.Stop();
 		environment->stats.puEventsTotalLastSecond += timer.ElapsedMicroseconds();
 
@@ -207,7 +224,7 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Stop();
 		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
-		if (environment->runtimeDebugMode)
+		if (debugMode)
 			quadTreeHandler.PopulateQuadData();
 
 		//PARTICLE COLLISIONS
@@ -229,7 +246,6 @@ void PhysicsEngine::LeadThreadRun() {
 		++environment->stats.physicsUpdateTotalLastSecond;
 	}
 
-	std::cout << "\nJOINING THE THREADS!!\n";
+
 	environment->workerThreads.CloseWorkerThreads();
-	std::cout << "\nRUN COMPLETE!!\n";
 }

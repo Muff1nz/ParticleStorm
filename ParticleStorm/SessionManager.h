@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ public:
 	SessionManager();
 	~SessionManager();
 
-	void Sandbox() const;
+	static void Sandbox();
 	void PhysBench() const;
 	void GraphBench() const;
 private:

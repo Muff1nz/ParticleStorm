@@ -9,6 +9,7 @@
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
 #include "Utils.h"
+#include "ConstStrings.h"
 
 
 SessionManager::SessionManager() = default;
@@ -84,10 +85,12 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 	return sessionString;
 }
 
-void SessionManager::Sandbox() const {
+void SessionManager::Sandbox() {
+	bool debugMode = false;
 	Environment environment{};
-	RenderEngineVulkan renderEngine(&environment);
-	PhysicsEngine physicsEngine(&environment);
+	MessageQueue messageQueue{};
+	RenderEngineVulkan renderEngine(&environment, &messageQueue);
+	PhysicsEngine physicsEngine(&environment, &messageQueue);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -123,16 +126,18 @@ void SessionManager::Sandbox() const {
 		if (state == GLFW_PRESS && state != lastMouseButtonState) {
 			double x, y;
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
-
 			glm::vec2 mouseWorldPos = environment.camera.GetWorldPos({ x, y });
-			environment.explosions.push(glm::vec2(mouseWorldPos.x, mouseWorldPos.y));
+			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_PhysicsEngine, MT_Explosion, new glm::vec2(mouseWorldPos)));
 			++environment.stats.explosionTotalLastSecond;
 		}
 		lastMouseButtonState = state;
 
 		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_Q);
-		if (state == GLFW_PRESS && state != lastQ)
-			environment.runtimeDebugMode = !environment.runtimeDebugMode;
+		if (state == GLFW_PRESS && state != lastQ) {
+			debugMode = !debugMode;
+			messageQueue.PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_DebugModeStateChange, debugMode ? ConstStrings::PS_TRUE : ConstStrings::PS_FALSE));
+		}
+			
 		lastQ = state;
 
 		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
@@ -152,8 +157,9 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 	Timer::unhinged = true;
 
 	Environment environment(particleCount, particleRadius, 1337, threadCount, 2200, 1200, 10000, 5450);
-	RenderEngineVulkan renderEngine(&environment);
-	PhysicsEngine physicsEngine(&environment);
+	MessageQueue messageQueue{};
+	RenderEngineVulkan renderEngine(&environment, &messageQueue);
+	PhysicsEngine physicsEngine(&environment, &messageQueue);
 	renderEngine.Init();
 	physicsEngine.Init();
 
@@ -195,7 +201,7 @@ std::string SessionManager::Benchmark(int particleCount, int particleRadius, int
 		if (explosionTimer.ElapsedSeconds() >= 1.0f) {
 			explosionTimer.Restart();
 			const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
-			environment.explosions.push(glm::vec2(impact.x, environment.worldHeight - impact.y));
+			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_PhysicsEngine, MT_Explosion, new glm::vec2(impact.x, environment.worldHeight - impact.y)));
 		}
 
 		glfwPollEvents();

@@ -1,14 +1,16 @@
 #pragma once
+
 #include <thread>
 
 #include "Environment.h"
 #include "NumberGenerator.h"
 #include "LinearQuad.h"
 #include "CollisionChecker.h"
+#include "MessageQueue.h"
 
 class PhysicsEngine {
 public:
-	PhysicsEngine(Environment* environment);
+	PhysicsEngine(Environment* environment, MessageQueue* messageQueue);
 	~PhysicsEngine();
 
 	void Init();
@@ -23,9 +25,14 @@ private:
 	NumberGenerator rng;
 
 	Environment* environment;
+	MessageQueue* messageQueue;
+	bool debugMode;
 
 	std::thread LeadThread;
-	CollisionChecker collisionChecker;
+	CollisionChecker collisionChecker;	
+
+	void HandleMessages();
+	void HandleExplosion(Message message) const;	
 
 	void ResolveCollision(int particle1, int particle2, float dist) const;
 	void QuadInternalParticleCollision(int localParticle1, int localParticle2, LinearQuad* tree) const;
@@ -34,7 +41,6 @@ private:
 	void LinearQuadParticleCollisions(LinearQuad* tree) const;
 	void LinearQuadParticleCollisions(std::vector<LinearQuad*>* quads, int start, int end) const;
 	void UpdateParticles(int start, int end, float deltaTime) const;
-	void HandleExplosions() const;
 	void WorldBoundsCheck(int particle) const;
 
 	void LeadThreadRun();

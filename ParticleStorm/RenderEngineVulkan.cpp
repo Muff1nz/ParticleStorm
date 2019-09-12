@@ -18,6 +18,7 @@
 
 #include "Timer.h"
 #include "RenderEntityFactory.h"
+#include "ConstStrings.h"
 
 
 //     _____                _                   _                   __  _____            _                   _             
@@ -29,8 +30,9 @@
 //                                                                                                                         
 //                                                                                                                         
 
-RenderEngineVulkan::RenderEngineVulkan(Environment* environment) {
+RenderEngineVulkan::RenderEngineVulkan(Environment* environment, MessageQueue* messageQueue) {
 	this->environment = environment;
+	this->messageQueue = messageQueue;
 }
 
 RenderEngineVulkan::~RenderEngineVulkan() {
@@ -51,6 +53,7 @@ RenderEngineVulkan::~RenderEngineVulkan() {
 
 void RenderEngineVulkan::CreateCommandBuffers() {
 	commandBuffers.resize(renderDataVulkanContext->swapChainFrameBuffers.size());
+	commandBuffersValidState.resize(renderDataVulkanContext->swapChainFrameBuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -307,7 +310,7 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	for (auto renderEntity : renderEntities)
-		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+		if (!renderEntity->IsDebugEntity() || debugMode)
 			renderEntity->BindToCommandPool(commandBuffers, imageIndex);
 
 	vkCmdEndRenderPass(commandBuffers[imageIndex]);
@@ -315,6 +318,8 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
+
+	commandBuffersValidState[imageIndex] = true;
 }
 
 void RenderEngineVulkan::DrawFrame() {
@@ -327,10 +332,11 @@ void RenderEngineVulkan::DrawFrame() {
 	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	//TODO: Have this be triggered by events
-	UpdateCommandBuffer(imageIndex);
+	if (!commandBuffersValidState[imageIndex])
+		UpdateCommandBuffer(imageIndex);
 
 	for (auto renderEntity : renderEntities) {
-		if (!renderEntity->IsDebugEntity() || environment->runtimeDebugMode)
+		if (!renderEntity->IsDebugEntity() || debugMode)
 			renderEntity->UpdateBuffers(imageIndex, &environment->camera);
 	}
 
@@ -371,10 +377,27 @@ void RenderEngineVulkan::DrawFrame() {
 	++environment->stats.renderUpdateTotalLastSecond;
 }
 
+void RenderEngineVulkan::HandleMessages() {
+	Message message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
+	while (!message.IsEmpty()) {
+		switch (message.messageType) {
+		case MT_DebugModeStateChange:
+			debugMode = message.message == ConstStrings::PS_TRUE;
+			for (int i = 0; i < commandBuffersValidState.size(); ++i) {
+				commandBuffersValidState[i] = false;
+			}
+			break;
+		default:;
+		}
+		message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
+	}
+}
+
 void RenderEngineVulkan::RenderThreadRun() {
 	Timer timer(99999.0f, 1.0f/144.0f);
 	while (!environment->done) {
 		timer.DeltaTime();
+		HandleMessages();
 		DrawFrame();
 	}
 }
