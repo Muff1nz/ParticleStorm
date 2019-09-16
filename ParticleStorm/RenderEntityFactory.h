@@ -8,8 +8,9 @@ class RenderEntityFactory {
 public:
 	RenderEntityFactory();
 	~RenderEntityFactory();
-		
+	
 	static RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity);
+	static void RecreateGraphicsPipeline(RenderEntity* renderEntity);
 private:
 	static void CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
 	static VkShaderModule CreateShaderModule(const std::vector<char>& code, VkDevice& device);

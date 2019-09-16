@@ -20,12 +20,16 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	renderDataCore->indexBuffer = createInfo.indexBuffer;
 	renderDataCore->indexCount = createInfo.indexCount;
 
+	RenderEntityMeta* renderEntityMeta = new RenderEntityMeta();
+	renderEntityMeta->frag = createInfo.fragmentShader;
+	renderEntityMeta->vert = createInfo.vertexShader;
+
 	if (transform->objectCount > 1) {
 		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
 		renderDataInstanced->instanceCount = transform->objectCount;
 		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
 		CreateInstanceBuffer(vulkanAllocator, *renderDataVulkanContext, renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, debugEntity);
+		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, renderEntityMeta, debugEntity);
 	}
 
 	RenderDataSingular* renderDataSingular = new RenderDataSingular();
@@ -34,7 +38,21 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	CreateUniformBuffers(vulkanAllocator, *renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
 	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, debugEntity);
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, renderEntityMeta, debugEntity);
+}
+
+void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {
+	renderEntity->DisposePipeline();
+	CreateGraphicsPipeline(
+		*renderEntity->renderDataVulkanContext,
+		renderEntity->renderDataSingular, 
+		renderEntity->renderEntityMeta->vert, 
+		renderEntity->renderEntityMeta->frag, 
+		renderEntity->renderDataCore->pipeline,
+		renderEntity->renderDataCore->pipelineLayout,
+		renderEntity->renderDataCore->renderMode,
+		renderEntity->renderDataInstanced != nullptr
+	);
 }
 
 
@@ -175,6 +193,7 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
+	//TODO: Consider keeping these around until RenderEngineVulkan.Dispose to make SwapChainRecreation cheaper.
 	vkDestroyShaderModule(renderDataVulkanContext.device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(renderDataVulkanContext.device, vertShaderModule, nullptr);
 }

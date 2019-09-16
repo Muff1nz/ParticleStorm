@@ -65,6 +65,9 @@ private:
 	size_t currentFrame = 0;
 
 	void UpdateCommandBuffer(int imageIndex);
+	void UpdateRenderEntities();
+	void RecreateCommandBuffers();
+	void RecreateSwapChain();
 	void DrawFrame();
 
 	//Cleanup

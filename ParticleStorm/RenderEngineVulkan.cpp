@@ -324,16 +324,43 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	commandBuffersValidState[imageIndex] = true;
 }
 
+void RenderEngineVulkan::UpdateRenderEntities() {
+	for (auto renderEntity : renderEntities) 
+		RenderEntityFactory::RecreateGraphicsPipeline(renderEntity);
+}
+
+void RenderEngineVulkan::RecreateCommandBuffers() {
+	vkFreeCommandBuffers(renderDataVulkanContext->device, renderDataVulkanContext->commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	CreateCommandBuffers();
+}
+
+void RenderEngineVulkan::RecreateSwapChain() {
+	do {
+		window->UpdateMetaData();
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	} while (window->GetHeight() == 0 || window->GetWidth() == 0);
+
+	vkDeviceWaitIdle(renderDataVulkanContext->device);
+	vulkanBackend->RecreateSwapChain();
+	UpdateRenderEntities();
+	RecreateCommandBuffers();
+}
+
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 		
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	//TODO: Have this be triggered by events
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) { //TODO: Expand with GLFW resize callback. Not every system gets the result here, ASLO move into bool FOO(...)...
+		RecreateSwapChain();
+		return;
+	} else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
+
 	if (!commandBuffersValidState[imageIndex])
 		UpdateCommandBuffer(imageIndex);
 
@@ -357,6 +384,8 @@ void RenderEngineVulkan::DrawFrame() {
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
+	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
 	if (vkQueueSubmit(renderDataVulkanContext->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
@@ -372,7 +401,14 @@ void RenderEngineVulkan::DrawFrame() {
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 
-	vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+		RecreateSwapChain();
+		return;
+	} else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 

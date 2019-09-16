@@ -6,7 +6,7 @@ void Window::InitWindow(int height, int width, bool fullscreen) {
 
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	if (fullscreen) {
 		auto monitor = glfwGetPrimaryMonitor();
 
@@ -39,6 +39,10 @@ void Window::Dispose() {
 	glfwTerminate();
 
 	isDisposed = true;
+}
+
+void Window::UpdateMetaData() {
+	glfwGetFramebufferSize(window, &width, &height);
 }
 
 int Window::GetHeight() const {

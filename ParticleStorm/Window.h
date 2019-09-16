@@ -12,6 +12,7 @@ public:
 	int GetWidth() const;
 	int IsFullscreen() const;
 	GLFWwindow* GetWindow() const;
+	void UpdateMetaData();
 private:
 	bool isDisposed = false;
 	
