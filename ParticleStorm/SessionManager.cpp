@@ -156,7 +156,7 @@ void SessionManager::Sandbox() {
 std::string SessionManager::Benchmark(int particleCount, int particleRadius, int threadCount) const {
 	Timer::unhinged = true;
 
-	Environment environment(particleCount, particleRadius, 1337, threadCount, 2200, 1200, 10000, 5450);
+	Environment environment(particleCount, particleRadius, 1337, threadCount, 10000, 5450);
 	MessageQueue messageQueue{};
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);
 	PhysicsEngine physicsEngine(&environment, &messageQueue);

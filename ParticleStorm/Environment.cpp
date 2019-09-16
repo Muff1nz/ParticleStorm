@@ -5,8 +5,8 @@ Environment::Environment() {
 	Init();
 }
 
-Environment::Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh) 
-: screenWidth(sw), screenHeight(sh), worldWidth(ww), worldHeight(wh), particleCount(circleCount), particleRadius(circleRadius), workerThreadCount(workerThreadCount) {
+Environment::Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int ww, int wh) 
+: worldWidth(ww), worldHeight(wh), particleCount(circleCount), particleRadius(circleRadius), workerThreadCount(workerThreadCount) {
 	Init();
 	this->seed = seed;
 }
@@ -23,7 +23,6 @@ void Environment::Init() {
 	particleResting = new bool[particleCount];
 	particleQuadCount = new std::atomic_int[particleCount];
 	workerThreads.Init(workerThreadCount);
-	camera = Camera(worldHeight, worldWidth, screenHeight, screenWidth);
 
 	quadPos = new glm::vec2[debugQuadSize];
 	quadScale = new glm::vec2[debugQuadSize];

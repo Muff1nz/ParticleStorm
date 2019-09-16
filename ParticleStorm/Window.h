@@ -8,10 +8,10 @@ public:
 	void InitWindow(int height, int width, bool fullscreen);
 	void Dispose();
 
-	int GetHeight();
-	int GetWidth();
-	int IsFullscreen();
-	GLFWwindow* GetWindow();
+	int GetHeight() const;
+	int GetWidth() const;
+	int IsFullscreen() const;
+	GLFWwindow* GetWindow() const;
 private:
 	bool isDisposed = false;
 	

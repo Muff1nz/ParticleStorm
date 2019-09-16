@@ -4,11 +4,12 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include "Queue.h"
+#include "Window.h"
 
 class Camera {
 public:
 	Camera();
-	Camera(int worldHeight, int worldWidth, int screenHeight, int screenWidth);
+	Camera(int worldHeight, int worldWidth, Window* window);
 	~Camera();
 	void Init(GLFWwindow* window);
 
@@ -17,15 +18,13 @@ public:
 
 	glm::vec2 GetWorldPos(glm::vec2 screenPos);
 	glm::vec2 GetViewPos(glm::vec2 screenPos);
+
 	void Update(GLFWwindow* window, float deltaTime);
 
 private:	
 	int worldHeight;
 	int worldWidth;
-	int screenHeight;
-	int screenWidth;
-	int orthoWidth;
-	int orthoHeight;
+	Window* window;
 
 
 	static Queue<double> scrollEvents;
@@ -38,7 +37,10 @@ private:
 
 	glm::vec2 oldMousePos;
 	glm::vec2 oldMouseFlag = { -999, -999 };
-	
+
+	float GetPixelToWorld() const;
+	int GetOrthoHeight() const;
+	int GetOrthoWidth() const;
 	void ResetCamera();
 	void static ScrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 };

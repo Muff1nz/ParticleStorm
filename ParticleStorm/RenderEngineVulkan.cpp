@@ -201,7 +201,9 @@ void RenderEngineVulkan::Init() {
 	isDisposed = false;
 
 	window = new Window();
-	window->InitWindow(environment->screenHeight, environment->screenWidth, environment->fullScreen);
+	window->InitWindow(1200, 2800, environment->fullScreen);
+	environment->camera = Camera(environment->worldHeight, environment->worldWidth, window);
+
 
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
