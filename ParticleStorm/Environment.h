@@ -17,8 +17,8 @@ public:
 	const bool fullScreen = false;
 		
 	//World domain
-	const int worldWidth = 9000;
-	const int worldHeight = 3600;	
+	const int worldWidth = 9000; //21:9 ish, 2.38
+	const int worldHeight = 3780;//	
 	int seed{};
 
 	//Runtime data domain
