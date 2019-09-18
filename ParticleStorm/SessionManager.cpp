@@ -86,7 +86,6 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 }
 
 void SessionManager::Sandbox() {
-	bool debugMode = false;
 	Environment environment{};
 	MessageQueue messageQueue{};
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);
@@ -104,6 +103,8 @@ void SessionManager::Sandbox() {
 
 	int lastMouseButtonState = GLFW_PRESS;
 	int lastQ = GLFW_PRESS;
+	int lastF = GLFW_PRESS;
+
 	float deltaTime;
 
 	while (!environment.done) {
@@ -134,11 +135,15 @@ void SessionManager::Sandbox() {
 
 		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_Q);
 		if (state == GLFW_PRESS && state != lastQ) {
-			debugMode = !debugMode;
-			messageQueue.PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_DebugModeStateChange, debugMode ? ConstStrings::PS_TRUE : ConstStrings::PS_FALSE));
-		}
-			
+			messageQueue.PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_DebugModeToggle));
+		}			
 		lastQ = state;
+
+		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_F);
+		if (state == GLFW_PRESS && state != lastF) {
+			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_RenderEngine, MT_FullScreenToggle));
+		}
+		lastF = state;
 
 		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
 	}
@@ -156,7 +161,7 @@ void SessionManager::Sandbox() {
 std::string SessionManager::Benchmark(int particleCount, int particleRadius, int threadCount) const {
 	Timer::unhinged = true;
 
-	Environment environment(particleCount, particleRadius, 1337, threadCount, 2200, 1200, 10000, 5450);
+	Environment environment(particleCount, particleRadius, 1337, threadCount, 10000, 5450);
 	MessageQueue messageQueue{};
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);
 	PhysicsEngine physicsEngine(&environment, &messageQueue);

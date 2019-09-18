@@ -4,10 +4,13 @@
 #include "RenderDataInstanced.h"
 #include "RenderDataVulkanContext.h"
 #include "Environment.h"
+#include "RenderEntityMeta.h"
 
 class RenderEntity {
 public:
-	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, bool debugEntity);
+	friend class RenderEntityFactory;
+
+	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
 	~RenderEntity();
 
 	void Dispose();
@@ -20,6 +23,7 @@ private:
 	bool isDisposed = false;
 	bool debugEntity = false;
 
+	RenderEntityMeta* renderEntityMeta;
 	RenderDataVulkanContext* renderDataVulkanContext;
 	RenderDataCore* renderDataCore;
 	RenderDataSingular* renderDataSingular;
@@ -27,4 +31,5 @@ private:
 
 	void UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const;
 	void UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) const;
+	void DisposePipeline() const;
 };

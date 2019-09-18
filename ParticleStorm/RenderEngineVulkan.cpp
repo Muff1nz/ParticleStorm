@@ -201,7 +201,11 @@ void RenderEngineVulkan::Init() {
 	isDisposed = false;
 
 	window = new Window();
-	window->InitWindow(environment->screenHeight, environment->screenWidth, environment->fullScreen);
+	window->InitWindow(1200, 2800, environment->fullScreen);
+	glfwSetWindowUserPointer(window->GetWindow(), this);
+	glfwSetFramebufferSizeCallback(window->GetWindow(), FramebufferResizeCallback);
+	environment->camera = Camera(environment->worldHeight, environment->worldWidth, window);
+
 
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
@@ -322,16 +326,56 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	commandBuffersValidState[imageIndex] = true;
 }
 
+void RenderEngineVulkan::UpdateRenderEntities() {
+	for (auto renderEntity : renderEntities) 
+		RenderEntityFactory::RecreateGraphicsPipeline(renderEntity);
+}
+
+void RenderEngineVulkan::RecreateCommandBuffers() {
+	vkFreeCommandBuffers(renderDataVulkanContext->device, renderDataVulkanContext->commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	CreateCommandBuffers();
+}
+
+void RenderEngineVulkan::RecreateSwapChain() {
+	do {
+		window->UpdateMetaData();
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	} while (window->GetHeight() == 0 || window->GetWidth() == 0);
+
+	vkDeviceWaitIdle(renderDataVulkanContext->device);
+	vulkanBackend->RecreateSwapChain();
+	UpdateRenderEntities();
+	RecreateCommandBuffers();
+
+	windowSizeChanged = false;
+}
+
+void RenderEngineVulkan::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto engine = reinterpret_cast<RenderEngineVulkan*>(glfwGetWindowUserPointer(window));
+	engine->windowSizeChanged = true;
+}
+
+bool RenderEngineVulkan::HandleSwapChain(VkResult result, bool includeCallback) {
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowSizeChanged && includeCallback) {
+		RecreateSwapChain(); 
+		return true;
+	}
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
+	return false;
+}
+
 void RenderEngineVulkan::DrawFrame() {
 	auto device = renderDataVulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 		
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	//TODO: Have this be triggered by events
+	if (HandleSwapChain(result, false)) return;
+
 	if (!commandBuffersValidState[imageIndex])
 		UpdateCommandBuffer(imageIndex);
 
@@ -355,6 +399,8 @@ void RenderEngineVulkan::DrawFrame() {
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
+	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
 	if (vkQueueSubmit(renderDataVulkanContext->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
@@ -370,7 +416,9 @@ void RenderEngineVulkan::DrawFrame() {
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 
-	vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
+
+	if (HandleSwapChain(result, true)) return;
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -381,11 +429,14 @@ void RenderEngineVulkan::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
-		case MT_DebugModeStateChange:
-			debugMode = message.message == ConstStrings::PS_TRUE;
+		case MT_DebugModeToggle:
+			debugMode = !debugMode;
 			for (int i = 0; i < commandBuffersValidState.size(); ++i) {
 				commandBuffersValidState[i] = false;
 			}
+			break;
+		case MT_FullScreenToggle:
+			window->ToggleFullscreen();
 			break;
 		default:;
 		}

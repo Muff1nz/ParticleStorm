@@ -15,8 +15,6 @@ public:
 	//Rendering domain
 	Camera camera;
 	const bool fullScreen = false;
-	const int screenWidth = 3000;
-	const int screenHeight = 1200;
 		
 	//World domain
 	const int worldWidth = 9000;
@@ -48,7 +46,7 @@ public:
 	glm::vec2* quadScale;
 
 	Environment();
-	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int sw, int sh, int ww, int wh);
+	Environment(int circleCount, int circleRadius, int seed, int workerThreadCount, int ww, int wh);
 	~Environment(); 
 private:
 	void Init();

@@ -254,6 +254,9 @@
     <ClInclude Include="MessageType.h">
       <Filter>Header Files\MessageSystem</Filter>
     </ClInclude>
+    <ClInclude Include="RenderEntityMeta.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="background.vert">

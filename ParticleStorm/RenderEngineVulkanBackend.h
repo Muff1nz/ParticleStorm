@@ -17,6 +17,7 @@ public:
 	~RenderEngineVulkanBackend();
 
 	void Init(Window* window);
+	void RecreateSwapChain();
 	void Dispose();
 
 	RenderDataVulkanContext* GetRenderDataVulkanContext();
@@ -24,6 +25,7 @@ public:
 	
 private:
 	bool isDisposed = false;
+	bool isSwapChainDisposed = false;
 
 	Window* window;
 	RenderDataVulkanContext* vulkanContext;
@@ -71,7 +73,8 @@ private:
 	VkCommandPool commandPool;
 
 	//Functions
-
+	void DisposeSwapChain();	
+	void CopyToVulkanContext() const;
 
 	//Init step 1
 	void CreateInstance();
@@ -85,7 +88,7 @@ private:
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
 
 	//Init step 3
-	void CreateSurface(GLFWwindow* window);
+	void CreateSurface();
 
 	//Init step 4
 	void PickPhysicalDevice();

@@ -3,7 +3,8 @@
 #include "Camera.h"
 #include "Environment.h"
 
-RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, bool debugEntity) {
+RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+	this->renderEntityMeta = renderEntityMeta;
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
 	this->renderDataSingular = renderDataSingular;
@@ -26,6 +27,7 @@ void RenderEntity::Dispose() {
 			vkDestroyBuffer(renderDataVulkanContext->device, renderDataInstanced->instanceBuffers[i], nullptr);
 			vkFreeMemory(renderDataVulkanContext->device, renderDataInstanced->instanceMemory[i], nullptr);
 		}
+		delete renderDataInstanced;
 	}
 
 	if (renderDataSingular != nullptr) {
@@ -39,13 +41,25 @@ void RenderEntity::Dispose() {
 	if (renderDataCore != nullptr) {
 		vkDestroyPipeline(renderDataVulkanContext->device, renderDataCore->pipeline, nullptr);
 		vkDestroyPipelineLayout(renderDataVulkanContext->device, renderDataCore->pipelineLayout, nullptr);
+		delete renderDataCore;
 	}
 
 	if (renderDataSingular != nullptr) {
 		vkDestroyDescriptorSetLayout(renderDataVulkanContext->device, renderDataSingular->descriptorSetLayout, nullptr);
+		delete renderDataSingular;
 	}
 
+	delete renderEntityMeta;
+
+
 	isDisposed = true;
+}
+
+void RenderEntity::DisposePipeline() const {
+	if (renderDataCore != nullptr) {
+		vkDestroyPipeline(renderDataVulkanContext->device, renderDataCore->pipeline, nullptr);
+		vkDestroyPipelineLayout(renderDataVulkanContext->device, renderDataCore->pipelineLayout, nullptr);
+	}
 }
 
 bool RenderEntity::IsDebugEntity() const {

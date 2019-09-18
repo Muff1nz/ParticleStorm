@@ -11,9 +11,11 @@ RenderEngineVulkanBackend::~RenderEngineVulkanBackend() {
 
 
 void RenderEngineVulkanBackend::Init(Window* window) {
+	this->window = window;
+
 	CreateInstance();
 	SetupDebugCallback();
-	CreateSurface(window->GetWindow());
+	CreateSurface();
 	PickPhysicalDevice();
 	CreateLogicalDevice();
 	CreateSwapChain();
@@ -23,6 +25,20 @@ void RenderEngineVulkanBackend::Init(Window* window) {
 	CreateCommandPool();
 
 	isDisposed = false;
+	isSwapChainDisposed = false;
+}
+
+void RenderEngineVulkanBackend::RecreateSwapChain() {
+	DisposeSwapChain();
+	
+	CreateSwapChain();
+	CreateImageViews();
+	CreateRenderPass();
+	CreateFrameBuffers();
+
+	isSwapChainDisposed = false;
+
+	CopyToVulkanContext();
 }
 
 void RenderEngineVulkanBackend::Dispose() {
@@ -31,17 +47,8 @@ void RenderEngineVulkanBackend::Dispose() {
 
 	vkDestroyCommandPool(device, commandPool, nullptr);
 
-	for (auto framebuffer : swapChainFrameBuffers) {
-		vkDestroyFramebuffer(device, framebuffer, nullptr);
-	}
+	DisposeSwapChain();
 
-
-	vkDestroyRenderPass(device, renderPass, nullptr);
-	for (auto imageView : swapChainImageViews) {
-		vkDestroyImageView(device, imageView, nullptr);
-	}
-
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyDevice(device, nullptr);
 
@@ -55,6 +62,26 @@ void RenderEngineVulkanBackend::Dispose() {
 	delete vulkanAllocator;
 
 	isDisposed = true;
+}
+
+void RenderEngineVulkanBackend::DisposeSwapChain() {
+	if (isSwapChainDisposed)
+		return;
+
+	for (auto framebuffer : swapChainFrameBuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+
+	vkDestroyRenderPass(device, renderPass, nullptr);
+
+	for (auto imageView : swapChainImageViews) {
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
+
+
+	isSwapChainDisposed = true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,8 +214,8 @@ void RenderEngineVulkanBackend::DestroyDebugUtilsMessengerEXT(VkInstance instanc
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEngineVulkanBackend::CreateSurface(GLFWwindow* window) {
-	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+void RenderEngineVulkanBackend::CreateSurface() {
+	if (glfwCreateWindowSurface(instance, window->GetWindow(), nullptr, &surface) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create window surface!");
 	}
 }
@@ -415,7 +442,10 @@ VkExtent2D RenderEngineVulkanBackend::ChooseSwapExtent(const VkSurfaceCapabiliti
 		return capabilities.currentExtent;
 	}
 
-	VkExtent2D actualExtent = { window->GetWidth(), window->GetHeight() };
+	VkExtent2D actualExtent = {
+		static_cast<uint32_t>(window->GetWidth()),
+		static_cast<uint32_t>(window->GetHeight())
+	};
 
 	actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 	actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -595,11 +625,7 @@ void RenderEngineVulkanBackend::CreateCommandPool() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() {
-	if (vulkanContext != nullptr)
-		return vulkanContext;
-
-	vulkanContext = new RenderDataVulkanContext();
+void RenderEngineVulkanBackend::CopyToVulkanContext() const {
 	vulkanContext->physicalDevice = physicalDevice;
 	vulkanContext->device = device;
 	vulkanContext->graphicsQueue = graphicsQueue;
@@ -610,6 +636,14 @@ RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext()
 	vulkanContext->presentQueue = presentQueue;
 	vulkanContext->swapChain = swapChain;
 	vulkanContext->swapChainFrameBuffers = swapChainFrameBuffers;
+}
+
+RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() {
+	if (vulkanContext != nullptr)
+		return vulkanContext;
+
+	vulkanContext = new RenderDataVulkanContext();
+	CopyToVulkanContext();
 	return vulkanContext;
 }
 
