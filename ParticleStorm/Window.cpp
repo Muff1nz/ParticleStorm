@@ -69,8 +69,14 @@ int Window::GetWidth() const {
 	return fullscreen ? screenWidth : width;
 }
 
-int Window::IsFullscreen() const {
+bool Window::IsFullscreen() const {
 	return fullscreen;
+}
+
+bool Window::IsMinimized() const {
+	int h, w;
+	glfwGetFramebufferSize(window, &h, &w);
+	return h == 0 || w == 0;
 }
 
 GLFWwindow* Window::GetWindow() const {

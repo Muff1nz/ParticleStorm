@@ -337,10 +337,10 @@ void RenderEngineVulkan::RecreateCommandBuffers() {
 }
 
 void RenderEngineVulkan::RecreateSwapChain() {
-	do {
-		window->UpdateMetaData();
+	
+	while (window->IsMinimized()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	} while (window->GetHeight() == 0 || window->GetWidth() == 0);
+	}
 
 	vkDeviceWaitIdle(renderDataVulkanContext->device);
 	vulkanBackend->RecreateSwapChain();
@@ -449,6 +449,7 @@ void RenderEngineVulkan::RenderThreadRun() {
 	while (!environment->done) {
 		timer.DeltaTime();
 		HandleMessages();
+		window->UpdateMetaData();
 		DrawFrame();
 	}
 }

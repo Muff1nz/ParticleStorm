@@ -8,12 +8,18 @@ public:
 	void InitWindow(int height, int width, bool fullscreen);
 	void Dispose();
 
+	GLFWwindow* GetWindow() const;
+	
 	int GetHeight() const;
 	int GetWidth() const;
-	int IsFullscreen() const;
-	GLFWwindow* GetWindow() const;
+
+	bool IsFullscreen() const;
+	bool IsMinimized() const;
+
+	
 	void UpdateMetaData();
 	void ToggleFullscreen();
+	
 private:
 	bool isDisposed = false;
 	
