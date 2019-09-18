@@ -183,8 +183,8 @@ void PhysicsEngine::HandleMessages() {
 		case MT_Explosion:
 			HandleExplosion(message);
 			break;
-		case MT_DebugModeStateChange:
-			debugMode = message.message == ConstStrings::PS_TRUE;
+		case MT_DebugModeToggle:
+			debugMode = !debugMode;
 			break;
 		default: ;
 		}

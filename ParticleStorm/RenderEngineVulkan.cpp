@@ -202,6 +202,8 @@ void RenderEngineVulkan::Init() {
 
 	window = new Window();
 	window->InitWindow(1200, 2800, environment->fullScreen);
+	glfwSetWindowUserPointer(window->GetWindow(), this);
+	glfwSetFramebufferSizeCallback(window->GetWindow(), FramebufferResizeCallback);
 	environment->camera = Camera(environment->worldHeight, environment->worldWidth, window);
 
 
@@ -344,6 +346,24 @@ void RenderEngineVulkan::RecreateSwapChain() {
 	vulkanBackend->RecreateSwapChain();
 	UpdateRenderEntities();
 	RecreateCommandBuffers();
+
+	windowSizeChanged = false;
+}
+
+void RenderEngineVulkan::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto engine = reinterpret_cast<RenderEngineVulkan*>(glfwGetWindowUserPointer(window));
+	engine->windowSizeChanged = true;
+}
+
+bool RenderEngineVulkan::HandleSwapChain(VkResult result, bool includeCallback) {
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowSizeChanged && includeCallback) {
+		RecreateSwapChain(); 
+		return true;
+	}
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
+	return false;
 }
 
 void RenderEngineVulkan::DrawFrame() {
@@ -354,12 +374,7 @@ void RenderEngineVulkan::DrawFrame() {
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) { //TODO: Expand with GLFW resize callback. Not every system gets the result here, ASLO move into bool FOO(...)...
-		RecreateSwapChain();
-		return;
-	} else if (result != VK_SUCCESS) {
-		throw std::runtime_error("failed to acquire swap chain image!");
-	}
+	if (HandleSwapChain(result, false)) return;
 
 	if (!commandBuffersValidState[imageIndex])
 		UpdateCommandBuffer(imageIndex);
@@ -403,12 +418,7 @@ void RenderEngineVulkan::DrawFrame() {
 
 	result = vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-		RecreateSwapChain();
-		return;
-	} else if (result != VK_SUCCESS) {
-		throw std::runtime_error("failed to acquire swap chain image!");
-	}
+	if (HandleSwapChain(result, true)) return;
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -419,11 +429,14 @@ void RenderEngineVulkan::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
-		case MT_DebugModeStateChange:
-			debugMode = message.message == ConstStrings::PS_TRUE;
+		case MT_DebugModeToggle:
+			debugMode = !debugMode;
 			for (int i = 0; i < commandBuffersValidState.size(); ++i) {
 				commandBuffersValidState[i] = false;
 			}
+			break;
+		case MT_FullScreenToggle:
+			window->ToggleFullscreen();
 			break;
 		default:;
 		}

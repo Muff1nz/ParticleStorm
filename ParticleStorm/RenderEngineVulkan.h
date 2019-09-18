@@ -41,6 +41,7 @@ private:
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	Window* window;
+	bool windowSizeChanged = false;
 	RenderEngineVulkanBackend* vulkanBackend;
 	RenderDataVulkanContext* renderDataVulkanContext;
 	VulkanAllocator* vulkanAllocator;
@@ -68,6 +69,8 @@ private:
 	void UpdateRenderEntities();
 	void RecreateCommandBuffers();
 	void RecreateSwapChain();
+	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+	bool HandleSwapChain(VkResult result, bool includeCallback);
 	void DrawFrame();
 
 	//Cleanup
