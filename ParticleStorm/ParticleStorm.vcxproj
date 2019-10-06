@@ -178,6 +178,7 @@
     <ClInclude Include="RenderTransform.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Stats.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="SystemComponent.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UniformBufferObject.h" />
@@ -194,6 +195,9 @@
     <None Include="particle.frag" />
     <None Include="quad.frag" />
     <None Include="quad.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\Circle.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

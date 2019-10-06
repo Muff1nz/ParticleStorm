@@ -246,6 +246,9 @@ void PhysicsEngine::LeadThreadRun() {
 		++environment->stats.physicsUpdateTotalLastSecond;
 	}
 
+	for (int i = 0; i < linearQuads->size(); i++)
+		delete (*linearQuads)[i];
 
+	delete linearQuads;
 	environment->workerThreads.CloseWorkerThreads();
 }

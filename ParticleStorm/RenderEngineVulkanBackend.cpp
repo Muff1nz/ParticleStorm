@@ -257,7 +257,11 @@ bool RenderEngineVulkanBackend::IsDeviceSuitable(VkPhysicalDevice device) const 
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
-	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 bool RenderEngineVulkanBackend::CheckDeviceExtensionSupport(VkPhysicalDevice device) const {
@@ -300,8 +304,9 @@ void RenderEngineVulkanBackend::CreateLogicalDevice() {
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
-	deviceFeatures.wideLines = true;
-	deviceFeatures.fillModeNonSolid = true;
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.wideLines = VK_TRUE;
+	deviceFeatures.fillModeNonSolid = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

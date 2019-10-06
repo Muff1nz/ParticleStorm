@@ -12,10 +12,13 @@ QuadTreeHandler::QuadTreeHandler(Environment* environment) {
 }
 
 
-QuadTreeHandler::~QuadTreeHandler() = default;
+QuadTreeHandler::~QuadTreeHandler() {
+	delete tree;
+}
 
 
 void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections) {
+	//TODO: Solve linearQuads using "Function Injection" and return like in RenderEngineVulkanBackend
 	BuildQuadTree();
 	environment->workerThreads.JoinWorkerThreads();
 	

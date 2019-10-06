@@ -21,7 +21,7 @@ RenderEntity::~RenderEntity() {
 void RenderEntity::Dispose() {
 	if (isDisposed)
 		return;
-
+	
 	if (renderDataInstanced != nullptr) {
 		for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
 			vkDestroyBuffer(renderDataVulkanContext->device, renderDataInstanced->instanceBuffers[i], nullptr);
@@ -31,6 +31,12 @@ void RenderEntity::Dispose() {
 	}
 
 	if (renderDataSingular != nullptr) {
+		//Texture
+		vkDestroySampler(renderDataVulkanContext->device, renderDataSingular->textureSampler, nullptr);
+		vkDestroyImageView(renderDataVulkanContext->device, renderDataSingular->textureImageView, nullptr);
+		vkDestroyImage(renderDataVulkanContext->device, renderDataSingular->textureImage, nullptr);
+		vkFreeMemory(renderDataVulkanContext->device, renderDataSingular->textureImageMemory, nullptr);
+
 		for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
 			vkDestroyBuffer(renderDataVulkanContext->device, renderDataSingular->uniformBuffers[i], nullptr);
 			vkFreeMemory(renderDataVulkanContext->device, renderDataSingular->uniformBuffersMemory[i], nullptr);

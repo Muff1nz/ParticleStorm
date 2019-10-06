@@ -6,6 +6,8 @@
 #include "InstanceBufferObject.h"
 
 struct RenderDataInstanced {
+	~RenderDataInstanced() = default;
+
 	std::vector<VkBuffer> instanceBuffers;
 	std::vector<VkDeviceMemory> instanceMemory;
 	InstanceBufferObject* instanceBufferObjects;

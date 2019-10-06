@@ -7,6 +7,8 @@ struct RenderEntityCreateInfo {
 	std::string vertexShader;
 	std::string fragmentShader;
 
+	std::string texturePath;
+
 	RenderMode renderMode;
 
 	VkBuffer vertexBuffer;

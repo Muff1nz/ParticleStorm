@@ -70,6 +70,12 @@
     <Filter Include="Source Files\MessageSystem">
       <UniqueIdentifier>{5d6167c7-9c71-4cda-af77-19db9e107caa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\STB">
+      <UniqueIdentifier>{456c7710-4fbb-4ae8-913e-e17a2f4b5022}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{282f6756-c542-4e0d-94e1-b3cbe5ebc156}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -257,6 +263,9 @@
     <ClInclude Include="RenderEntityMeta.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files\STB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="background.vert">
@@ -277,5 +286,10 @@
     <None Include="quad.frag">
       <Filter>Shaders\Fragment</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\Circle.png">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@
 struct InstanceBufferObject {
 	glm::mat4 MVP;
 
-	static VkVertexInputBindingDescription getBindingDescription() {
+	static VkVertexInputBindingDescription GetBindingDescription() {
 		VkVertexInputBindingDescription bindingDescription;
 		bindingDescription.binding = 1;
 		bindingDescription.stride = sizeof(InstanceBufferObject);
@@ -18,11 +18,11 @@ struct InstanceBufferObject {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+	static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions() {
 		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 		for (int i = 0; i < 4; ++i) {
 			attributeDescriptions[i].binding = 1;
-			attributeDescriptions[i].location = i + 2;
+			attributeDescriptions[i].location = i + 3; //Vertex takes locations 1-2
 			attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 			attributeDescriptions[i].offset = sizeof(glm::vec4) * i;
 		}

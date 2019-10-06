@@ -6,23 +6,37 @@
 
 class RenderEntityFactory {
 public:
-	RenderEntityFactory();
+	RenderEntityFactory(RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator);
 	~RenderEntityFactory();
 	
-	static RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity);
-	static void RecreateGraphicsPipeline(RenderEntity* renderEntity);
+	 RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderTransform* transform, bool debugEntity);
+	 void RecreateGraphicsPipeline(RenderEntity* renderEntity);
 private:
-	static void CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
-	static VkShaderModule CreateShaderModule(const std::vector<char>& code, VkDevice& device);
+	RenderDataVulkanContext* renderDataVulkanContext;
+	VulkanAllocator* vulkanAllocator;
+
+	 void CreateGraphicsPipeline(RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
+	 VkShaderModule CreateShaderModule(const std::vector<char>& code, VkDevice& device) const;
 	static std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription(bool instancing);
 	static std::vector<VkVertexInputBindingDescription> CreateVertexBindingDescription(bool instancing);
-	static std::vector<char> ReadFile(const std::string& filename);	
+	 std::vector<char> ReadFile(const std::string& filename);	
 
-	static void CreateInstanceBuffer(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext& renderDataVulkanContext, RenderDataInstanced* renderDataInstanced);
+	 void CreateInstanceBuffer(RenderDataInstanced* renderDataInstanced);
 
-	static void CreateDescriptorSetLayout(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
-	static void CreateUniformBuffers(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);	
-	static void CreateDescriptorPool(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
-	static void CreateDescriptorSets(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular);
+	 void CreateUniformBuffers(RenderDataSingular* renderDataSingular);
+
+	void CreateTextureImage(std::string texturePath, RenderDataSingular* renderDataSingular);
+	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+	void CreateTextureImageView(RenderDataSingular* renderDataSingular) const;
+	void CreateTextureSampler(RenderDataSingular* renderDataSingular) const;
+
+	VkCommandBuffer BeginSingleTimeCommands() const;
+	void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+
+	 void CreateDescriptorSetLayout(RenderDataSingular* renderDataSingular);	
+	 void CreateDescriptorPool(RenderDataSingular* renderDataSingular) const;
+	 void CreateDescriptorSets(RenderDataSingular* renderDataSingular) const;
 };
 

@@ -15,6 +15,9 @@ Environment::~Environment() {
 	delete particlePos;
 	delete particleVel;
 	delete particleQuadCount;
+	delete particleResting;
+	delete quadPos;
+	delete quadScale;
 }
 
 void Environment::Init() {

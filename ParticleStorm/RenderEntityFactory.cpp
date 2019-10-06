@@ -1,5 +1,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <fstream>
 
 #include "RenderEntityFactory.h"
@@ -8,11 +12,14 @@
 #include "VulkanAllocator.h"
 #include "RenderEntityCreateInfo.h"
 
-RenderEntityFactory::RenderEntityFactory() = default;
+RenderEntityFactory::RenderEntityFactory(RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator) {
+	this->renderDataVulkanContext = renderDataVulkanContext;
+	this->vulkanAllocator = vulkanAllocator;
+};
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderDataVulkanContext* renderDataVulkanContext, VulkanAllocator* vulkanAllocator, RenderTransform* transform, bool debugEntity) {		
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderTransform* transform, bool debugEntity) {		
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->transform = *transform;
 	renderDataCore->renderMode = createInfo.renderMode;
@@ -24,27 +31,37 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	renderEntityMeta->frag = createInfo.fragmentShader;
 	renderEntityMeta->vert = createInfo.vertexShader;
 
-	if (transform->objectCount > 1) {
-		RenderDataInstanced* renderDataInstanced = new RenderDataInstanced();
-		renderDataInstanced->instanceCount = transform->objectCount;
-		CreateGraphicsPipeline(*renderDataVulkanContext, nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
-		CreateInstanceBuffer(vulkanAllocator, *renderDataVulkanContext, renderDataInstanced);
-		return new RenderEntity(renderDataVulkanContext, renderDataCore, nullptr, renderDataInstanced, renderEntityMeta, debugEntity);
-	}
+	RenderDataInstanced* renderDataInstanced = nullptr;
+	RenderDataSingular* renderDataSingular = nullptr;
 
-	RenderDataSingular* renderDataSingular = new RenderDataSingular();
-	CreateDescriptorSetLayout(*renderDataVulkanContext, renderDataSingular);
-	CreateGraphicsPipeline(*renderDataVulkanContext, renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
-	CreateUniformBuffers(vulkanAllocator, *renderDataVulkanContext, renderDataSingular);
-	CreateDescriptorPool(*renderDataVulkanContext, renderDataSingular);
-	CreateDescriptorSets(*renderDataVulkanContext, renderDataSingular);
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, nullptr, renderEntityMeta, debugEntity);
+	if (transform->objectCount > 1 && !createInfo.texturePath.empty())
+		throw std::runtime_error("Using textures and instancing at the same time is not implemented yet!");
+
+	if (transform->objectCount > 1) {
+		renderDataInstanced = new RenderDataInstanced();
+		renderDataInstanced->instanceCount = transform->objectCount;
+		CreateGraphicsPipeline(nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
+		CreateInstanceBuffer( renderDataInstanced);
+	}
+	else if (transform->objectCount == 1 || !createInfo.texturePath.empty()) {
+		renderDataSingular = new RenderDataSingular();
+		CreateDescriptorSetLayout(renderDataSingular);
+		CreateGraphicsPipeline(renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
+
+		CreateTextureImage(createInfo.texturePath, renderDataSingular);
+		CreateTextureImageView(renderDataSingular);
+		CreateTextureSampler(renderDataSingular);
+		CreateUniformBuffers(renderDataSingular);
+		
+		CreateDescriptorPool(renderDataSingular);
+		CreateDescriptorSets(renderDataSingular);
+	}
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, renderDataInstanced, renderEntityMeta, debugEntity);
 }
 
 void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {
 	renderEntity->DisposePipeline();
 	CreateGraphicsPipeline(
-		*renderEntity->renderDataVulkanContext,
 		renderEntity->renderDataSingular, 
 		renderEntity->renderEntityMeta->vert, 
 		renderEntity->renderEntityMeta->frag, 
@@ -64,11 +81,11 @@ void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& renderDataVulkanContext, RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
+void RenderEntityFactory::CreateGraphicsPipeline(RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
 	auto vertShaderCode = ReadFile(vert);
 	auto fragShaderCode = ReadFile(frag);
-	auto vertShaderModule = CreateShaderModule(vertShaderCode, renderDataVulkanContext.device);
-	auto fragShaderModule = CreateShaderModule(fragShaderCode, renderDataVulkanContext.device);
+	auto vertShaderModule = CreateShaderModule(vertShaderCode, renderDataVulkanContext->device);
+	auto fragShaderModule = CreateShaderModule(fragShaderCode, renderDataVulkanContext->device);
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -101,14 +118,14 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)renderDataVulkanContext.swapChainExtent.width;
-	viewport.height = (float)renderDataVulkanContext.swapChainExtent.height;
+	viewport.width = (float)renderDataVulkanContext->swapChainExtent.width;
+	viewport.height = (float)renderDataVulkanContext->swapChainExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = renderDataVulkanContext.swapChainExtent;
+	scissor.extent = renderDataVulkanContext->swapChainExtent;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -167,7 +184,7 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-	if (vkCreatePipelineLayout(renderDataVulkanContext.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(renderDataVulkanContext->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
@@ -184,21 +201,21 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataVulkanContext& render
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = nullptr; // Optional
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = renderDataVulkanContext.renderPass;
+	pipelineInfo.renderPass = renderDataVulkanContext->renderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
-	if (vkCreateGraphicsPipelines(renderDataVulkanContext.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(renderDataVulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
 	//TODO: Consider keeping these around until RenderEngineVulkan.Dispose to make SwapChainRecreation cheaper.
-	vkDestroyShaderModule(renderDataVulkanContext.device, fragShaderModule, nullptr);
-	vkDestroyShaderModule(renderDataVulkanContext.device, vertShaderModule, nullptr);
+	vkDestroyShaderModule(renderDataVulkanContext->device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(renderDataVulkanContext->device, vertShaderModule, nullptr);
 }
 
-VkShaderModule RenderEntityFactory::CreateShaderModule(const std::vector<char>& code, VkDevice& device) {
+VkShaderModule RenderEntityFactory::CreateShaderModule(const std::vector<char>& code, VkDevice& device) const {
 	VkShaderModuleCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();
@@ -214,12 +231,12 @@ VkShaderModule RenderEntityFactory::CreateShaderModule(const std::vector<char>& 
 
 std::vector<VkVertexInputAttributeDescription> RenderEntityFactory::CreateVertexAttributeDescription(bool instancing) {
 	std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
-	for (auto attributeDescription : Vertex::getAttributeDescriptions()) {
+	for (auto attributeDescription : Vertex::GetAttributeDescriptions()) {
 		attributeDescriptions.push_back(attributeDescription);
 	}
 
 	if (instancing) {
-		for (auto description : InstanceBufferObject::getAttributeDescriptions()) {
+		for (auto description : InstanceBufferObject::GetAttributeDescriptions()) {
 			attributeDescriptions.push_back(description);
 		}
 	}
@@ -228,9 +245,9 @@ std::vector<VkVertexInputAttributeDescription> RenderEntityFactory::CreateVertex
 
 std::vector<VkVertexInputBindingDescription> RenderEntityFactory::CreateVertexBindingDescription(bool instancing) {
 	std::vector<VkVertexInputBindingDescription> bindingDescriptions = {};
-	bindingDescriptions.push_back(Vertex::getBindingDescription());
+	bindingDescriptions.push_back(Vertex::GetBindingDescription());
 	if (instancing)
-		bindingDescriptions.push_back(InstanceBufferObject::getBindingDescription());
+		bindingDescriptions.push_back(InstanceBufferObject::GetBindingDescription());
 	return bindingDescriptions;
 }
 
@@ -261,31 +278,31 @@ std::vector<char> RenderEntityFactory::ReadFile(const std::string& filename) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void RenderEntityFactory::CreateInstanceBuffer(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataInstanced* renderDataInstanced) {
+void RenderEntityFactory::CreateInstanceBuffer(RenderDataInstanced* renderDataInstanced) {
 	renderDataInstanced->instanceBufferObjects = new InstanceBufferObject[renderDataInstanced->instanceCount];
-	renderDataInstanced->instanceBuffers.resize(renderDataVulkanContext.swapChainImages.size());
-	renderDataInstanced->instanceMemory.resize(renderDataVulkanContext.swapChainImages.size());
+	renderDataInstanced->instanceBuffers.resize(renderDataVulkanContext->swapChainImages.size());
+	renderDataInstanced->instanceMemory.resize(renderDataVulkanContext->swapChainImages.size());
 
 	for (int j = 0; j < renderDataInstanced->instanceCount; ++j) {
 		renderDataInstanced->instanceBufferObjects[j].MVP = glm::mat4(1);
 	}
 
-	for (int i = 0; i < renderDataVulkanContext.swapChainImages.size(); ++i) {
+	for (int i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
 		VkDeviceSize bufferSize = sizeof(InstanceBufferObject) * renderDataInstanced->instanceCount;
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
 		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		void* data;
-		vkMapMemory(renderDataVulkanContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, renderDataInstanced->instanceBufferObjects, (size_t)bufferSize);
-		vkUnmapMemory(renderDataVulkanContext.device, stagingBufferMemory);
+		vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
 
 		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, renderDataInstanced->instanceBuffers[i], renderDataInstanced->instanceMemory[i]);
 		vulkanAllocator->CopyBuffer(stagingBuffer, renderDataInstanced->instanceBuffers[i], bufferSize);
 
-		vkDestroyBuffer(renderDataVulkanContext.device, stagingBuffer, nullptr);
-		vkFreeMemory(renderDataVulkanContext.device, stagingBufferMemory, nullptr);
+		vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
+		vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 	}
 }
 
@@ -297,7 +314,7 @@ void RenderEntityFactory::CreateInstanceBuffer(VulkanAllocator* vulkanAllocator,
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
+void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataSingular* renderDataSingular) {
 	VkDescriptorSetLayoutBinding uboLayoutBinding;
 	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -305,73 +322,314 @@ void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataVulkanContext &ren
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
+	VkDescriptorSetLayoutBinding samplerLayoutBinding;
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
 
-	if (vkCreateDescriptorSetLayout(renderDataVulkanContext.device, &layoutInfo, nullptr, &renderDataSingular->descriptorSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(renderDataVulkanContext->device, &layoutInfo, nullptr, &renderDataSingular->descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
 
-void RenderEntityFactory::CreateUniformBuffers(VulkanAllocator* vulkanAllocator, RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
+void RenderEntityFactory::CreateUniformBuffers(RenderDataSingular* renderDataSingular) {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-	renderDataSingular->uniformBuffers.resize(renderDataVulkanContext.swapChainImages.size());
-	renderDataSingular->uniformBuffersMemory.resize(renderDataVulkanContext.swapChainImages.size());
+	renderDataSingular->uniformBuffers.resize(renderDataVulkanContext->swapChainImages.size());
+	renderDataSingular->uniformBuffersMemory.resize(renderDataVulkanContext->swapChainImages.size());
 
-	for (size_t i = 0; i < renderDataVulkanContext.swapChainImages.size(); i++) {
+	for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); i++) {
 		vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderDataSingular->uniformBuffers[i], renderDataSingular->uniformBuffersMemory[i]);
 	}
 }
 
-void RenderEntityFactory::CreateDescriptorPool(RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
-	VkDescriptorPoolSize poolSize;
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(renderDataVulkanContext.swapChainImages.size());
+void RenderEntityFactory::CreateTextureImage(std::string texturePath, RenderDataSingular* renderDataSingular) {
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-	VkDescriptorPoolCreateInfo poolInfo;
+	if (!pixels) {
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	vulkanAllocator->CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
+
+	stbi_image_free(pixels);
+
+	CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, renderDataSingular->textureImage, renderDataSingular->textureImageMemory);
+
+	TransitionImageLayout(renderDataSingular->textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	CopyBufferToImage(stagingBuffer, renderDataSingular->textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	TransitionImageLayout(renderDataSingular->textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
+	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
+}
+
+void RenderEntityFactory::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+	VkImageCreateInfo imageInfo = {};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = format;
+	imageInfo.tiling = tiling;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = usage;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateImage(renderDataVulkanContext->device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create image!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(renderDataVulkanContext->device, image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = vulkanAllocator->FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(renderDataVulkanContext->device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate image memory!");
+	}
+
+	vkBindImageMemory(renderDataVulkanContext->device, image, imageMemory, 0);
+}
+
+void RenderEntityFactory::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	VkPipelineStageFlags sourceStage;
+	VkPipelineStageFlags destinationStage;
+
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	} else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	} else {
+		throw std::invalid_argument("unsupported layout transition!");
+	}
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		sourceStage, destinationStage,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &barrier
+	);
+
+	EndSingleTimeCommands(commandBuffer);
+}
+
+void RenderEntityFactory::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	VkBufferImageCopy region = {};
+	region.bufferOffset = 0;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight = 0;
+
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+
+	region.imageOffset = { 0, 0, 0 };
+	region.imageExtent = {
+		width,
+		height,
+		1
+	};
+
+	vkCmdCopyBufferToImage(
+		commandBuffer,
+		buffer,
+		image,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1,
+		&region
+	);
+
+	EndSingleTimeCommands(commandBuffer);
+}
+
+void RenderEntityFactory::CreateTextureImageView(RenderDataSingular* renderDataSingular) const {
+	VkImageViewCreateInfo viewInfo = {}; //TODO: This is a duplication of RenderEngineVulkanBackend::CreateImageViews
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = renderDataSingular->textureImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	if (vkCreateImageView(renderDataVulkanContext->device, &viewInfo, nullptr, &renderDataSingular->textureImageView) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture image view!");
+	}
+}
+
+void RenderEntityFactory::CreateTextureSampler(RenderDataSingular* renderDataSingular) const {
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+
+	if (vkCreateSampler(renderDataVulkanContext->device, &samplerInfo, nullptr, &renderDataSingular->textureSampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
+}
+
+VkCommandBuffer RenderEntityFactory::BeginSingleTimeCommands() const {
+	VkCommandBufferAllocateInfo allocInfo = {}; //TODO: Based on code in copy buffer. Can simplify that function
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = renderDataVulkanContext->commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(renderDataVulkanContext->device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void RenderEntityFactory::EndSingleTimeCommands(VkCommandBuffer commandBuffer) const {
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(renderDataVulkanContext->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(renderDataVulkanContext->graphicsQueue);
+
+	vkFreeCommandBuffers(renderDataVulkanContext->device, renderDataVulkanContext->commandPool, 1, &commandBuffer);
+}
+
+
+void RenderEntityFactory::CreateDescriptorPool(RenderDataSingular* renderDataSingular) const {
+	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
+
+	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
-	poolInfo.maxSets = static_cast<uint32_t>(renderDataVulkanContext.swapChainImages.size());
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
+	poolInfo.maxSets = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
 
-	if (vkCreateDescriptorPool(renderDataVulkanContext.device, &poolInfo, nullptr, &renderDataSingular->descriptorPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(renderDataVulkanContext->device, &poolInfo, nullptr, &renderDataSingular->descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
 
-void RenderEntityFactory::CreateDescriptorSets(RenderDataVulkanContext &renderDataVulkanContext, RenderDataSingular* renderDataSingular) {
-	std::vector<VkDescriptorSetLayout> layouts(renderDataVulkanContext.swapChainImages.size(), renderDataSingular->descriptorSetLayout);
+void RenderEntityFactory::CreateDescriptorSets(RenderDataSingular* renderDataSingular) const {
+	std::vector<VkDescriptorSetLayout> layouts(renderDataVulkanContext->swapChainImages.size(), renderDataSingular->descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = renderDataSingular->descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(renderDataVulkanContext.swapChainImages.size());
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
 	allocInfo.pSetLayouts = layouts.data();
 
-	renderDataSingular->descriptorSets.resize(renderDataVulkanContext.swapChainImages.size());
-	if (vkAllocateDescriptorSets(renderDataVulkanContext.device, &allocInfo, renderDataSingular->descriptorSets.data()) != VK_SUCCESS) {
+	renderDataSingular->descriptorSets.resize(renderDataVulkanContext->swapChainImages.size());
+	if (vkAllocateDescriptorSets(renderDataVulkanContext->device, &allocInfo, renderDataSingular->descriptorSets.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
-	for (size_t i = 0; i < renderDataVulkanContext.swapChainImages.size(); i++) {
+	for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); i++) {
 		VkDescriptorBufferInfo bufferInfo = {};
 		bufferInfo.buffer = renderDataSingular->uniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = renderDataSingular->descriptorSets[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr; // Optional
-		descriptorWrite.pTexelBufferView = nullptr; // Optional
+		VkDescriptorImageInfo imageInfo = {};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = renderDataSingular->textureImageView;
+		imageInfo.sampler = renderDataSingular->textureSampler;
 
-		vkUpdateDescriptorSets(renderDataVulkanContext.device, 1, &descriptorWrite, 0, nullptr);
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = renderDataSingular->descriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[1].dstSet = renderDataSingular->descriptorSets[i];
+		descriptorWrites[1].dstBinding = 1;
+		descriptorWrites[1].dstArrayElement = 0;
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorCount = 1;
+		descriptorWrites[1].pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(renderDataVulkanContext->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }

@@ -9,12 +9,10 @@
 
 #include "RenderEngineVulkan.h"
 
-#include <GLFW/glfw3.h>
 #include <set>
 #include <limits>
 #include <fstream>
 #include <gtc/matrix_transform.hpp>
-#include <array>
 
 #include "Timer.h"
 #include "RenderEntityFactory.h"
@@ -110,7 +108,7 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
 }
 
-void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) {
+void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) const {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	VkBuffer stagingBuffer;
@@ -131,9 +129,12 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 }
 
 void RenderEngineVulkan::CreateRenderEntities() {
+	RenderEntityFactory factory(renderDataVulkanContext, vulkanAllocator);
+
 	RenderEntityCreateInfo createInfoBackground;
 	createInfoBackground.vertexShader = "backgroundVert.spv";
 	createInfoBackground.fragmentShader = "backgroundFrag.spv";
+	createInfoBackground.texturePath = "Textures/BackGround.png";
 	createInfoBackground.renderMode = Triangles;
 	createInfoBackground.vertexBuffer = quadVertexBuffer;
 	createInfoBackground.indexBuffer = quadIndexBuffer;
@@ -143,7 +144,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 	backgroundTransform->objectCount = 1;	
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoBackground, renderDataVulkanContext, vulkanAllocator, backgroundTransform, false));
+	renderEntities.push_back(factory.CreateRenderEntity(createInfoBackground, backgroundTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -160,7 +161,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
 	particlesTransform->staticScale = true;
 	particlesTransform->objectCount = environment->particleCount;
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoParticles, renderDataVulkanContext, vulkanAllocator, particlesTransform, false));
+	renderEntities.push_back(factory.CreateRenderEntity(createInfoParticles, particlesTransform, false));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -176,7 +177,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	quadTreeTransform->pos = environment->quadPos;
 	quadTreeTransform->scale = environment->quadScale;
 	quadTreeTransform->objectCount = environment->debugQuadSize;
-	renderEntities.push_back(RenderEntityFactory::CreateRenderEntity(createInfoQuadTree, renderDataVulkanContext, vulkanAllocator, quadTreeTransform, true));
+	renderEntities.push_back(factory.CreateRenderEntity(createInfoQuadTree, quadTreeTransform, true));
 }
 
 void RenderEngineVulkan::InitVulkan() {
@@ -238,7 +239,6 @@ void RenderEngineVulkan::Dispose() {
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
 
-
 	vkDestroyBuffer(device, quadLineIndexBuffer, nullptr);
 	vkFreeMemory(device, quadLineIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, quadIndexBuffer, nullptr);
@@ -257,6 +257,7 @@ void RenderEngineVulkan::Dispose() {
 	isDisposed = true;
 
 	delete window;
+	delete vulkanBackend;
 }
 
 //                                                 
@@ -327,8 +328,9 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 }
 
 void RenderEngineVulkan::UpdateRenderEntities() {
+	RenderEntityFactory factory(renderDataVulkanContext, vulkanAllocator);
 	for (auto renderEntity : renderEntities) 
-		RenderEntityFactory::RecreateGraphicsPipeline(renderEntity);
+		factory.RecreateGraphicsPipeline(renderEntity);
 }
 
 void RenderEngineVulkan::RecreateCommandBuffers() {
