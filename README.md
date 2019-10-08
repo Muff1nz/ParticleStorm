@@ -21,4 +21,5 @@ Related project: https://github.com/Muff1nz/ParticleStorm_Tools (Tools for this 
   - Variable particle radiuses, and dynamic particle counts during runtime (Toggleable depending on performance)
 ## Input Handling:
   - Creat a proper input handler
-  
+## Audio:
+ - Anything (probably ability to playa song in background)
