@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "Environment.h"
 
-RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+RenderEntity::RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
 	this->renderEntityMeta = renderEntityMeta;
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;

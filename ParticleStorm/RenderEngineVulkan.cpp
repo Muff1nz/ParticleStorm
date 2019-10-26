@@ -50,16 +50,16 @@ RenderEngineVulkan::~RenderEngineVulkan() {
 
 
 void RenderEngineVulkan::CreateCommandBuffers() {
-	commandBuffers.resize(renderDataVulkanContext->swapChainFrameBuffers.size());
-	commandBuffersValidState.resize(renderDataVulkanContext->swapChainFrameBuffers.size());
+	commandBuffers.resize(vulkanContext->swapChainFrameBuffers.size());
+	commandBuffersValidState.resize(vulkanContext->swapChainFrameBuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = renderDataVulkanContext->commandPool;
+	allocInfo.commandPool = vulkanContext->commandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
-	if (vkAllocateCommandBuffers(renderDataVulkanContext->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+	if (vkAllocateCommandBuffers(vulkanContext->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 
@@ -81,9 +81,9 @@ void RenderEngineVulkan::CreateSyncObjects() {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		if (vkCreateSemaphore(renderDataVulkanContext->device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(renderDataVulkanContext->device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-			vkCreateFence(renderDataVulkanContext->device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+		if (vkCreateSemaphore(vulkanContext->device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(vulkanContext->device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateFence(vulkanContext->device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
 
 			throw std::runtime_error("failed to create synchronization objects for a frame!");
 		}
@@ -98,14 +98,14 @@ void RenderEngineVulkan::CreateVertexBuffer() {
 	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(vulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
+	vkUnmapMemory(vulkanContext->device, stagingBufferMemory);
 
 	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, quadVertexBuffer, quadVertexBufferMemory);
 	vulkanAllocator->CopyBuffer(stagingBuffer, quadVertexBuffer, bufferSize);
-	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
-	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
+	vkDestroyBuffer(vulkanContext->device, stagingBuffer, nullptr);
+	vkFreeMemory(vulkanContext->device, stagingBufferMemory, nullptr);
 }
 
 void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) const {
@@ -116,20 +116,20 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(renderDataVulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(vulkanContext->device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(renderDataVulkanContext->device, stagingBufferMemory);
+	vkUnmapMemory(vulkanContext->device, stagingBufferMemory);
 
 	vulkanAllocator->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
 	vulkanAllocator->CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
-	vkDestroyBuffer(renderDataVulkanContext->device, stagingBuffer, nullptr);
-	vkFreeMemory(renderDataVulkanContext->device, stagingBufferMemory, nullptr);
+	vkDestroyBuffer(vulkanContext->device, stagingBuffer, nullptr);
+	vkFreeMemory(vulkanContext->device, stagingBufferMemory, nullptr);
 }
 
 void RenderEngineVulkan::CreateRenderEntities() {
-	RenderEntityFactory factory(renderDataVulkanContext, vulkanAllocator);
+	RenderEntityFactory factory(vulkanContext, vulkanAllocator);
 
 	RenderEntityCreateInfo createInfoBackground;
 	createInfoBackground.vertexShader = "backgroundVert.spv";
@@ -210,8 +210,8 @@ void RenderEngineVulkan::Init() {
 
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
-	renderDataVulkanContext = vulkanBackend->GetRenderDataVulkanContext();
-	vulkanAllocator = vulkanBackend->GetVulkanAllocator();
+	vulkanContext = vulkanBackend->GetVulkanContext();
+	vulkanAllocator = new VulkanAllocator(vulkanContext);
 
 	InitVulkan();
 }
@@ -229,7 +229,7 @@ void RenderEngineVulkan::Dispose() {
 	if (isDisposed)
 		return;
 
-	auto device = renderDataVulkanContext->device;
+	auto device = vulkanContext->device;
 
 	vkDeviceWaitIdle(device);
 
@@ -253,11 +253,12 @@ void RenderEngineVulkan::Dispose() {
 
 	vulkanBackend->Dispose();
 	window->Dispose();
-
-	isDisposed = true;
-
+	
 	delete window;
+	delete vulkanAllocator;
 	delete vulkanBackend;
+	
+	isDisposed = true;
 }
 
 //                                                 
@@ -303,10 +304,10 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = renderDataVulkanContext->renderPass;
-	renderPassInfo.framebuffer = renderDataVulkanContext->swapChainFrameBuffers[imageIndex];
+	renderPassInfo.renderPass = vulkanContext->renderPass;
+	renderPassInfo.framebuffer = vulkanContext->swapChainFrameBuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderDataVulkanContext->swapChainExtent;
+	renderPassInfo.renderArea.extent = vulkanContext->swapChainExtent;
 
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	renderPassInfo.clearValueCount = 1;
@@ -328,13 +329,13 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 }
 
 void RenderEngineVulkan::UpdateRenderEntities() {
-	RenderEntityFactory factory(renderDataVulkanContext, vulkanAllocator);
+	RenderEntityFactory factory(vulkanContext, vulkanAllocator);
 	for (auto renderEntity : renderEntities) 
 		factory.RecreateGraphicsPipeline(renderEntity);
 }
 
 void RenderEngineVulkan::RecreateCommandBuffers() {
-	vkFreeCommandBuffers(renderDataVulkanContext->device, renderDataVulkanContext->commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	vkFreeCommandBuffers(vulkanContext->device, vulkanContext->commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	CreateCommandBuffers();
 }
 
@@ -344,7 +345,7 @@ void RenderEngineVulkan::RecreateSwapChain() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
-	vkDeviceWaitIdle(renderDataVulkanContext->device);
+	vkDeviceWaitIdle(vulkanContext->device);
 	vulkanBackend->RecreateSwapChain();
 	UpdateRenderEntities();
 	RecreateCommandBuffers();
@@ -369,12 +370,12 @@ bool RenderEngineVulkan::HandleSwapChain(VkResult result, bool includeCallback) 
 }
 
 void RenderEngineVulkan::DrawFrame() {
-	auto device = renderDataVulkanContext->device;
+	auto device = vulkanContext->device;
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 		
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(device, renderDataVulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, vulkanContext->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	if (HandleSwapChain(result, false)) return;
 
@@ -403,7 +404,7 @@ void RenderEngineVulkan::DrawFrame() {
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
-	if (vkQueueSubmit(renderDataVulkanContext->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+	if (vkQueueSubmit(vulkanContext->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
@@ -412,13 +413,13 @@ void RenderEngineVulkan::DrawFrame() {
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { renderDataVulkanContext->swapChain };
+	VkSwapchainKHR swapChains[] = { vulkanContext->swapChain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 
-	result = vkQueuePresentKHR(renderDataVulkanContext->presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(vulkanContext->presentQueue, &presentInfo);
 
 	if (HandleSwapChain(result, true)) return;
 

@@ -4,8 +4,6 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <thread>
-#include <array>
-
 
 #include "Environment.h"
 #include "RenderEntity.h"
@@ -13,6 +11,7 @@
 #include "Window.h"
 #include "MessageQueue.h"
 #include "Vertex.h"
+#include "VulkanAllocator.h"
 
 
 class RenderEngineVulkan {
@@ -45,7 +44,7 @@ private:
 	Window* window;
 	bool windowSizeChanged = false;
 	RenderEngineVulkanBackend* vulkanBackend;
-	RenderDataVulkanContext* renderDataVulkanContext;
+	VulkanContext* vulkanContext;
 	VulkanAllocator* vulkanAllocator;
 
 	//Vulkan

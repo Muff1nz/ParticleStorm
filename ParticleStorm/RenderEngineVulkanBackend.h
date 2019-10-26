@@ -6,8 +6,7 @@
 #include <vector>
 #include <optional>
 #include "Window.h"
-#include "RenderDataVulkanContext.h"
-#include "VulkanAllocator.h"
+#include "VulkanContext.h"
 
 class Environment;
 
@@ -20,16 +19,13 @@ public:
 	void RecreateSwapChain();
 	void Dispose();
 
-	RenderDataVulkanContext* GetRenderDataVulkanContext();
-	VulkanAllocator* GetVulkanAllocator();
-	
+	VulkanContext* GetVulkanContext();	
 private:
 	bool isDisposed = false;
 	bool isSwapChainDisposed = false;
 
 	Window* window;
-	RenderDataVulkanContext* vulkanContext;
-	VulkanAllocator* vulkanAllocator;
+	VulkanContext* vulkanContext;
 	
 	//Internal structs
 	struct QueueFamilyIndices {

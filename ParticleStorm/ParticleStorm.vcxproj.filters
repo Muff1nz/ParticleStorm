@@ -138,6 +138,12 @@
     <ClCompile Include="ConstStrings.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="ImageFactory.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleTimeCommand.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Environment.h">
@@ -224,9 +230,6 @@
     <ClInclude Include="RenderTransform.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
-    <ClInclude Include="RenderDataVulkanContext.h">
-      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
-    </ClInclude>
     <ClInclude Include="RenderEngineVulkanBackend.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -265,6 +268,18 @@
     </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Header Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageFactory.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleTimeCommand.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="PsTuple.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanContext.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

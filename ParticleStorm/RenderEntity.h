@@ -2,7 +2,7 @@
 #include "RenderDataCore.h"
 #include "RenderDataSingular.h"
 #include "RenderDataInstanced.h"
-#include "RenderDataVulkanContext.h"
+#include "VulkanContext.h"
 #include "Environment.h"
 #include "RenderEntityMeta.h"
 
@@ -10,7 +10,7 @@ class RenderEntity {
 public:
 	friend class RenderEntityFactory;
 
-	RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
+	RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
 	~RenderEntity();
 
 	void Dispose();
@@ -23,8 +23,9 @@ private:
 	bool isDisposed = false;
 	bool debugEntity = false;
 
+	VulkanContext* renderDataVulkanContext;
+
 	RenderEntityMeta* renderEntityMeta;
-	RenderDataVulkanContext* renderDataVulkanContext;
 	RenderDataCore* renderDataCore;
 	RenderDataSingular* renderDataSingular;
 	RenderDataInstanced* renderDataInstanced;
