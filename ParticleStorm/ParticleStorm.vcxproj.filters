@@ -224,9 +224,6 @@
     <ClInclude Include="RenderDataInstanced.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
-    <ClInclude Include="RenderDataSingular.h">
-      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
-    </ClInclude>
     <ClInclude Include="RenderTransform.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
@@ -279,6 +276,9 @@
       <Filter>Header Files\DataStructures</Filter>
     </ClInclude>
     <ClInclude Include="VulkanContext.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataUniform.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
   </ItemGroup>

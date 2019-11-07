@@ -151,6 +151,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	RenderEntityCreateInfo createInfoParticles;
 	createInfoParticles.vertexShader = "particleVert.spv";
 	createInfoParticles.fragmentShader = "particleFrag.spv";
+	createInfoParticles.texturePath = "Textures/Circle.png";
 	createInfoParticles.renderMode = Triangles;
 	createInfoParticles.vertexBuffer = quadVertexBuffer;
 	createInfoParticles.indexBuffer = quadIndexBuffer;
@@ -163,7 +164,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	particlesTransform->objectCount = environment->particleCount;
 	renderEntities.push_back(factory.CreateRenderEntity(createInfoParticles, particlesTransform, false));
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	RenderEntityCreateInfo createInfoQuadTree;
 	createInfoQuadTree.vertexShader = "quadVert.spv";

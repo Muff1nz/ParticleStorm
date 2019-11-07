@@ -1,6 +1,6 @@
 #pragma once
 #include "RenderDataCore.h"
-#include "RenderDataSingular.h"
+#include "RenderDataUniform.h"
 #include "RenderDataInstanced.h"
 #include "VulkanContext.h"
 #include "Environment.h"
@@ -10,7 +10,7 @@ class RenderEntity {
 public:
 	friend class RenderEntityFactory;
 
-	RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
+	RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
 	~RenderEntity();
 
 	void Dispose();
@@ -27,7 +27,7 @@ private:
 
 	RenderEntityMeta* renderEntityMeta;
 	RenderDataCore* renderDataCore;
-	RenderDataSingular* renderDataSingular;
+	RenderDataUniform* renderDataUniform;
 	RenderDataInstanced* renderDataInstanced;
 
 	void UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const;

@@ -30,40 +30,55 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	renderEntityMeta->vert = createInfo.vertexShader;
 
 	RenderDataInstanced* renderDataInstanced = nullptr;
-	RenderDataSingular* renderDataSingular = nullptr;
+	RenderDataUniform* renderDataUniform = nullptr;
 
-	if (transform->objectCount > 1 && !createInfo.texturePath.empty())
-		throw std::runtime_error("Using textures and instancing at the same time is not implemented yet!");
+	bool useUniformBufferObject = transform->objectCount == 1;
+	bool useInstanceing = !useUniformBufferObject;
+	bool useTexture = !createInfo.texturePath.empty();
 
-	if (transform->objectCount > 1) {
+	//if (useInstanceing && useTexture)
+	//	throw std::runtime_error("Using textures and instancing at the same time is not implemented yet!");
+
+	if (useInstanceing) {
 		renderDataInstanced = new RenderDataInstanced();
 		renderDataInstanced->instanceCount = transform->objectCount;
-		CreateGraphicsPipeline(nullptr, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, true);
-		CreateInstanceBuffer( renderDataInstanced);
 	}
-	else if (transform->objectCount == 1 || !createInfo.texturePath.empty()) {
-		renderDataSingular = new RenderDataSingular();
-		CreateDescriptorSetLayout(renderDataSingular);
-		CreateGraphicsPipeline(renderDataSingular, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, false);
+	if (useUniformBufferObject || useTexture) {
+		renderDataUniform = new RenderDataUniform();
+		renderDataUniform->useUniformBufferObject = useUniformBufferObject;
+		renderDataUniform->useTexture = useTexture;
 
-		auto imageTuple = imageFactory->CreateTextureImage(createInfo.texturePath);
-		renderDataSingular->textureImage = imageTuple.first;
-		renderDataSingular->textureImageMemory = imageTuple.second;
-		renderDataSingular->textureImageView = imageFactory->CreateImageView(renderDataSingular->textureImage, VK_FORMAT_R8G8B8A8_UNORM);
-		renderDataSingular->textureSampler = imageFactory->CreateTextureSampler();
-
-		CreateUniformBuffers(renderDataSingular);
-		
-		CreateDescriptorPool(renderDataSingular);
-		CreateDescriptorSets(renderDataSingular);
+		CreateDescriptorSetLayout(renderDataUniform);
 	}
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataSingular, renderDataInstanced, renderEntityMeta, debugEntity);
+
+	CreateGraphicsPipeline(renderDataUniform, createInfo.vertexShader, createInfo.fragmentShader, renderDataCore->pipeline, renderDataCore->pipelineLayout, createInfo.renderMode, renderDataInstanced != nullptr);
+
+	if (useInstanceing) {
+		CreateInstanceBuffer(renderDataInstanced);
+	}
+	if (useUniformBufferObject || useTexture) {
+		if (renderDataUniform->useTexture) {
+			auto imageTuple = imageFactory->CreateTextureImage(createInfo.texturePath);
+			renderDataUniform->textureImage = imageTuple.first;
+			renderDataUniform->textureImageMemory = imageTuple.second;
+			renderDataUniform->textureImageView = imageFactory->CreateImageView(renderDataUniform->textureImage, VK_FORMAT_R8G8B8A8_UNORM);
+			renderDataUniform->textureSampler = imageFactory->CreateTextureSampler();
+		}
+
+		if (renderDataUniform->useUniformBufferObject)
+			CreateUniformBuffers(renderDataUniform);
+
+		CreateDescriptorPool(renderDataUniform);
+		CreateDescriptorSets(renderDataUniform);
+	}
+
+	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataUniform, renderDataInstanced, renderEntityMeta, debugEntity);
 }
 
 void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {
 	renderEntity->DisposePipeline();
 	CreateGraphicsPipeline(
-		renderEntity->renderDataSingular, 
+		renderEntity->renderDataUniform, 
 		renderEntity->renderEntityMeta->vert, 
 		renderEntity->renderEntityMeta->frag, 
 		renderEntity->renderDataCore->pipeline,
@@ -82,7 +97,7 @@ void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateGraphicsPipeline(RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
+void RenderEntityFactory::CreateGraphicsPipeline(RenderDataUniform* renderDataUniform, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing) {
 	auto vertShaderCode = ReadFile(vert);
 	auto fragShaderCode = ReadFile(frag);
 	auto vertShaderModule = CreateShaderModule(vertShaderCode, renderDataVulkanContext->device);
@@ -180,8 +195,8 @@ void RenderEntityFactory::CreateGraphicsPipeline(RenderDataSingular* renderDataS
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = renderDataSingular != nullptr ? 1 : 0;
-	pipelineLayoutInfo.pSetLayouts = renderDataSingular != nullptr ? &renderDataSingular->descriptorSetLayout : nullptr;
+	pipelineLayoutInfo.setLayoutCount = renderDataUniform != nullptr ? 1 : 0;
+	pipelineLayoutInfo.pSetLayouts = renderDataUniform != nullptr ? &renderDataUniform->descriptorSetLayout : nullptr;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -315,7 +330,7 @@ void RenderEntityFactory::CreateInstanceBuffer(RenderDataInstanced* renderDataIn
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderEntityFactory::CreateUniformBuffers(RenderDataSingular* renderDataSingular) const {
+void RenderEntityFactory::CreateUniformBuffers(RenderDataUniform* renderDataSingular) const {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 	renderDataSingular->uniformBuffers.resize(renderDataVulkanContext->swapChainImages.size());
@@ -326,38 +341,61 @@ void RenderEntityFactory::CreateUniformBuffers(RenderDataSingular* renderDataSin
 	}
 }
 
-void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataSingular* renderDataSingular) const {
-	VkDescriptorSetLayoutBinding uboLayoutBinding;
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+void RenderEntityFactory::CreateDescriptorSetLayout(RenderDataUniform* renderDataUniform) const {
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding;
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	if (renderDataUniform->useUniformBufferObject) {
+		VkDescriptorSetLayoutBinding uboLayoutBinding;
+		uboLayoutBinding.binding = bindings.size();
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.descriptorCount = 1;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+		bindings.emplace_back(uboLayoutBinding);
+	}
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	if (renderDataUniform->useTexture) {
+		VkDescriptorSetLayoutBinding samplerLayoutBinding;
+		samplerLayoutBinding.binding = bindings.size();
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		bindings.emplace_back(samplerLayoutBinding);
+	}
+
+	if (bindings.empty())
+		throw std::runtime_error("failed to create descriptor set layout! Zero bindings!");
+	
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	layoutInfo.pBindings = bindings.data();
 
-	if (vkCreateDescriptorSetLayout(renderDataVulkanContext->device, &layoutInfo, nullptr, &renderDataSingular->descriptorSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(renderDataVulkanContext->device, &layoutInfo, nullptr, &renderDataUniform->descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
 
-void RenderEntityFactory::CreateDescriptorPool(RenderDataSingular* renderDataSingular) const {
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
+void RenderEntityFactory::CreateDescriptorPool(RenderDataUniform* renderDataUniform) const {
+	std::vector<VkDescriptorPoolSize> poolSizes;
+
+	if (renderDataUniform->useUniformBufferObject) {
+		VkDescriptorPoolSize poolSize;
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
+		poolSizes.emplace_back(poolSize);
+	}
+
+	if (renderDataUniform->useTexture) {
+		VkDescriptorPoolSize poolSize;
+		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSize.descriptorCount = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
+		poolSizes.emplace_back(poolSize);
+	}
+
+	if (poolSizes.empty())
+		throw std::runtime_error("failed to create descriptor pool! Zero poolSizes!");
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -365,12 +403,12 @@ void RenderEntityFactory::CreateDescriptorPool(RenderDataSingular* renderDataSin
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = static_cast<uint32_t>(renderDataVulkanContext->swapChainImages.size());
 
-	if (vkCreateDescriptorPool(renderDataVulkanContext->device, &poolInfo, nullptr, &renderDataSingular->descriptorPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(renderDataVulkanContext->device, &poolInfo, nullptr, &renderDataUniform->descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
 
-void RenderEntityFactory::CreateDescriptorSets(RenderDataSingular* renderDataSingular) const {
+void RenderEntityFactory::CreateDescriptorSets(RenderDataUniform* renderDataSingular) const {
 	std::vector<VkDescriptorSetLayout> layouts(renderDataVulkanContext->swapChainImages.size(), renderDataSingular->descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -384,33 +422,44 @@ void RenderEntityFactory::CreateDescriptorSets(RenderDataSingular* renderDataSin
 	}
 
 	for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); i++) {
-		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = renderDataSingular->uniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
+		std::vector<VkWriteDescriptorSet> descriptorWrites = {};
 
-		VkDescriptorImageInfo imageInfo = {};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = renderDataSingular->textureImageView;
-		imageInfo.sampler = renderDataSingular->textureSampler;
+		if (renderDataSingular->useUniformBufferObject) {
+			VkDescriptorBufferInfo bufferInfo = {};
+			bufferInfo.buffer = renderDataSingular->uniformBuffers[i];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformBufferObject);
 
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+			VkWriteDescriptorSet descriptorSet = {};
+			descriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorSet.dstSet = renderDataSingular->descriptorSets[i];
+			descriptorSet.dstBinding = descriptorWrites.size();
+			descriptorSet.dstArrayElement = 0;
+			descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorSet.descriptorCount = 1;
+			descriptorSet.pBufferInfo = &bufferInfo;
+			descriptorWrites.emplace_back(descriptorSet);
+		}
 
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = renderDataSingular->descriptorSets[i];
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
+		if (renderDataSingular->useTexture) {
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = renderDataSingular->textureImageView;
+			imageInfo.sampler = renderDataSingular->textureSampler;
 
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = renderDataSingular->descriptorSets[i];
-		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].pImageInfo = &imageInfo;
+			VkWriteDescriptorSet descriptorSet = {};
+			descriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorSet.dstSet = renderDataSingular->descriptorSets[i];
+			descriptorSet.dstBinding = descriptorWrites.size();
+			descriptorSet.dstArrayElement = 0;
+			descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorSet.descriptorCount = 1;
+			descriptorSet.pImageInfo = &imageInfo;
+			descriptorWrites.emplace_back(descriptorSet);			
+		}
+
+		if (descriptorWrites.empty())
+			throw std::runtime_error("failed to create descriptor set! Zero VkWriteDescriptorSets");
 
 		vkUpdateDescriptorSets(renderDataVulkanContext->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}

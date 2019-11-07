@@ -7,7 +7,7 @@
 #include "stb_image.h"
 
 #include "SingleTimeCommand.h"
-#include "RenderDataSingular.h"
+#include "RenderDataUniform.h"
 
 
 ImageFactory::ImageFactory(VulkanContext* vulkanContext) {

@@ -17,7 +17,7 @@ private:
 	VulkanAllocator* vulkanAllocator;
 	ImageFactory* imageFactory;
 
-	 void CreateGraphicsPipeline(RenderDataSingular* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
+	 void CreateGraphicsPipeline(RenderDataUniform* renderDataSingular, std::string vert, std::string frag, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, RenderMode renderMode, bool instancing);
 	 VkShaderModule CreateShaderModule(const std::vector<char>& code, VkDevice& device) const;
 	static std::vector<VkVertexInputAttributeDescription> CreateVertexAttributeDescription(bool instancing);
 	static std::vector<VkVertexInputBindingDescription> CreateVertexBindingDescription(bool instancing);
@@ -25,10 +25,10 @@ private:
 
 	 void CreateInstanceBuffer(RenderDataInstanced* renderDataInstanced);
 
-	 void CreateUniformBuffers(RenderDataSingular* renderDataSingular) const;
+	 void CreateUniformBuffers(RenderDataUniform* renderDataSingular) const;
 
-	 void CreateDescriptorSetLayout(RenderDataSingular* renderDataSingular) const;	
-	 void CreateDescriptorPool(RenderDataSingular* renderDataSingular) const;
-	 void CreateDescriptorSets(RenderDataSingular* renderDataSingular) const;
+	 void CreateDescriptorSetLayout(RenderDataUniform* renderDataSingular) const;	
+	 void CreateDescriptorPool(RenderDataUniform* renderDataSingular) const;
+	 void CreateDescriptorSets(RenderDataUniform* renderDataSingular) const;
 };
 
