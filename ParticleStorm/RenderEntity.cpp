@@ -31,13 +31,14 @@ void RenderEntity::Dispose() {
 	}
 
 	if (renderDataUniform != nullptr) {
-		//Texture
-		vkDestroySampler(renderDataVulkanContext->device, renderDataUniform->textureSampler, nullptr);
-		vkDestroyImageView(renderDataVulkanContext->device, renderDataUniform->textureImageView, nullptr);
-		vkDestroyImage(renderDataVulkanContext->device, renderDataUniform->textureImage, nullptr);
-		vkFreeMemory(renderDataVulkanContext->device, renderDataUniform->textureImageMemory, nullptr);
+		if (renderDataUniform->useTexture) {
+			vkDestroySampler(renderDataVulkanContext->device, renderDataUniform->textureSampler, nullptr);
+			vkDestroyImageView(renderDataVulkanContext->device, renderDataUniform->textureImageView, nullptr);
+			vkDestroyImage(renderDataVulkanContext->device, renderDataUniform->textureImage, nullptr);
+			vkFreeMemory(renderDataVulkanContext->device, renderDataUniform->textureImageMemory, nullptr);
+		}
 
-		if (renderDataInstanced != nullptr) {
+		if (renderDataUniform->useUniformBufferObject) {
 			for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
 				vkDestroyBuffer(renderDataVulkanContext->device, renderDataUniform->uniformBuffers[i], nullptr);
 				vkFreeMemory(renderDataVulkanContext->device, renderDataUniform->uniformBuffersMemory[i], nullptr);
@@ -88,23 +89,6 @@ void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
 void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffers, int index) const {
 	VkDeviceSize offsets[] = { 0 };
 	VkBuffer vertexBuffers[] = { renderDataCore->vertexBuffer };
-
-	//if (renderDataUniform != nullptr) {
-	//	vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
-	//	vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
-	//	vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-	//	vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipelineLayout, 0, 1, &renderDataUniform->descriptorSets[index], 0, nullptr);
-	//	vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, 1, 0, 0, 0);
-	//}
-
-	//if (renderDataInstanced != nullptr) {
-	//	VkBuffer instanceBuffer[] = { renderDataInstanced->instanceBuffers[index] };
-	//	vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
-	//	vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
-	//	vkCmdBindVertexBuffers(commandBuffers[index], 1, 1, instanceBuffer, offsets);
-	//	vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-	//	vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, static_cast<uint32_t>(renderDataInstanced->instanceCount), 0, 0, 0);
-	//}
 
 	if (renderDataUniform != nullptr && renderDataInstanced != nullptr) {
 		VkBuffer instanceBuffer[] = { renderDataInstanced->instanceBuffers[index] };

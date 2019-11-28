@@ -36,9 +36,6 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	bool useInstanceing = !useUniformBufferObject;
 	bool useTexture = !createInfo.texturePath.empty();
 
-	//if (useInstanceing && useTexture)
-	//	throw std::runtime_error("Using textures and instancing at the same time is not implemented yet!");
-
 	if (useInstanceing) {
 		renderDataInstanced = new RenderDataInstanced();
 		renderDataInstanced->instanceCount = transform->objectCount;

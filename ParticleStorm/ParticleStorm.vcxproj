@@ -169,6 +169,7 @@
     <ClInclude Include="Range.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderDataCore.h" />
+    <ClInclude Include="SimplexNoise.h" />
     <ClInclude Include="VulkanContext.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="RenderEngineVulkanBackend.h" />

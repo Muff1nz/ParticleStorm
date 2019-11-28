@@ -76,6 +76,12 @@
     <Filter Include="Textures">
       <UniqueIdentifier>{282f6756-c542-4e0d-94e1-b3cbe5ebc156}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\TextureGen">
+      <UniqueIdentifier>{978c53df-18e2-4e22-b85f-930bd2432c1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TextureGen">
+      <UniqueIdentifier>{fc8e200f-8577-43e1-b8f2-5afaf1876fd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -280,6 +286,9 @@
     </ClInclude>
     <ClInclude Include="RenderDataUniform.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="SimplexNoise.h">
+      <Filter>Header Files\Graphics\TextureGen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
