@@ -3,11 +3,11 @@
 #include "Camera.h"
 #include "Environment.h"
 
-RenderEntity::RenderEntity(RenderDataVulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataSingular* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+RenderEntity::RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
 	this->renderEntityMeta = renderEntityMeta;
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
-	this->renderDataSingular = renderDataSingular;
+	this->renderDataUniform = renderDataSingular;
 	this->renderDataInstanced = renderDataInstanced;
 	this->debugEntity = debugEntity;
 
@@ -30,18 +30,22 @@ void RenderEntity::Dispose() {
 		delete renderDataInstanced;
 	}
 
-	if (renderDataSingular != nullptr) {
-		//Texture
-		vkDestroySampler(renderDataVulkanContext->device, renderDataSingular->textureSampler, nullptr);
-		vkDestroyImageView(renderDataVulkanContext->device, renderDataSingular->textureImageView, nullptr);
-		vkDestroyImage(renderDataVulkanContext->device, renderDataSingular->textureImage, nullptr);
-		vkFreeMemory(renderDataVulkanContext->device, renderDataSingular->textureImageMemory, nullptr);
-
-		for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
-			vkDestroyBuffer(renderDataVulkanContext->device, renderDataSingular->uniformBuffers[i], nullptr);
-			vkFreeMemory(renderDataVulkanContext->device, renderDataSingular->uniformBuffersMemory[i], nullptr);
+	if (renderDataUniform != nullptr) {
+		if (renderDataUniform->useTexture) {
+			vkDestroySampler(renderDataVulkanContext->device, renderDataUniform->textureSampler, nullptr);
+			vkDestroyImageView(renderDataVulkanContext->device, renderDataUniform->textureImageView, nullptr);
+			vkDestroyImage(renderDataVulkanContext->device, renderDataUniform->textureImage, nullptr);
+			vkFreeMemory(renderDataVulkanContext->device, renderDataUniform->textureImageMemory, nullptr);
 		}
-		vkDestroyDescriptorPool(renderDataVulkanContext->device, renderDataSingular->descriptorPool, nullptr);
+
+		if (renderDataUniform->useUniformBufferObject) {
+			for (size_t i = 0; i < renderDataVulkanContext->swapChainImages.size(); ++i) {
+				vkDestroyBuffer(renderDataVulkanContext->device, renderDataUniform->uniformBuffers[i], nullptr);
+				vkFreeMemory(renderDataVulkanContext->device, renderDataUniform->uniformBuffersMemory[i], nullptr);
+			}
+		}
+
+		vkDestroyDescriptorPool(renderDataVulkanContext->device, renderDataUniform->descriptorPool, nullptr);
 	}
 
 	if (renderDataCore != nullptr) {
@@ -50,9 +54,9 @@ void RenderEntity::Dispose() {
 		delete renderDataCore;
 	}
 
-	if (renderDataSingular != nullptr) {
-		vkDestroyDescriptorSetLayout(renderDataVulkanContext->device, renderDataSingular->descriptorSetLayout, nullptr);
-		delete renderDataSingular;
+	if (renderDataUniform != nullptr) {
+		vkDestroyDescriptorSetLayout(renderDataVulkanContext->device, renderDataUniform->descriptorSetLayout, nullptr);
+		delete renderDataUniform;
 	}
 
 	delete renderEntityMeta;
@@ -73,7 +77,7 @@ bool RenderEntity::IsDebugEntity() const {
 }
 
 void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {
-	if (renderDataSingular != nullptr) {
+	if (renderDataUniform != nullptr && renderDataInstanced == nullptr) {
 		UpdateUniformBuffer(imageIndex, camera);
 	}
 
@@ -86,15 +90,21 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 	VkDeviceSize offsets[] = { 0 };
 	VkBuffer vertexBuffers[] = { renderDataCore->vertexBuffer };
 
-	if (renderDataSingular != nullptr) {
+	if (renderDataUniform != nullptr && renderDataInstanced != nullptr) {
+		VkBuffer instanceBuffer[] = { renderDataInstanced->instanceBuffers[index] };
+		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
+		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
+		vkCmdBindVertexBuffers(commandBuffers[index], 1, 1, instanceBuffer, offsets);
+		vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipelineLayout, 0, 1, &renderDataUniform->descriptorSets[index], 0, nullptr);
+		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, static_cast<uint32_t>(renderDataInstanced->instanceCount), 0, 0, 0);
+	}else if (renderDataUniform != nullptr) {
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
 		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(commandBuffers[index], renderDataCore->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipelineLayout, 0, 1, &renderDataSingular->descriptorSets[index], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipelineLayout, 0, 1, &renderDataUniform->descriptorSets[index], 0, nullptr);
 		vkCmdDrawIndexed(commandBuffers[index], renderDataCore->indexCount, 1, 0, 0, 0);
-	}
-
-	if (renderDataInstanced != nullptr) {
+	} else if (renderDataInstanced != nullptr) {
 		VkBuffer instanceBuffer[] = { renderDataInstanced->instanceBuffers[index] };
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, renderDataCore->pipeline);
 		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, vertexBuffers, offsets);
@@ -136,7 +146,7 @@ void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) cons
 	ubo.MVP = projView * model;
 
 	void* data;
-	vkMapMemory(renderDataVulkanContext->device, renderDataSingular->uniformBuffersMemory[imageIndex], 0, sizeof(UniformBufferObject), 0, &data);
+	vkMapMemory(renderDataVulkanContext->device, renderDataUniform->uniformBuffersMemory[imageIndex], 0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(renderDataVulkanContext->device, renderDataSingular->uniformBuffersMemory[imageIndex]);
+	vkUnmapMemory(renderDataVulkanContext->device, renderDataUniform->uniformBuffersMemory[imageIndex]);
 }

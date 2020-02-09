@@ -33,7 +33,7 @@ private:
 
 	float zoom;
 	float minZoom = -0.49f;
-	float maxZoom = 10.0f;
+	float maxZoom = 1.25f;
 
 	glm::vec2 oldMousePos;
 	glm::vec2 oldMouseFlag = { -999, -999 };

@@ -9,7 +9,6 @@
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
 #include "Utils.h"
-#include "ConstStrings.h"
 
 
 SessionManager::SessionManager() = default;
@@ -85,7 +84,7 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 	return sessionString;
 }
 
-void SessionManager::Sandbox() {
+void SessionManager::Sandbox() const {
 	Environment environment{};
 	MessageQueue messageQueue{};
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);

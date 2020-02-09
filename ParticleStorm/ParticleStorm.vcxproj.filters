@@ -76,6 +76,12 @@
     <Filter Include="Textures">
       <UniqueIdentifier>{282f6756-c542-4e0d-94e1-b3cbe5ebc156}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\TextureGen">
+      <UniqueIdentifier>{978c53df-18e2-4e22-b85f-930bd2432c1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TextureGen">
+      <UniqueIdentifier>{fc8e200f-8577-43e1-b8f2-5afaf1876fd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -137,6 +143,18 @@
     </ClCompile>
     <ClCompile Include="ConstStrings.cpp">
       <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageFactory.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleTimeCommand.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureGenerator.cpp">
+      <Filter>Source Files\TextureGen</Filter>
+    </ClCompile>
+    <ClCompile Include="PsTexture.cpp">
+      <Filter>Source Files\TextureGen</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,13 +236,7 @@
     <ClInclude Include="RenderDataInstanced.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
-    <ClInclude Include="RenderDataSingular.h">
-      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
-    </ClInclude>
     <ClInclude Include="RenderTransform.h">
-      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderDataVulkanContext.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
     <ClInclude Include="RenderEngineVulkanBackend.h">
@@ -265,6 +277,36 @@
     </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Header Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageFactory.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleTimeCommand.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="PsTuple.h">
+      <Filter>Header Files\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanContext.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataUniform.h">
+      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="SimplexNoise.h">
+      <Filter>Header Files\Graphics\TextureGen</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image_write.h">
+      <Filter>Header Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureGenerator.h">
+      <Filter>Header Files\Graphics\TextureGen</Filter>
+    </ClInclude>
+    <ClInclude Include="PsTexture.h">
+      <Filter>Header Files\Graphics\TextureGen</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Header Files\Graphics\TextureGen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

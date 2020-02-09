@@ -2,6 +2,7 @@
 #include <set>
 #include "RenderEngineVulkan.h"
 #include <iostream>
+#include "ImageFactory.h"
 
 RenderEngineVulkanBackend::RenderEngineVulkanBackend() = default;
 
@@ -24,6 +25,8 @@ void RenderEngineVulkanBackend::Init(Window* window) {
 	CreateFrameBuffers();
 	CreateCommandPool();
 
+	CopyToVulkanContext();
+
 	isDisposed = false;
 	isSwapChainDisposed = false;
 }
@@ -36,9 +39,9 @@ void RenderEngineVulkanBackend::RecreateSwapChain() {
 	CreateRenderPass();
 	CreateFrameBuffers();
 
-	isSwapChainDisposed = false;
-
 	CopyToVulkanContext();
+
+	isSwapChainDisposed = false;
 }
 
 void RenderEngineVulkanBackend::Dispose() {
@@ -59,7 +62,6 @@ void RenderEngineVulkanBackend::Dispose() {
 	vkDestroyInstance(instance, nullptr);
 
 	delete vulkanContext;
-	delete vulkanAllocator;
 
 	isDisposed = true;
 }
@@ -499,25 +501,12 @@ RenderEngineVulkanBackend::QueueFamilyIndices RenderEngineVulkanBackend::FindQue
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderEngineVulkanBackend::CreateImageViews() {
+	auto context = GetVulkanContext();
+	ImageFactory imageFactory(context);
+
 	swapChainImageViews.resize(swapChainImages.size());
 	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		VkImageViewCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = swapChainImages[i];
-		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = swapChainImageFormat;
-		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		createInfo.subresourceRange.baseMipLevel = 0;
-		createInfo.subresourceRange.levelCount = 1;
-		createInfo.subresourceRange.baseArrayLayer = 0;
-		createInfo.subresourceRange.layerCount = 1;
-		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create image views!");
-		}
+		swapChainImageViews[i] = imageFactory.CreateImageView(swapChainImages[i], swapChainImageFormat);
 	}
 }
 
@@ -643,19 +632,11 @@ void RenderEngineVulkanBackend::CopyToVulkanContext() const {
 	vulkanContext->swapChainFrameBuffers = swapChainFrameBuffers;
 }
 
-RenderDataVulkanContext* RenderEngineVulkanBackend::GetRenderDataVulkanContext() {
+VulkanContext* RenderEngineVulkanBackend::GetVulkanContext() {
 	if (vulkanContext != nullptr)
 		return vulkanContext;
 
-	vulkanContext = new RenderDataVulkanContext();
+	vulkanContext = new VulkanContext();
 	CopyToVulkanContext();
 	return vulkanContext;
-}
-
-VulkanAllocator* RenderEngineVulkanBackend::GetVulkanAllocator() {
-	if (vulkanAllocator != nullptr)
-		return vulkanAllocator;
-
-	vulkanAllocator = new VulkanAllocator(physicalDevice, device, graphicsQueue, commandPool);
-	return vulkanAllocator;
 }
