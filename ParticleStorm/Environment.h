@@ -1,6 +1,5 @@
 #pragma once
 
-#include <queue>
 #include <atomic>
 
 #include "WorkerThreadPool.h"

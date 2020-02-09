@@ -18,7 +18,7 @@ public:
 	SessionManager();
 	~SessionManager();
 
-	static void Sandbox();
+	void Sandbox() const;
 	void PhysBench() const;
 	void GraphBench() const;
 private:

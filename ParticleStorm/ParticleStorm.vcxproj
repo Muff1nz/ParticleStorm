@@ -132,6 +132,7 @@
     <ClCompile Include="MessageQueue.cpp" />
     <ClCompile Include="NumberGenerator.cpp" />
     <ClCompile Include="PhysicsEngine.cpp" />
+    <ClCompile Include="PsTexture.cpp" />
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="QuadTreeHandler.cpp" />
     <ClCompile Include="Rect.cpp" />
@@ -141,6 +142,7 @@
     <ClCompile Include="RenderEntityFactory.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="SingleTimeCommand.cpp" />
+    <ClCompile Include="TextureGenerator.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="VulkanAllocator.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -149,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionChecker.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="ConcurrentVector.h" />
     <ClInclude Include="ConstStrings.h" />
     <ClInclude Include="EnumUtils.h" />
@@ -162,6 +165,7 @@
     <ClInclude Include="MultiIntVector.h" />
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="PhysicsEngine.h" />
+    <ClInclude Include="PsTexture.h" />
     <ClInclude Include="PsTuple.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="QuadTreeHandler.h" />
@@ -170,6 +174,8 @@
     <ClInclude Include="Rect.h" />
     <ClInclude Include="RenderDataCore.h" />
     <ClInclude Include="SimplexNoise.h" />
+    <ClInclude Include="stb_image_write.h" />
+    <ClInclude Include="TextureGenerator.h" />
     <ClInclude Include="VulkanContext.h" />
     <ClInclude Include="RenderEngineVulkan.h" />
     <ClInclude Include="RenderEngineVulkanBackend.h" />

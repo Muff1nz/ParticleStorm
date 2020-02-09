@@ -134,7 +134,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	RenderEntityCreateInfo createInfoBackground;
 	createInfoBackground.vertexShader = "backgroundVert.spv";
 	createInfoBackground.fragmentShader = "backgroundFrag.spv";
-	createInfoBackground.texturePath = "Textures/BackGround.png";
+	createInfoBackground.texturePath = textureGenerator->GetBackgroungTexture(environment, environment->worldWidth, environment->worldHeight);
 	createInfoBackground.renderMode = Triangles;
 	createInfoBackground.vertexBuffer = quadVertexBuffer;
 	createInfoBackground.indexBuffer = quadIndexBuffer;
@@ -151,7 +151,7 @@ void RenderEngineVulkan::CreateRenderEntities() {
 	RenderEntityCreateInfo createInfoParticles;
 	createInfoParticles.vertexShader = "particleVert.spv";
 	createInfoParticles.fragmentShader = "particleFrag.spv";
-	createInfoParticles.texturePath = "Textures/Circle.png";
+	createInfoParticles.texturePath = textureGenerator->GetParticleTexture();
 	createInfoParticles.renderMode = Triangles;
 	createInfoParticles.vertexBuffer = quadVertexBuffer;
 	createInfoParticles.indexBuffer = quadIndexBuffer;
@@ -214,6 +214,8 @@ void RenderEngineVulkan::Init() {
 	vulkanContext = vulkanBackend->GetVulkanContext();
 	vulkanAllocator = new VulkanAllocator(vulkanContext);
 
+	textureGenerator = new TextureGenerator();
+
 	InitVulkan();
 }
 
@@ -258,6 +260,8 @@ void RenderEngineVulkan::Dispose() {
 	delete window;
 	delete vulkanAllocator;
 	delete vulkanBackend;
+
+	delete textureGenerator;
 	
 	isDisposed = true;
 }

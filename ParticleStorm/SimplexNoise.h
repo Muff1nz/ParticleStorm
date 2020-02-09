@@ -7,100 +7,6 @@
 //Ported from TGAG
 class SimplexNoise {
 public:
-	int hash[256] = {
-		151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
-		140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
-		247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
-		57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175,
-		74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122,
-		60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54,
-		65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169,
-		200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64,
-		52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212,
-		207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213,
-		119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
-		129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104,
-		218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241,
-		81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157,
-		184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93,
-		222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
-	};
-
-	int const  hashMask = 255;
-
-	float* gradients1D = new float[] {
-		1.0f, -1.0f
-	};
-
-	int const gradientsMask1D = 1;
-
-	glm::vec2 gradients2D[8] = {
-		glm::vec2(1.0f, 0.0f),
-		glm::vec2(-1.0f, 0.0f),
-		glm::vec2(0.0f, 1.0f),
-		glm::vec2(0.0f,-1.0f),
-		normalize(glm::vec2(1.0f, 1.0f)),
-		normalize(glm::vec2(-1.0f, 1.0f)),
-		normalize(glm::vec2(1.0f,-1.0f)),
-		normalize(glm::vec2(-1.0f,-1.0f))
-	};
-
-	int const gradientsMask2D = 7;
-
-	glm::vec3 gradients3D[32] = {
-		normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
-		normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
-		normalize(glm::vec3(1.0f,-1.0f, 0.0f)),
-		normalize(glm::vec3(-1.0f,-1.0f, 0.0f)),
-		normalize(glm::vec3(1.0f, 0.0f, 1.0f)),
-		normalize(glm::vec3(-1.0f, 0.0f, 1.0f)),
-		normalize(glm::vec3(1.0f, 0.0f,-1.0f)),
-		normalize(glm::vec3(-1.0f, 0.0f,-1.0f)),
-		normalize(glm::vec3(0.0f, 1.0f, 1.0f)),
-		normalize(glm::vec3(0.0f,-1.0f, 1.0f)),
-		normalize(glm::vec3(0.0f, 1.0f,-1.0f)),
-		normalize(glm::vec3(0.0f,-1.0f,-1.0f)),
-
-		normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
-		normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
-		normalize(glm::vec3(1.0f,-1.0f, 0.0f)),
-		normalize(glm::vec3(-1.0f,-1.0f, 0.0f)),
-		normalize(glm::vec3(1.0f, 0.0f, 1.0f)),
-		normalize(glm::vec3(-1.0f, 0.0f, 1.0f)),
-		normalize(glm::vec3(1.0f, 0.0f,-1.0f)),
-		normalize(glm::vec3(-1.0f, 0.0f,-1.0f)),
-		normalize(glm::vec3(0.0f, 1.0f, 1.0f)),
-		normalize(glm::vec3(0.0f,-1.0f, 1.0f)),
-		normalize(glm::vec3(0.0f, 1.0f,-1.0f)),
-		normalize(glm::vec3(0.0f,-1.0f,-1.0f)),
-
-		normalize(glm::vec3(1.0f, 1.0f, 1.0f)),
-		normalize(glm::vec3(-1.0f, 1.0f, 1.0f)),
-		normalize(glm::vec3(1.0f,-1.0f, 1.0f)),
-		normalize(glm::vec3(-1.0f,-1.0f, 1.0f)),
-		normalize(glm::vec3(1.0f, 1.0f,-1.0f)),
-		normalize(glm::vec3(-1.0f, 1.0f,-1.0f)),
-		normalize(glm::vec3(1.0f,-1.0f,-1.0f)),
-		normalize(glm::vec3(-1.0f,-1.0f,-1.0f))
-	};
-
-	int const gradientsMask3D = 31;
-
-	float squaresToTriangles = (3.0f - sqrt(3.0f)) / 6.0f; //Converts points from square grid to triangel grid
-	float trianglesToSquares = (sqrt(3.0f) - 1.0f) / 2.0f; //Converts points from triangle grid to square grid
-	float tetrahedronToCube = (1.0f / 3.0f);
-	float cubeToTetrahedron = (1.0f / 6.0f);
-
-	float simplexScale2D = 296.0f * sqrt(2) / 15.0f;
-	float simplexScale3D = 812.0f * sqrt(3) / 35.0f;
-
-	float Dot(glm::vec2 g, float x, float y) {
-		return g.x * x + g.y * y;
-	}
-	float Dot(glm::vec3 g, float x, float y, float z) {
-		return g.x * x + g.y * y + g.z * z;
-	}
-
 	/// <summary>
 	/// Scales the -1 to 1 range numbers to 0 to 1.
 	/// </summary>
@@ -222,64 +128,7 @@ public:
 	}
 
 
-	/// <summary>
-	/// Computes the simplex noise value for a part (One end of a unit line segment)
-	/// </summary>
-	/// <param name="point"></param>
-	/// <param name="ix"></param>
-	/// <returns>Simplex noise value for part</returns>
-	float SimplexValue1DPart(glm::vec3 point, int ix) {
-		float x = point.x - ix;
-		float f = 1.0f - x * x;
-		float f2 = f * f;
-		float f3 = f * f2;
-		float h = hash[ix & hashMask];
-		return f3 * h;
-	}
 
-	/// <summary>
-	/// Computes the simplex noise value for a part (One corner of a triangle)
-	/// </summary>
-	/// <param name="point"></param>
-	/// <param name="ix"></param>
-	/// <param name="iy"></param>
-	/// <returns>Simplex value for triangle point</returns>
-	float SimplexValue2DPart(glm::vec3 point, int ix, int iy) {
-		float unskew = (ix + iy) * squaresToTriangles;
-		float x = point.x - ix + unskew;
-		float y = point.y - iy + unskew;
-		float f = 0.5f - x * x - y * y;
-		if (f >0.0f) {
-			float f2 = f * f;
-			float f3 = f * f2;
-			float h = hash[hash[ix & hashMask] + iy & hashMask];
-			return f3 * h;
-		}
-		return 0;
-	}
-
-	/// <summary>
-	/// Computes the simplex noise value for a corner in a tetrahedron
-	/// </summary>
-	/// <param name="point"></param>
-	/// <param name="ix"></param>
-	/// <param name="iy"></param>
-	/// <param name="iz"></param>
-	/// <returns>The simplex noise value for the corner in the tetrahedron</returns>
-	float SimplexValue3DPart(glm::vec3 point, int ix, int iy, int iz) {
-		float unskew = (ix + iy + iz) * cubeToTetrahedron;
-		float x = point.x - ix + unskew;
-		float y = point.y - iy + unskew;
-		float z = point.z - iz + unskew;
-		float f = 0.5f - x * x - y * y - z * z;
-		if (f >0.0f) {
-			float f2 = f * f;
-			float f3 = f * f2;
-			float h = hash[hash[hash[ix & hashMask] + iy & hashMask] + iz & hashMask];
-			return f3 * h;
-		}
-		return 0;
-	}
 
 	///////////////////////////////////////////////////////////////////////////////////
 	///   _____               _ _            _     _   _       _          			///
@@ -391,7 +240,161 @@ public:
 
 		return sample * simplexScale3D;
 	}
+	
+private:
+	int hash[256] = {
+		151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
+		140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
+		247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
+		57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175,
+		74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122,
+		60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54,
+		65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169,
+		200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64,
+		52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212,
+		207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213,
+		119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
+		129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104,
+		218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241,
+		81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157,
+		184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93,
+		222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+	};
 
+	int const  hashMask = 255;
+
+	float* gradients1D = new float[2] {
+		1.0f, -1.0f
+	};
+
+	int const gradientsMask1D = 1;
+
+	glm::vec2 gradients2D[8] = {
+		glm::vec2(1.0f, 0.0f),
+		glm::vec2(-1.0f, 0.0f),
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(0.0f,-1.0f),
+		normalize(glm::vec2(1.0f, 1.0f)),
+		normalize(glm::vec2(-1.0f, 1.0f)),
+		normalize(glm::vec2(1.0f,-1.0f)),
+		normalize(glm::vec2(-1.0f,-1.0f))
+	};
+
+	int const gradientsMask2D = 7;
+
+	glm::vec3 gradients3D[32] = {
+		normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
+		normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
+		normalize(glm::vec3(1.0f,-1.0f, 0.0f)),
+		normalize(glm::vec3(-1.0f,-1.0f, 0.0f)),
+		normalize(glm::vec3(1.0f, 0.0f, 1.0f)),
+		normalize(glm::vec3(-1.0f, 0.0f, 1.0f)),
+		normalize(glm::vec3(1.0f, 0.0f,-1.0f)),
+		normalize(glm::vec3(-1.0f, 0.0f,-1.0f)),
+		normalize(glm::vec3(0.0f, 1.0f, 1.0f)),
+		normalize(glm::vec3(0.0f,-1.0f, 1.0f)),
+		normalize(glm::vec3(0.0f, 1.0f,-1.0f)),
+		normalize(glm::vec3(0.0f,-1.0f,-1.0f)),
+
+		normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
+		normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
+		normalize(glm::vec3(1.0f,-1.0f, 0.0f)),
+		normalize(glm::vec3(-1.0f,-1.0f, 0.0f)),
+		normalize(glm::vec3(1.0f, 0.0f, 1.0f)),
+		normalize(glm::vec3(-1.0f, 0.0f, 1.0f)),
+		normalize(glm::vec3(1.0f, 0.0f,-1.0f)),
+		normalize(glm::vec3(-1.0f, 0.0f,-1.0f)),
+		normalize(glm::vec3(0.0f, 1.0f, 1.0f)),
+		normalize(glm::vec3(0.0f,-1.0f, 1.0f)),
+		normalize(glm::vec3(0.0f, 1.0f,-1.0f)),
+		normalize(glm::vec3(0.0f,-1.0f,-1.0f)),
+
+		normalize(glm::vec3(1.0f, 1.0f, 1.0f)),
+		normalize(glm::vec3(-1.0f, 1.0f, 1.0f)),
+		normalize(glm::vec3(1.0f,-1.0f, 1.0f)),
+		normalize(glm::vec3(-1.0f,-1.0f, 1.0f)),
+		normalize(glm::vec3(1.0f, 1.0f,-1.0f)),
+		normalize(glm::vec3(-1.0f, 1.0f,-1.0f)),
+		normalize(glm::vec3(1.0f,-1.0f,-1.0f)),
+		normalize(glm::vec3(-1.0f,-1.0f,-1.0f))
+	};
+
+	int const gradientsMask3D = 31;
+
+	float squaresToTriangles = (3.0f - sqrt(3.0f)) / 6.0f; //Converts points from square grid to triangel grid
+	float trianglesToSquares = (sqrt(3.0f) - 1.0f) / 2.0f; //Converts points from triangle grid to square grid
+	float tetrahedronToCube = (1.0f / 3.0f);
+	float cubeToTetrahedron = (1.0f / 6.0f);
+
+	float simplexScale2D = 296.0f * sqrt(2) / 15.0f;
+	float simplexScale3D = 812.0f * sqrt(3) / 35.0f;
+
+	float Dot(glm::vec2 g, float x, float y) {
+		return g.x * x + g.y * y;
+	}
+
+	float Dot(glm::vec3 g, float x, float y, float z) {
+		return g.x * x + g.y * y + g.z * z;
+	}
+
+	/// <summary>
+	/// Computes the simplex noise value for a part (One end of a unit line segment)
+	/// </summary>
+	/// <param name="point"></param>
+	/// <param name="ix"></param>
+	/// <returns>Simplex noise value for part</returns>
+	float SimplexValue1DPart(glm::vec3 point, int ix) {
+		float x = point.x - ix;
+		float f = 1.0f - x * x;
+		float f2 = f * f;
+		float f3 = f * f2;
+		float h = hash[ix & hashMask];
+		return f3 * h;
+	}
+
+	/// <summary>
+	/// Computes the simplex noise value for a part (One corner of a triangle)
+	/// </summary>
+	/// <param name="point"></param>
+	/// <param name="ix"></param>
+	/// <param name="iy"></param>
+	/// <returns>Simplex value for triangle point</returns>
+	float SimplexValue2DPart(glm::vec3 point, int ix, int iy) {
+		float unskew = (ix + iy) * squaresToTriangles;
+		float x = point.x - ix + unskew;
+		float y = point.y - iy + unskew;
+		float f = 0.5f - x * x - y * y;
+		if (f >0.0f) {
+			float f2 = f * f;
+			float f3 = f * f2;
+			float h = hash[hash[ix & hashMask] + iy & hashMask];
+			return f3 * h;
+		}
+		return 0;
+	}
+
+	/// <summary>
+	/// Computes the simplex noise value for a corner in a tetrahedron
+	/// </summary>
+	/// <param name="point"></param>
+	/// <param name="ix"></param>
+	/// <param name="iy"></param>
+	/// <param name="iz"></param>
+	/// <returns>The simplex noise value for the corner in the tetrahedron</returns>
+	float SimplexValue3DPart(glm::vec3 point, int ix, int iy, int iz) {
+		float unskew = (ix + iy + iz) * cubeToTetrahedron;
+		float x = point.x - ix + unskew;
+		float y = point.y - iy + unskew;
+		float z = point.z - iz + unskew;
+		float f = 0.5f - x * x - y * y - z * z;
+		if (f >0.0f) {
+			float f2 = f * f;
+			float f3 = f * f2;
+			float h = hash[hash[hash[ix & hashMask] + iy & hashMask] + iz & hashMask];
+			return f3 * h;
+		}
+		return 0;
+	}
 
 	/// <summary>
 	/// Computes the simplex noise  for a part (One end of a unit line segment)
