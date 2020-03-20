@@ -82,6 +82,12 @@
     <Filter Include="Source Files\TextureGen">
       <UniqueIdentifier>{fc8e200f-8577-43e1-b8f2-5afaf1876fd4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Input">
+      <UniqueIdentifier>{c3379b48-76d9-45f1-bbe7-5a1cda674f79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{bdbb1bc2-c2ed-4ccb-856f-7663d1832420}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -155,6 +161,9 @@
     </ClCompile>
     <ClCompile Include="PsTexture.cpp">
       <Filter>Source Files\TextureGen</Filter>
+    </ClCompile>
+    <ClCompile Include="EventEngine.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -307,6 +316,9 @@
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Header Files\Graphics\TextureGen</Filter>
+    </ClInclude>
+    <ClInclude Include="EventEngine.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

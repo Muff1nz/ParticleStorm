@@ -1,30 +1,25 @@
 #include "Camera.h"
 #include <ext/matrix_transform.inl>
 #include <ext/matrix_clip_space.inl>
-#include "Window.h"
 
-Queue<double> Camera::scrollEvents{};
 
 Camera::Camera() {
 	zoom = 0;
 }
 
-Camera::Camera(int worldHeight, int worldWidth, Window* window) {
+Camera::Camera(EventEngine* eventEngine, Window* window, int worldHeight, int worldWidth) {
+	this->eventEngine = eventEngine;
+	this->window = window;
+
 	this->worldHeight = worldHeight;
 	this->worldWidth = worldWidth;
-	this->window = window;
+	
 	zoom = 0;
 	pos = { 0, 0 };
 	ResetCamera();
 }
 
-Camera::~Camera() {
-	scrollEvents.Clear();
-}
-
-void Camera::Init(GLFWwindow* window) {
-	glfwSetScrollCallback(window, ScrollCallback);
-}
+Camera::~Camera() = default;
 
 glm::mat4 Camera::GetView() {
 	glm::vec2 offset = { GetOrthoWidth() / 2, GetOrthoHeight() / 2 };
@@ -77,33 +72,23 @@ int Camera::GetOrthoWidth() const {
 	return GetPixelToWorld() * window->GetWidth();
 }
 
-void Camera::Update(GLFWwindow* window, float deltaTime) {
+void Camera::Update(float deltaTime) {
 	float cameraZoomSpeed = pow(zoom + 1, 2) * 30.0f * deltaTime;
-
-	//Translation	
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-		double x, y;
-		glfwGetCursorPos(window, &x, &y);
-		glm::vec2 mousePos = GetViewPos({ x, y });
-		if (oldMousePos != oldMouseFlag) {
-			glm::vec2 delta = mousePos - oldMousePos;
-			pos += delta;
-		}
-		oldMousePos = mousePos;
-	} else {
-		oldMousePos = oldMouseFlag;
+	
+	if (eventEngine->GetMouseButton(GLFW_MOUSE_BUTTON_RIGHT)) {
+		auto mousePos = GetViewPos(eventEngine->GetMousePos());
+		pos += mousePos - oldMousePos;
 	}
-
-	while (!scrollEvents.Empty()) {
-		zoom -= scrollEvents.Pop() * cameraZoomSpeed;
-	}
+	oldMousePos = GetViewPos(eventEngine->GetMousePos());
+	
+	zoom -= eventEngine->GetMouseScrollDelta() * cameraZoomSpeed;	
 	
 	if (zoom <= minZoom)
 		zoom = minZoom;
 	if (zoom > maxZoom)
 		zoom = maxZoom;
 
-	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+	if (eventEngine->GetKeyDown(GLFW_KEY_R))
 		ResetCamera();
 }
 
@@ -113,7 +98,4 @@ void Camera::ResetCamera() {
 	pos = { -worldWidth / 2, -worldHeight / 2 }; 
 }
 
-void Camera::ScrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
-	scrollEvents.Push(yOffset);
-}
 

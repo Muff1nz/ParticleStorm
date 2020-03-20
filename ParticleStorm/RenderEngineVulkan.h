@@ -33,6 +33,7 @@ public:
 	
 	//Accessors
 	GLFWwindow* GetWindow() const;
+	Window* GetComplexWindow() const;
 private:
 	//Particle Storm Specific Variables
 	Environment* environment;

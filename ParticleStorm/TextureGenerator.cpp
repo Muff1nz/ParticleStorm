@@ -84,7 +84,6 @@ std::string TextureGenerator::GetParticleTexture() const {
 	texture.WriteToDisk(fileName);
 
 	timer.Stop();
-	std::cout << "\nPARTICLE TEXTURE: Finished generating in " << timer.ElapsedMilliseconds() << "ms";
-
+	std::cout << "\nPARTICLE TEXTURE: Finished generating in " << timer.ElapsedMilliseconds() << "ms\n\n";
 	return fileName;
 }

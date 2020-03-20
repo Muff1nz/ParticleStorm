@@ -9,7 +9,6 @@
 
 #include "RenderEngineVulkan.h"
 
-#include <set>
 #include <limits>
 #include <fstream>
 #include <gtc/matrix_transform.hpp>
@@ -203,11 +202,9 @@ void RenderEngineVulkan::Init() {
 	isDisposed = false;
 
 	window = new Window();
-	window->InitWindow(1200, 2800, environment->fullScreen);
+	window->InitWindow(1200, 2800);
 	glfwSetWindowUserPointer(window->GetWindow(), this);
 	glfwSetFramebufferSizeCallback(window->GetWindow(), FramebufferResizeCallback);
-	environment->camera = Camera(environment->worldHeight, environment->worldWidth, window);
-
 
 	vulkanBackend = new RenderEngineVulkanBackend();
 	vulkanBackend->Init(window);
@@ -277,6 +274,10 @@ void RenderEngineVulkan::Dispose() {
 
 GLFWwindow* RenderEngineVulkan::GetWindow() const {
 	return window->GetWindow();
+}
+
+Window* RenderEngineVulkan::GetComplexWindow() const {
+	return window;
 }
 
 

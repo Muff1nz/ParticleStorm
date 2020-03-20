@@ -8,6 +8,7 @@
 #include "Environment.h"
 #include "PhysicsEngine.h"
 #include "RenderEngineVulkan.h"
+#include "EventEngine.h"
 #include "Utils.h"
 
 
@@ -87,22 +88,22 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 void SessionManager::Sandbox() const {
 	Environment environment{};
 	MessageQueue messageQueue{};
+
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);
 	PhysicsEngine physicsEngine(&environment, &messageQueue);
-	renderEngine.Init();
-	physicsEngine.Init();
+	EventEngine eventEngine;
 
-	environment.camera.Init(renderEngine.GetWindow());
+	renderEngine.Init();
+	eventEngine.Init(renderEngine.GetWindow());
+	physicsEngine.Init();	
+	
+	environment.camera = Camera(&eventEngine, renderEngine.GetComplexWindow(), environment.worldHeight, environment.worldWidth);
 
 	renderEngine.Start();
 	physicsEngine.Start();
 
 	Timer timer;
 	timer.Start();
-
-	int lastMouseButtonState = GLFW_PRESS;
-	int lastQ = GLFW_PRESS;
-	int lastF = GLFW_PRESS;
 
 	float deltaTime;
 
@@ -117,34 +118,30 @@ void SessionManager::Sandbox() const {
 			std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
-		//TODO: Find neat system of handling user input/events triggered by users!
+		//TODO: Move these last bits into EventEngine. Get rid of environment.done, replace with shutdown message triggered by eventEngine
 		glfwPollEvents();
 		if (glfwWindowShouldClose(renderEngine.GetWindow()))
 			environment.done = true;
 
-		auto state = glfwGetMouseButton(renderEngine.GetWindow(), GLFW_MOUSE_BUTTON_LEFT);
-		if (state == GLFW_PRESS && state != lastMouseButtonState) {
+		eventEngine.Update();
+
+		if (eventEngine.GetMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
 			double x, y;
 			glfwGetCursorPos(renderEngine.GetWindow(), &x, &y);
 			glm::vec2 mouseWorldPos = environment.camera.GetWorldPos({ x, y });
 			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_PhysicsEngine, MT_Explosion, new glm::vec2(mouseWorldPos)));
 			++environment.stats.explosionTotalLastSecond;
 		}
-		lastMouseButtonState = state;
 
-		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_Q);
-		if (state == GLFW_PRESS && state != lastQ) {
+		if (eventEngine.GetKeyDown(GLFW_KEY_Q)) {
 			messageQueue.PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_DebugModeToggle));
-		}			
-		lastQ = state;
-
-		state = glfwGetKey(renderEngine.GetWindow(), GLFW_KEY_F);
-		if (state == GLFW_PRESS && state != lastF) {
+		}
+		
+		if (eventEngine.GetKeyDown(GLFW_KEY_F)) {
 			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_RenderEngine, MT_FullScreenToggle));
 		}
-		lastF = state;
 
-		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
+		environment.camera.Update(deltaTime);
 	}
 
 	physicsEngine.Join();
