@@ -12,18 +12,17 @@
 class Environment {
 public:
 	//Rendering domain
-	Camera camera;
-	const bool fullScreen = false;
+	Camera camera; //Move to core engine
 		
-	//World domain
+	//World domain || Move to physics engine
 	const int worldWidth = 9000; //21:9 ish, 2.38
 	const int worldHeight = 3780;//	
 	int seed{};
 
-	//Runtime data domain
-	Stats stats{};
+	//Runtime data domain 
+	Stats stats{}; //Move to core engine
 
-	//Particle domain
+	//Particle domain || Move to physics engine
 	const int particleCount = 10000;
 	const float particleRadius = 20;
 
@@ -34,12 +33,12 @@ public:
 	//Why is this here?
 	std::atomic_int* particleQuadCount{};
 
-	//Threading domain
-	bool done{};
+	//Threading domain //Move to core engine
+	bool done{}; //Get rid of this
 	const int workerThreadCount = 14;
 	WorkerThreadPool workerThreads;
 
-	//Debugging domain
+	//Debugging domain //Dunno how to handle yet
 	int debugQuadSize = 1000;
 	glm::vec2* quadPos;
 	glm::vec2* quadScale;

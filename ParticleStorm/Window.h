@@ -5,7 +5,7 @@
 
 class Window {
 public:
-	void InitWindow(int height, int width, bool fullscreen);
+	void InitWindow(int height, int width);
 	void Dispose();
 
 	GLFWwindow* GetWindow() const;

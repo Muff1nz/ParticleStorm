@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <map>
 #include <vector>
+#include "Queue.h"
+#include <vec2.hpp>
 
 class EventEngine {
 public:
@@ -19,6 +21,10 @@ public:
 	bool GetMouseButtonDown(int mouseButton);
 	bool GetMouseButton(int mouseButton);
 	bool GetMouseButtonUp(int mouseButton);
+
+	glm::vec2 GetMousePos() const;
+
+	int GetMouseScrollDelta() const;	
 	
 	void Update();
 private:	
@@ -32,7 +38,12 @@ private:
 	std::map<int, int> mouseButtonStates;
 	std::vector<int> mouseButtonHooks;
 
+	glm::vec2 mousePos;
+
+	int mouseScrollDelta;
+	static Queue<double> scrollEvents;
+
 	void HookKeyIfNeeded(int key);
 	void HookMouseButtonIfNeeded(int mouseButton);
+	void static ScrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 };
-

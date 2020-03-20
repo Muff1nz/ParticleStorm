@@ -1,13 +1,15 @@
 #include "EventEngine.h"
+#include "Queue.h"
 
+Queue<double> EventEngine::scrollEvents{};
 
-EventEngine::EventEngine() {
-}
+EventEngine::EventEngine(): window(nullptr) {}
 
 EventEngine::~EventEngine() = default;
 
 void EventEngine::Init(GLFWwindow* window) {
 	this->window = window;
+	glfwSetScrollCallback(window, ScrollCallback);
 }
 
 bool EventEngine::GetKeyDown(int key) {
@@ -40,6 +42,14 @@ bool EventEngine::GetMouseButtonUp(int mouseButton) {
 	return !mouseButtonStates[mouseButton] && mouseButtonStatesGhost[mouseButton];
 }
 
+glm::vec2 EventEngine::GetMousePos() const {
+	return mousePos;
+}
+
+int EventEngine::GetMouseScrollDelta() const {
+	return mouseScrollDelta;
+}
+
 void EventEngine::Update() {
 	for (auto key : keyHooks) {
 		keyStatesGhost[key] = keyStates[key];
@@ -50,6 +60,15 @@ void EventEngine::Update() {
 		mouseButtonStatesGhost[mouseButton] = mouseButtonStates[mouseButton];
 		mouseButtonStates[mouseButton] = glfwGetMouseButton(window, mouseButton);
 	}
+
+	mouseScrollDelta = 0;
+	while (!scrollEvents.Empty()) {
+		mouseScrollDelta += scrollEvents.Pop();
+	}
+
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+	mousePos = { x, y };
 }
 
 void EventEngine::HookKeyIfNeeded(int key) {
@@ -72,4 +91,8 @@ void EventEngine::HookMouseButtonIfNeeded(int mouseButton) {
 	auto state = glfwGetMouseButton(window, mouseButton);
 	mouseButtonStatesGhost.insert({ mouseButton, state });
 	mouseButtonStates.insert({ mouseButton, state });
+}
+
+void EventEngine::ScrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
+	scrollEvents.Push(yOffset);
 }

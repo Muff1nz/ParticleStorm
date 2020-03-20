@@ -1,8 +1,8 @@
 #include "Window.h"
 
 
-void Window::InitWindow(int height, int width, bool fullscreen) {
-	this->fullscreen = fullscreen;
+void Window::InitWindow(int height, int width) {
+	this->fullscreen = false;
 
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

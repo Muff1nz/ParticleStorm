@@ -88,14 +88,16 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 void SessionManager::Sandbox() const {
 	Environment environment{};
 	MessageQueue messageQueue{};
+
 	RenderEngineVulkan renderEngine(&environment, &messageQueue);
 	PhysicsEngine physicsEngine(&environment, &messageQueue);
 	EventEngine eventEngine;
+
 	renderEngine.Init();
 	eventEngine.Init(renderEngine.GetWindow());
 	physicsEngine.Init();	
 	
-	environment.camera.Init(renderEngine.GetWindow());
+	environment.camera = Camera(&eventEngine, renderEngine.GetComplexWindow(), environment.worldHeight, environment.worldWidth);
 
 	renderEngine.Start();
 	physicsEngine.Start();
@@ -116,7 +118,7 @@ void SessionManager::Sandbox() const {
 			std::cout << environment.stats.LastSecondToStringConsole();
 		}
 
-		//TODO: Find neat system of handling user input/events triggered by users!
+		//TODO: Move these last bits into EventEngine. Get rid of environment.done, replace with shutdown message triggered by eventEngine
 		glfwPollEvents();
 		if (glfwWindowShouldClose(renderEngine.GetWindow()))
 			environment.done = true;
@@ -139,7 +141,7 @@ void SessionManager::Sandbox() const {
 			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_RenderEngine, MT_FullScreenToggle));
 		}
 
-		environment.camera.Update(renderEngine.GetWindow(), deltaTime);
+		environment.camera.Update(deltaTime);
 	}
 
 	physicsEngine.Join();
