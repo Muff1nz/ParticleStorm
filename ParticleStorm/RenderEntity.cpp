@@ -1,9 +1,9 @@
 #include "RenderEntity.h"
 #include <ext/matrix_transform.inl>
 #include "Camera.h"
-#include "Environment.h"
 
-RenderEntity::RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+RenderEntity::RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+	this->transform = transform;
 	this->renderEntityMeta = renderEntityMeta;
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
@@ -115,11 +115,11 @@ void RenderEntity::BindToCommandPool(std::vector<VkCommandBuffer> &commandBuffer
 }
 
 void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) const {
-	glm::vec2* pos = renderDataCore->transform.pos;
-	glm::vec2* scale = renderDataCore->transform.scale;
+	glm::vec2* pos = transform->position;
+	glm::vec2* scale = transform->scale;
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
 
-	if (!renderDataCore->transform.staticScale) {
+	if (!transform->uniformScale) {
 		for (int i = 0; i < renderDataInstanced->instanceCount; ++i) {
 			glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(pos[i], 0)) * glm::scale(glm::mat4(1), glm::vec3(scale[i], 1));
 			renderDataInstanced->instanceBufferObjects[i].MVP = projView * model;
@@ -142,7 +142,7 @@ void RenderEntity::UpdateInstanceBuffer(uint32_t imageIndex, Camera* camera) con
 void RenderEntity::UpdateUniformBuffer(uint32_t imageIndex, Camera* camera) const {
 	UniformBufferObject ubo = {};
 	glm::mat4 projView = camera->GetProj() * camera->GetView();
-	glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(*renderDataCore->transform.pos, 0)) * glm::scale(glm::mat4(1), glm::vec3(*renderDataCore->transform.scale, 1));
+	glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(*transform->position, 0)) * glm::scale(glm::mat4(1), glm::vec3(*transform->scale, 1));
 	ubo.MVP = projView * model;
 
 	void* data;

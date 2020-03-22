@@ -11,7 +11,6 @@
 
 class WorkerThreadPool {
 public:
-	WorkerThreadPool();
 	WorkerThreadPool(int threadCount);
 	~WorkerThreadPool();
 
@@ -22,6 +21,8 @@ public:
 	void CloseWorkerThreads();
 	void PartitionForWorkers(int size, std::vector<Range>& range, int threads = 0) const;
 	std::string StateString();
+
+	int GetThreadCount() const;
 private:
 	bool isInitialized{};
 	bool done = false;

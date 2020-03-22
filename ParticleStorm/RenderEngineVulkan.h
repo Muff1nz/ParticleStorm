@@ -5,20 +5,19 @@
 #include <glm.hpp>
 #include <thread>
 
-#include "Environment.h"
 #include "RenderEntity.h"
 #include "RenderEngineVulkanBackend.h"
 #include "Window.h"
-#include "MessageQueue.h"
+#include "MessageSystem.h"
 #include "Vertex.h"
 #include "VulkanAllocator.h"
 #include "TextureGenerator.h"
-
+#include  "Stats.h"
 
 class RenderEngineVulkan {
 public:
 	//Constructor / Destructor
-	RenderEngineVulkan(Environment* environment, MessageQueue* messageQueue);
+	RenderEngineVulkan(MessageSystem* messageQueue, Stats* stats);
 	~RenderEngineVulkan();
 
 	//Init
@@ -34,11 +33,14 @@ public:
 	//Accessors
 	GLFWwindow* GetWindow() const;
 	Window* GetComplexWindow() const;
+	Camera* GetCamera() const;
 private:
-	//Particle Storm Specific Variables
-	Environment* environment;
-	MessageQueue* messageQueue;
+	MessageSystem* messageQueue;
+	Stats* stats;
 	bool debugMode;
+	bool shouldRun;
+
+	Camera* camera;
 
 	//General
 	const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -63,6 +65,7 @@ private:
 	VkDeviceMemory quadLineIndexBufferMemory;
 
 	std::vector<RenderEntity*> renderEntities;
+	std::vector<RenderEntity*> destroyedRenderEntities;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -76,6 +79,7 @@ private:
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 	bool HandleSwapChain(VkResult result, bool includeCallback);
 	void DrawFrame();
+	void InvalidateCommandBuffers();
 
 	//Cleanup
 	bool isDisposed;
@@ -83,8 +87,11 @@ private:
 	//Threading
 	std::thread renderThead;
 
+
 	void HandleMessages();
 
+	bool CommandBuffersAreValid();
+	void HandleDestroyedRenderEntities();
 	//Threading
 	void RenderThreadRun();
 
@@ -93,7 +100,9 @@ private:
 	void CreateSyncObjects();
 	void CreateVertexBuffer();
 	void CreateIndexBuffer(const std::vector<uint16_t>& indices, VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory) const;
-	void CreateRenderEntities();
+	
+	void CreateRenderEntity(Message message);
+	void RemoveRenderEntity(const Message& message);
 	
 	void InitVulkan();
 

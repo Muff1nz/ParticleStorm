@@ -17,9 +17,8 @@ RenderEntityFactory::RenderEntityFactory(VulkanContext* vulkanContext, VulkanAll
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderTransform* transform, bool debugEntity) {		
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform, bool debugEntity) {
 	RenderDataCore* renderDataCore = new RenderDataCore();
-	renderDataCore->transform = *transform;
 	renderDataCore->renderMode = createInfo.renderMode;
 	renderDataCore->vertexBuffer = createInfo.vertexBuffer;
 	renderDataCore->indexBuffer = createInfo.indexBuffer;
@@ -32,13 +31,13 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 	RenderDataInstanced* renderDataInstanced = nullptr;
 	RenderDataUniform* renderDataUniform = nullptr;
 
-	bool useUniformBufferObject = transform->objectCount == 1;
+	bool useUniformBufferObject = transform->count == 1;
 	bool useInstanceing = !useUniformBufferObject;
 	bool useTexture = !createInfo.texturePath.empty();
 
 	if (useInstanceing) {
 		renderDataInstanced = new RenderDataInstanced();
-		renderDataInstanced->instanceCount = transform->objectCount;
+		renderDataInstanced->instanceCount = transform->count;
 	}
 	if (useUniformBufferObject || useTexture) {
 		renderDataUniform = new RenderDataUniform();
@@ -69,7 +68,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 		CreateDescriptorSets(renderDataUniform);
 	}
 
-	return new RenderEntity(renderDataVulkanContext, renderDataCore, renderDataUniform, renderDataInstanced, renderEntityMeta, debugEntity);
+	return new RenderEntity(transform, renderDataVulkanContext, renderDataCore, renderDataUniform, renderDataInstanced, renderEntityMeta, debugEntity);
 }
 
 void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {

@@ -1,5 +1,5 @@
 #pragma once
-#include "Environment.h"
+
 #include "Rect.h"
 #include "MultiIntVector.h"
 #include "ConcurrentVector.h"

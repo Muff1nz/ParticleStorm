@@ -14,15 +14,17 @@ struct Message {
 
 	Message() : Message(SYSTEM_None, SYSTEM_None, MT_Empty, "", nullptr) {}
 
-	Message(SystemComponent sender, MessageType messageType) : Message(sender, SYSTEM_None, messageType, "", nullptr) {}
+	Message(SystemComponent sender, MessageType messageType)												: Message(sender, SYSTEM_None, messageType, "", nullptr) {}
 
-	Message(SystemComponent sender, MessageType messageType, std::string message) : Message(sender, SYSTEM_None, messageType, message, nullptr) {}
+	Message(SystemComponent sender, MessageType messageType, std::string message)							: Message(sender, SYSTEM_None, messageType, message, nullptr) {}
 
-	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType) : Message(sender, receiver, messageType, "", nullptr) {}
+	Message(SystemComponent sender, MessageType messageType, void* payload)									: Message(sender, SYSTEM_None, messageType, "", payload) {}
+
+	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType)						: Message(sender, receiver, messageType, "", nullptr) {}
 
 	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType, std::string message) : Message(sender, receiver, messageType, message, nullptr) {}
 
-	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType, void* payload) : Message(sender, receiver, messageType, "", payload) {}
+	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType, void* payload)		: Message(sender, receiver, messageType, "", payload) {}
 
 	Message(SystemComponent sender, SystemComponent receiver, MessageType messageType, std::string message, void* payload) {
 		this->sender = sender;

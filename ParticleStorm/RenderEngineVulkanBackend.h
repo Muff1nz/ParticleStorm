@@ -8,8 +8,6 @@
 #include "Window.h"
 #include "VulkanContext.h"
 
-class Environment;
-
 class RenderEngineVulkanBackend {
 public:
 	RenderEngineVulkanBackend();	

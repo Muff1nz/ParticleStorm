@@ -1,20 +1,30 @@
 #pragma once
+
 #include "QuadTree.h"
 #include "LinearQuad.h"
 #include "CollisionChecker.h"
+#include "PhysicsParticlesEntity.h"
+#include "Range.h"
+#include "WorkerThreadPool.h"
+#include "Stats.h"
+#include "WorldEntity.h"
 
 
 class QuadTreeHandler {
 public:
-	QuadTreeHandler(Environment* environment);
+	QuadTreeHandler(WorkerThreadPool* workerThreads, Stats* stats);
 	~QuadTreeHandler();
 
-
+	void Init(PhysicsParticlesEntity* particles, WorldEntity* world);
 	void BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections);
 	void PopulateQuadData();
 
 private:
-	Environment* environment;
+	PhysicsParticlesEntity* particles;
+	WorldEntity* world;
+
+	WorkerThreadPool* workerThreads;
+	Stats* stats;
 
 	QuadTree* tree;
 	ConcurrentVector<QuadTree*> quads;

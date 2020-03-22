@@ -1,16 +1,16 @@
-#include "MessageQueue.h"
+#include "MessageSystem.h"
 #include "EnumUtils.h"
 
 
-MessageQueue::MessageQueue() {
+MessageSystem::MessageSystem() {
 	for (auto supportedComponent : supportedComponents) {
 		queues.emplace_back(supportedComponent, Queue<Message>());
 	}
 }
 
-MessageQueue::~MessageQueue() = default;
+MessageSystem::~MessageSystem() = default;
 
-void MessageQueue::PS_SendMessage(Message message) {
+void MessageSystem::PS_SendMessage(Message message) {
 	std::unique_lock<std::mutex> lock(queueLock);
 
 	for (auto& queue : queues) {
@@ -20,7 +20,7 @@ void MessageQueue::PS_SendMessage(Message message) {
 	}
 }
 
-void MessageQueue::PS_BroadcastMessage(Message message) {
+void MessageSystem::PS_BroadcastMessage(Message message) {
 	std::unique_lock<std::mutex> lock(queueLock);
 
 	message.receiver = SYSTEM_None;
@@ -33,7 +33,7 @@ void MessageQueue::PS_BroadcastMessage(Message message) {
 	}
 }
 
-Message MessageQueue::PS_GetMessage(SystemComponent receiver) {
+Message MessageSystem::PS_GetMessage(SystemComponent receiver) {
 	std::unique_lock<std::mutex> lock(queueLock);
 
 	for (auto& queue : queues) {

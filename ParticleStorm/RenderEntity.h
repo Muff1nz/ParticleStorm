@@ -3,14 +3,16 @@
 #include "RenderDataUniform.h"
 #include "RenderDataInstanced.h"
 #include "VulkanContext.h"
-#include "Environment.h"
+#include "Camera.h"
 #include "RenderEntityMeta.h"
 
 class RenderEntity {
 public:
 	friend class RenderEntityFactory;
 
-	RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
+	TransformEntity* transform;
+
+	RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
 	~RenderEntity();
 
 	void Dispose();
@@ -24,7 +26,6 @@ private:
 	bool debugEntity = false;
 
 	VulkanContext* renderDataVulkanContext;
-
 	RenderEntityMeta* renderEntityMeta;
 	RenderDataCore* renderDataCore;
 	RenderDataUniform* renderDataUniform;

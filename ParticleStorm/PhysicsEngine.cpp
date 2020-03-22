@@ -6,69 +6,62 @@
 #include "Range.h"
 #include "LinearQuad.h"
 #include "QuadTreeHandler.h"
-#include "ConstStrings.h"
+#include "ParticlesEntity.h"
+#include "WorldEntity.h"
 
-PhysicsEngine::PhysicsEngine(Environment* environment, MessageQueue* messageQueue) {
-	this->environment = environment;
+PhysicsEngine::PhysicsEngine(MessageSystem* messageQueue, WorkerThreadPool* workerThreads, Stats* stats) {
 	this->messageQueue = messageQueue;
-	collisionChecker = CollisionChecker(environment->particleRadius);
-	rng = NumberGenerator(environment->seed);
+	this->workerThreads = workerThreads;
+	this->stats = stats;
+
+	collisionChecker = CollisionChecker(1);
+	quadTreeHandler = new QuadTreeHandler(workerThreads, stats);
 }
 
 PhysicsEngine::~PhysicsEngine() = default;
 
 void PhysicsEngine::Init() {
-	const int maxSpeed = 1000;
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
 
-	for (int i = 0; i < environment->particleCount; i++) { //Initialize particles (position/velocity)
-		circlePos[i] = glm::vec2(rng.GenerateFloat(0, environment->worldWidth), rng.GenerateFloat(0, environment->worldHeight));
-
-		do {
-			circleVel[i] = glm::vec2(rng.GenerateFloat(-maxSpeed, maxSpeed), rng.GenerateFloat(-maxSpeed, maxSpeed));
-		} while (abs(circleVel[i].x) < 1 && abs(circleVel[i].y) < 1);
-	}
 }
 
 void PhysicsEngine::Join() {
-	LeadThread.join();
+	LeadPhysicsThread.join();
 }
 
 void PhysicsEngine::Start() {
-	LeadThread = std::thread([=] {LeadThreadRun(); });
+	LeadPhysicsThread = std::thread([=] {LeadThreadRun(); });
 }
 
 void PhysicsEngine::WorldBoundsCheck(const int particle) const {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
+	const auto circlePos = particles->position;
+	const auto circleVel = particles->velocity;
 
-	if (circlePos[particle].y < environment->particleRadius) {
+	if (circlePos[particle].y < particles->radius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
-		circlePos[particle].y = environment->particleRadius;
-		environment->particleResting[particle] = true;
+		circlePos[particle].y = particles->radius;
+		particles->particleResting[particle] = true;
 	}
-	if (circlePos[particle].y > environment->worldHeight - environment->particleRadius) {
+	if (circlePos[particle].y > world->height - particles->radius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
-		circlePos[particle].y = environment->worldHeight - environment->particleRadius;
+		circlePos[particle].y = world->height - particles->radius;
 	}
-	if (circlePos[particle].x < environment->particleRadius) {
+	if (circlePos[particle].x < particles->radius) {
 		circleVel[particle].x = -circleVel[particle].x * friction;
-		circlePos[particle].x = environment->particleRadius;
+		circlePos[particle].x = particles->radius;
 	}
-	if (circlePos[particle].x > environment->worldWidth - environment->particleRadius) {
+	if (circlePos[particle].x > world->width - particles->radius) {
 		circleVel[particle].x = -circleVel[particle].x * friction;
-		circlePos[particle].x = environment->worldWidth - environment->particleRadius;
+		circlePos[particle].x = world->width - particles->radius;
 	}
 }
 
 void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, const float dist) const {
-	const auto particlePos = environment->particlePos;
-	const auto particleVel = environment->particleVel;
-	const auto particleResting = environment->particleResting;
+	const auto particlePos = particles->position;
+	const auto particleVel = particles->velocity;
+	const auto particleResting = particles->particleResting;
 
 	glm::vec2 positionDelta = particlePos[particle1] - particlePos[particle2];
-	const float overlap = environment->particleRadius * 2 - dist;
+	const float overlap = particles->radius * 2 - dist;
 	const glm::vec2 displacement = positionDelta / dist * (overlap / 2);
 	particlePos[particle1] += displacement;
 	particlePos[particle2] += -displacement;
@@ -94,18 +87,18 @@ void PhysicsEngine::QuadInternalParticleCollision(const int localParticle1, cons
 		const int globalParticle1 = tree->internalParticle[localParticle1];
 		const int globalParticle2 = tree->internalParticle[localParticle2];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
-		tree->internalParticlePos[localParticle2] = environment->particlePos[globalParticle2];
+		tree->internalParticlePos[localParticle1] = particles->position[globalParticle1];
+		tree->internalParticlePos[localParticle2] = particles->position[globalParticle2];
 	}
 }
 
 void PhysicsEngine::QuadMixedParticleCollision(const int localParticle1, const int localParticle2, LinearQuad* tree) const {
 	const int globalParticle2 = tree->externalParticle[localParticle2];
 	float dist = 0;
-	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], environment->particlePos[globalParticle2], dist)) {
+	if (collisionChecker.CircleCircleCollision(tree->internalParticlePos[localParticle1], particles->position[globalParticle2], dist)) {
 		const int globalParticle1 = tree->internalParticle[localParticle1];
 		ResolveCollision(globalParticle1, globalParticle2, dist);
-		tree->internalParticlePos[localParticle1] = environment->particlePos[globalParticle1];
+		tree->internalParticlePos[localParticle1] = particles->position[globalParticle1];
 	}
 }
 
@@ -114,7 +107,7 @@ void PhysicsEngine::QuadExternalCollision(const int localParticle1, const int lo
 	const int globalParticle1 = tree->externalParticle[localParticle1];
 	const int globalParticle2 = tree->externalParticle[localParticle2];
 	float dist = 0;
-	if (collisionChecker.CircleCircleCollision(environment->particlePos[globalParticle1], environment->particlePos[globalParticle2], dist)) {
+	if (collisionChecker.CircleCircleCollision(particles->position[globalParticle1], particles->position[globalParticle2], dist)) {
 		ResolveCollision(globalParticle1, globalParticle2, dist);
 	}
 }
@@ -152,22 +145,25 @@ void PhysicsEngine::LinearQuadParticleCollisions(std::vector<LinearQuad*>* quads
 void PhysicsEngine::UpdateParticles(int start, int end, float deltaTime) const {
 	for (int i = start; i < end; i++) {
 		WorldBoundsCheck(i);
-		if (!environment->particleResting[i])
-			environment->particleVel[i] += gravity * deltaTime;
-		environment->particlePos[i] += environment->particleVel[i] * deltaTime;
+		if (!particles->particleResting[i])
+			particles->velocity[i] += gravity * deltaTime;
+		particles->position[i] += particles->velocity[i] * deltaTime;
 
-		environment->particleResting[i] = false;
-		environment->particleQuadCount[i] = 0;
+		particles->particleResting[i] = false;
+		particles->particleQuadCount[i] = 0;
 	}
 }
 
 void PhysicsEngine::HandleExplosion(Message message) const {
+	if (particles == nullptr || world == nullptr)
+		return;
+
 	float const explosionForce = 500000.0f;
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
+	const auto circlePos = particles->position;
+	const auto circleVel = particles->velocity;
 
 	glm::vec2 impactPoint = *static_cast<glm::vec2*>(message.payload);
-	for (int i = 0; i < environment->particleCount; i++) {
+	for (int i = 0; i < particles->count; i++) {
 		glm::vec2 lineBetween = circlePos[i] - impactPoint;
 		const float distance = length(lineBetween);
 		lineBetween /= distance;
@@ -176,17 +172,81 @@ void PhysicsEngine::HandleExplosion(Message message) const {
 	delete static_cast<glm::vec2*>(message.payload);
 }
 
+void PhysicsEngine::AddEntity(Message message) {
+	BaseEntity* entity = static_cast<BaseEntity*>(message.payload);
+
+	if (entity->type == ET_Particles) {
+		ParticlesEntity* particlesEntity = static_cast<ParticlesEntity*>(entity);
+
+		if (particles != nullptr)
+			throw std::runtime_error("Cannot add particles to physics engine, particles already present");
+
+		particlesEntity->RegisterAsObserver();
+		particles = new PhysicsParticlesEntity(particlesEntity);
+
+		collisionChecker = CollisionChecker(particles->radius);
+		workerThreads->PartitionForWorkers(particles->count, particleSections);
+	}
+	
+	if (entity->type == ET_World) {
+		WorldEntity* worldEntity = static_cast<WorldEntity*>(entity);
+
+		if (world != nullptr)
+			throw std::runtime_error("Cannot add world to physics engine, world already present");
+
+		worldEntity->RegisterAsObserver();
+		world = worldEntity;
+	}
+
+	if (world != nullptr && particles != nullptr) {
+		quadTreeHandler->Init(particles, world);
+	}
+}
+
+void PhysicsEngine::RemoveEntity(Message message) {
+	BaseEntity* entity = static_cast<BaseEntity*>(message.payload);
+
+	if (entity->type == ET_Particles) {
+		ParticlesEntity* particlesEntity = static_cast<ParticlesEntity*>(message.payload);
+		if (particles != nullptr && particles->particlesEntity->id != particlesEntity->id)
+			throw std::runtime_error("Cannot remove particles from physics engine! Existing particles don't match particles to remove!");
+
+		particles->Dispose();
+		particles->particlesEntity->UnregisterAsObserver();
+		particles = nullptr;
+	}
+
+
+	if (entity->type == ET_World) {
+		WorldEntity* worldEntity = static_cast<WorldEntity*>(message.payload);
+		if (world != nullptr && world->id != worldEntity->id)
+			throw std::runtime_error("Cannot remove world from physics engine! Existing world don't match world to remove!");
+
+		worldEntity->UnregisterAsObserver();
+		world = nullptr;
+	}
+}
+
 void PhysicsEngine::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_PhysicsEngine);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
+		case MT_ShutDown:
+			shouldRun = false;
+			break;
 		case MT_Explosion:
 			HandleExplosion(message);
 			break;
 		case MT_DebugModeToggle:
 			debugMode = !debugMode;
 			break;
-		default: ;
+		case MT_Entity_Submitted:
+			AddEntity(message);
+			break;
+		case MT_Entity_Destroyed:
+			RemoveEntity(message);
+		default: 
+			break;
 		}
 		message = messageQueue->PS_GetMessage(SYSTEM_PhysicsEngine);
 	}
@@ -194,61 +254,59 @@ void PhysicsEngine::HandleMessages() {
 
 
 void PhysicsEngine::LeadThreadRun() {
-	const auto circlePos = environment->particlePos;
-	const auto circleVel = environment->particleVel;
 
 	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
-
-	std::vector<Range> particleSections;
-	environment->workerThreads.PartitionForWorkers(environment->particleCount, particleSections);
-
-
-	QuadTreeHandler quadTreeHandler(environment);
+	
 	auto linearQuads = new std::vector<LinearQuad*>();
 
-	while (!environment->done) {
+	shouldRun = true;
+	while (shouldRun) {
 
 		float deltaTime = timer.DeltaTime();
-		environment->stats.physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
+		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
 
-		//EXPLOSIONS
+		//Messages
 		timer.Restart();
 		HandleMessages();
 		timer.Stop();
-		environment->stats.puEventsTotalLastSecond += timer.ElapsedMicroseconds();
+		stats->puEventsTotalLastSecond += timer.ElapsedMicroseconds();
+
+		if (particles == nullptr || world == nullptr) {
+			std::this_thread::sleep_for(std::chrono::microseconds(100));
+			continue;
+		}
 
 		//QUADTREE
 		timer.Restart();
 		std::vector<Range> quadSections;
-		quadTreeHandler.BuildLinearQuadTree(linearQuads, quadSections);
+		quadTreeHandler->BuildLinearQuadTree(linearQuads, quadSections);
 		timer.Stop();
-		environment->stats.puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
+		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		if (debugMode)
-			quadTreeHandler.PopulateQuadData();
+			quadTreeHandler->PopulateQuadData();
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		for (auto quadSection : quadSections)
-			environment->workerThreads.AddWork([=] { LinearQuadParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
-		environment->workerThreads.JoinWorkerThreads();
+			workerThreads->AddWork([=] { LinearQuadParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
+		workerThreads->JoinWorkerThreads();
 		timer.Stop();
-		environment->stats.puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
+		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
 		//UPDATES
 		timer.Restart();
 		for (auto particleSection : particleSections)
-			environment->workerThreads.AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
-		environment->workerThreads.JoinWorkerThreads();
+			workerThreads->AddWork([=] { UpdateParticles(particleSection.lower, particleSection.upper, deltaTime); });
+		workerThreads->JoinWorkerThreads();
 		timer.Stop();
-		environment->stats.puPositionUpdatesTotalLastSecond += timer.ElapsedMicroseconds();
+		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMicroseconds();
 
-		++environment->stats.physicsUpdateTotalLastSecond;
+		++stats->physicsUpdateTotalLastSecond;
 	}
 
 	for (int i = 0; i < linearQuads->size(); i++)
 		delete (*linearQuads)[i];
 
 	delete linearQuads;
-	environment->workerThreads.CloseWorkerThreads();
 }

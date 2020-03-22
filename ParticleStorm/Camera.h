@@ -3,13 +3,13 @@
 #include <mat4x4.hpp>
 #include "Window.h"
 #include "EventEngine.h"
+#include "WorldEntity.h"
 
 class EventEngine;
 
 class Camera {
 public:
-	Camera();
-	Camera(EventEngine* eventEngine, Window* window, int worldHeight, int worldWidth);
+	Camera(Window* window);
 	~Camera();
 
 	glm::mat4 GetView();
@@ -20,22 +20,27 @@ public:
 
 	void Update(float deltaTime);
 
+	void SetEventEngine(EventEngine* eventEngine);
+	void SetWorld(WorldEntity* world);
+
 private:	
 	EventEngine* eventEngine;
-	int worldHeight;
-	int worldWidth;
-	Window* window;
+	WorldEntity* world{};
+	Window* window{};
 
-	glm::vec2 pos;
+	glm::vec2 pos{};
 
-	float zoom;
+	float zoom{};
 	float minZoom = -0.49f;
 	float maxZoom = 1.25f;
 	
-	glm::vec2 oldMousePos;
+	glm::vec2 oldMousePos{};
 
 	float GetPixelToWorld() const;
 	int GetOrthoHeight() const;
 	int GetOrthoWidth() const;
 	void ResetCamera();
+
+	int GetWorldHeight() const;
+	int GetWorldWidth() const;
 };

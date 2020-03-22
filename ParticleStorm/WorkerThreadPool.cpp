@@ -1,12 +1,6 @@
 #include "WorkerThreadPool.h"
 #include <string>
 
-
-WorkerThreadPool::WorkerThreadPool() {
-	isInitialized = false;
-}
-
-
 WorkerThreadPool::WorkerThreadPool(int threadCount) {
 	Init(threadCount);
 }
@@ -67,6 +61,10 @@ void WorkerThreadPool::PartitionForWorkers(const int size, std::vector<Range>& r
 std::string WorkerThreadPool::StateString() {
 	std::unique_lock<std::mutex> lock(mutex);
 	return "Busy threads: " + std::to_string(busyThreads) + " Work units in queue: " + std::to_string(work.Size());
+}
+
+int WorkerThreadPool::GetThreadCount() const {
+	return workerThreads.size();
 }
 
 void WorkerThreadPool::WorkerThreadRun() {

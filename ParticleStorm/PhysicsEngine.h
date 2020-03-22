@@ -2,15 +2,19 @@
 
 #include <thread>
 
-#include "Environment.h"
 #include "NumberGenerator.h"
 #include "LinearQuad.h"
 #include "CollisionChecker.h"
-#include "MessageQueue.h"
+#include "MessageSystem.h"
+#include "PhysicsParticlesEntity.h"
+#include "WorkerThreadPool.h"
+#include "Stats.h"
+#include "WorldEntity.h"
+#include "QuadTreeHandler.h"
 
 class PhysicsEngine {
 public:
-	PhysicsEngine(Environment* environment, MessageQueue* messageQueue);
+	PhysicsEngine(MessageSystem* messageQueue, WorkerThreadPool* workerThreads, Stats* stats);
 	~PhysicsEngine();
 
 	void Init();
@@ -22,14 +26,25 @@ private:
 	const glm::vec2 gravity = glm::vec2(0, -400);
 	const float friction = 0.99f;
 
-	NumberGenerator rng;
+	PhysicsParticlesEntity* particles;
+	WorldEntity* world;
 
-	Environment* environment;
-	MessageQueue* messageQueue;
+	QuadTreeHandler* quadTreeHandler;
+	std::vector<Range> particleSections;
+
+	WorkerThreadPool* workerThreads;
+	Stats* stats;
+
+	MessageSystem* messageQueue;
 	bool debugMode;
 
-	std::thread LeadThread;
-	CollisionChecker collisionChecker;	
+	bool shouldRun;
+
+	std::thread LeadPhysicsThread;
+	CollisionChecker collisionChecker;
+
+	void AddEntity(Message message);
+	void RemoveEntity(Message message);
 
 	void HandleMessages();
 	void HandleExplosion(Message message) const;	
