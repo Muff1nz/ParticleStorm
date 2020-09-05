@@ -85,6 +85,12 @@
     <Filter Include="Header Files\Entities">
       <UniqueIdentifier>{0fb1408b-402e-4029-968f-518f8cee100d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\SessionManagers">
+      <UniqueIdentifier>{51cdc30e-0b39-4927-b329-a1739b45801d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SessionManagers">
+      <UniqueIdentifier>{01d8e6a4-9c44-4f4a-b8b4-95ac75eab7b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -92,9 +98,6 @@
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="SessionManager.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Source Files\Utils</Filter>
@@ -165,13 +168,16 @@
     <ClCompile Include="EntityEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="SandBoxSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h">
       <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="SessionManager.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Header Files\Utils</Filter>
@@ -343,6 +349,15 @@
     </ClInclude>
     <ClInclude Include="EntityType.h">
       <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="SandBoxSession.h">
+      <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

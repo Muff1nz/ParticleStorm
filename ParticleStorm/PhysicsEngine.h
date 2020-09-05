@@ -2,7 +2,6 @@
 
 #include <thread>
 
-#include "NumberGenerator.h"
 #include "LinearQuad.h"
 #include "CollisionChecker.h"
 #include "MessageSystem.h"
@@ -17,9 +16,9 @@ public:
 	PhysicsEngine(MessageSystem* messageQueue, WorkerThreadPool* workerThreads, Stats* stats);
 	~PhysicsEngine();
 
-	void Init();
 	void Start();
 	void Join();
+
 private:
 	const float maxPhysicsDeltaTime = 1.0f / 60.0f; //Which gives a minimum of 450 physics updates per "second" (maybe scale with particle radius)
 	const float minPhysicsDeltaTime = 1.0f / 1000.0f; 

@@ -22,32 +22,32 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{F480C920-9210-4C8A-AEBE-9BE115A0E5F7}</ProjectGuid>
     <RootNamespace>ParticleStorm</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -142,6 +142,7 @@
     <ClCompile Include="RenderEngineVulkanBackend.cpp" />
     <ClCompile Include="RenderEntity.cpp" />
     <ClCompile Include="RenderEntityFactory.cpp" />
+    <ClCompile Include="SandboxSession.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="SingleTimeCommand.cpp" />
     <ClCompile Include="TextureGenerator.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="CollisionChecker.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ConcurrentVector.h" />
+    <ClInclude Include="Configuration.h" />
     <ClInclude Include="ConfigurationData.h" />
     <ClInclude Include="ConstStrings.h" />
     <ClInclude Include="CoreEngine.h" />
@@ -162,6 +164,7 @@
     <ClInclude Include="EntityType.h" />
     <ClInclude Include="GameEntity.h" />
     <ClInclude Include="ParticlesEntity.h" />
+    <ClInclude Include="SandboxSession.h" />
     <ClInclude Include="TransformEntity.h" />
     <ClInclude Include="WorldEntity.h" />
     <ClInclude Include="EntityEngine.h" />

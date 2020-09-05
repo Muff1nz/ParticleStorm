@@ -11,7 +11,6 @@
 
 #include <limits>
 #include <fstream>
-#include <gtc/matrix_transform.hpp>
 
 #include "Timer.h"
 #include "RenderEntityFactory.h"
@@ -132,7 +131,7 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 void RenderEngineVulkan::CreateRenderEntity(Message message) {
 	RenderEntityFactory factory(vulkanContext, vulkanAllocator);
 
-	GameEntity* entity = static_cast<GameEntity*>(message.payload);
+	auto entity = static_cast<GameEntity*>(message.payload);
 
 
 	if (entity->type == ET_World) {
@@ -160,7 +159,7 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	if (entity->type == ET_Particles) {
-		ParticlesEntity* particlesEntity = static_cast<ParticlesEntity*>(entity);
+		auto particlesEntity = static_cast<ParticlesEntity*>(entity);
 		particlesEntity->RegisterAsObserver();
 
 		RenderEntityCreateInfo createInfoParticles;
@@ -200,7 +199,7 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 }
 
 void RenderEngineVulkan::RemoveRenderEntity(const Message& message) {
-	BaseEntity* entity = static_cast<BaseEntity*>(message.payload);
+	auto entity = static_cast<BaseEntity*>(message.payload);
 	for (int i = 0; i < renderEntities.size(); ++i) {
 		RenderEntity* renderEntity = renderEntities[i];
 		if (renderEntity->transform->id == entity->id) {
@@ -318,6 +317,10 @@ Window* RenderEngineVulkan::GetComplexWindow() const {
 
 Camera* RenderEngineVulkan::GetCamera() const {
 	return camera;
+}
+
+void RenderEngineVulkan::ApplyConfiguration(Configuration* config) const {
+	window->SetSize(config->screenWidth, config->screenHeight);
 }
 
 
@@ -498,7 +501,11 @@ void RenderEngineVulkan::HandleMessages() {
 		case MT_Entity_Destroyed:
 			RemoveRenderEntity(message);
 			break;
-		default:;
+		case MT_Config:
+			ApplyConfiguration(static_cast<Configuration*>(message.payload));
+			break;
+		default:
+			break;
 		}
 		message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
 	}

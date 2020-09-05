@@ -19,7 +19,8 @@ public:
 	
 	void UpdateMetaData();
 	void ToggleFullscreen();
-	
+	void SetSize(int windowWidth, int windowHeight);
+
 private:
 	bool isDisposed = false;
 	
@@ -33,8 +34,8 @@ private:
 	int screenHeight = 0;
 	int screenWidth = 0;
 
-	int height = 0;
-	int width = 0;
+	int windowHeight = 0;
+	int windowWidth = 0;
 
 	int posX = 0;
 	int posy = 0;

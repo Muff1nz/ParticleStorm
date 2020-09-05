@@ -20,10 +20,6 @@ PhysicsEngine::PhysicsEngine(MessageSystem* messageQueue, WorkerThreadPool* work
 
 PhysicsEngine::~PhysicsEngine() = default;
 
-void PhysicsEngine::Init() {
-
-}
-
 void PhysicsEngine::Join() {
 	LeadPhysicsThread.join();
 }

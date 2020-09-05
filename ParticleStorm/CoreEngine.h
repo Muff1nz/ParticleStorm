@@ -13,11 +13,9 @@ public:
 private:
 	bool shouldRun;
 
-	MessageSystem messageSystem{};
+	MessageSystem* messageSystem{};
 	WorkerThreadPool* workerThreadPool{};
 	Stats* stats{};
-
-	SessionManager* sessionManager{};
 	
 	PhysicsEngine* physicsEngine{};
 	RenderEngineVulkan* renderEngine{};

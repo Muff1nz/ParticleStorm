@@ -7,6 +7,7 @@ enum MessageType {
 	//System events
 	MT_ShutDown,
 	MT_Shutdown_Session,
+	MT_Config,
 
 	//User triggered events
 	MT_Explosion,

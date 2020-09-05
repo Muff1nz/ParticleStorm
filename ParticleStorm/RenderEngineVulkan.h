@@ -13,6 +13,7 @@
 #include "VulkanAllocator.h"
 #include "TextureGenerator.h"
 #include  "Stats.h"
+#include "Configuration.h"
 
 class RenderEngineVulkan {
 public:
@@ -34,6 +35,7 @@ public:
 	GLFWwindow* GetWindow() const;
 	Window* GetComplexWindow() const;
 	Camera* GetCamera() const;
+	void ApplyConfiguration(Configuration* config) const;
 private:
 	MessageSystem* messageQueue;
 	Stats* stats;
