@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "VulkanContext.h"
 #include "RenderDataUniform.h"
 #include "VulkanAllocator.h"
