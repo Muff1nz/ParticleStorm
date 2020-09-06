@@ -9,14 +9,14 @@ SandboxSession::SandboxSession(MessageSystem* messageQueue, EventEngine* eventEn
 SandboxSession::~SandboxSession() = default;;
 
 void SandboxSession::Init() {
+	stats->ClearData();
 	timer.Restart();
 
 	config = new Configuration();
-
 	config->workerThreadCount = 14;
-
 	config->screenHeight = 1200;
 	config->screenWidth = 2800;
+	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(config)));
 
 	world = new WorldEntity(9000, 3780);
 	
@@ -29,7 +29,6 @@ void SandboxSession::Init() {
 	DeployEntity(world);
 	DeployEntity(particles);
 
-	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(config)));
 }
 
 void SandboxSession::Update() {
@@ -70,17 +69,17 @@ void SandboxSession::Complete() {
 }
 
 void SandboxSession::HandleEntityDestroyed(BaseEntity* entity) {
-	if (entity->type == ET_Particles) {
+	if (entity->type == ET_Particles && particles != nullptr && entity->id == particles->id) {
 		particles->UnregisterAsObserver();
 		particles = nullptr;
 	}
 
-	if (entity->type == ET_World) {
+	if (entity->type == ET_World && world != nullptr && entity->id == world->id) {
 		world->UnregisterAsObserver();
 		world = nullptr;
 	}
 
-	if (entity->type == ET_QuadTreeDebugEntity && debugQuadTree != nullptr) {
+	if (entity->type == ET_QuadTreeDebugEntity && debugQuadTree != nullptr && entity->id == debugQuadTree->id) {
 		if (debugQuadTree->id == entity->id) {
 			
 			debugQuadTree->UnregisterAsObserver();

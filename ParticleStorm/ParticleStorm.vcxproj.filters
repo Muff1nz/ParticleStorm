@@ -177,6 +177,9 @@
     <ClCompile Include="IdGenerator.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsBenchmarkSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h">
@@ -367,6 +370,9 @@
     </ClInclude>
     <ClInclude Include="DebugQuadTreeEntity.h">
       <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsBenchmarkSession.h">
+      <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,7 @@
 #include "WorkerThreadPool.h"
 #include "Timer.h"
 #include "EntityEngine.h"
+#include "GraphicsBenchmarkSession.h"
 #include "SandboxSession.h"
 
 
@@ -30,7 +31,7 @@ void CoreEngine::BootParticleStorm() {
 			//BootPhysBench();
 			break;
 		case '3':
-			//BootGraphBench();
+			BootGraphicsBenchmark();
 			break;
 		case 'X':
 			break;
@@ -131,56 +132,59 @@ void CoreEngine::BootSandbox() {
 
 	entityEngine->DestroyAllEntities();
 	while (!entityEngine->AllEntitiesAreDead()) {
-		entityEngine->Update();
+		sandboxSession.Update();
+		entityEngine->Update();		
 	}
 	
 	sandboxSession.Complete();
 }
 
-void CoreEngine::BootPhysBench() {
-	//auto camera = renderEngine->GetCamera();
-
-	//bool shouldRunSession = true;
-
-	//Timer timer;
-	//timer.Start();
-
-	//SandboxSession SandboxSession(messageSystem, eventEngine, camera, stats);
-	//SandboxSession.Init();
-
-	//while (shouldRunSession && shouldRun) {
-	//	auto deltaTime = timer.DeltaTime();
-
-	//	eventEngine->Update();
-	//	entityEngine->Update();
-	//	camera->Update(deltaTime);
-	//	SandboxSession.Update();
-
-	//	Message message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
-	//	while (!message.IsEmpty()) {
-	//		switch (message.messageType) {
-	//		case MT_ShutDown:
-	//			shouldRun = false;
-	//			break;
-	//		case MT_Shutdown_Session:
-	//			shouldRunSession = false;
-	//			break;
-	//		case MT_Config:
-	//			entityEngine->ApplyConfiguration(static_cast<Configuration*>(message.payload));
-	//			break;
-	//		default:
-	//			break;
-	//		}
-	//		message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
-	//	}
-
-	//	std::this_thread::sleep_for(std::chrono::microseconds(20));
-	//}
-
-	//entityEngine->DestroyAllEntities();
-	//SandboxSession.CompleteSandbox();
+void CoreEngine::BootPhysicsBenchmark() {
+	
 }
 
-void CoreEngine::BootGraphBench() {
+void CoreEngine::BootGraphicsBenchmark() {
+	auto camera = renderEngine->GetCamera();
 
+	bool shouldRunSession = true;
+
+	Timer timer;
+	timer.Start();
+
+	GraphicsBenchmarkSession graphicsBenchmarkSession(messageSystem, eventEngine, camera, stats);
+	graphicsBenchmarkSession.Init();
+
+	while (shouldRunSession && shouldRun) {
+		auto deltaTime = timer.DeltaTime();
+
+		eventEngine->Update();
+		entityEngine->Update();
+		camera->Update(deltaTime);
+		graphicsBenchmarkSession.Update();
+
+		Message message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
+		while (!message.IsEmpty()) {
+			switch (message.messageType) {
+			case MT_ShutDown:
+				shouldRun = false;
+				break;
+			case MT_Shutdown_Session:
+				shouldRunSession = false;
+				break;
+			default:
+				break;
+			}
+			message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
+		}
+
+		std::this_thread::sleep_for(std::chrono::microseconds(20));
+	}
+
+	entityEngine->DestroyAllEntities();
+	while (!entityEngine->AllEntitiesAreDead()) {
+		graphicsBenchmarkSession.Update();
+		entityEngine->Update();
+	}
+
+	graphicsBenchmarkSession.Complete();
 }

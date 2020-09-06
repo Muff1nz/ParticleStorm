@@ -28,7 +28,7 @@ private:
 	void PrintMenu() const;
 
 	void BootSandbox();
-	void BootPhysBench();
-	void BootGraphBench();
+	void BootPhysicsBenchmark();
+	void BootGraphicsBenchmark();
 };
 

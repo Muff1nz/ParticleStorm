@@ -128,6 +128,7 @@
     <ClCompile Include="ConstStrings.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="EntityEngine.cpp" />
+    <ClCompile Include="GraphicsBenchmarkSession.cpp" />
     <ClCompile Include="IdGenerator.cpp" />
     <ClCompile Include="ImageFactory.cpp" />
     <ClCompile Include="EventEngine.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="BaseEntity.h" />
     <ClInclude Include="EntityType.h" />
     <ClInclude Include="GameEntity.h" />
+    <ClInclude Include="GraphicsBenchmarkSession.h" />
     <ClInclude Include="IdGenerator.h" />
     <ClInclude Include="ParticlesEntity.h" />
     <ClInclude Include="DebugQuadTreeEntity.h" />

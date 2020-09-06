@@ -23,7 +23,7 @@ void EntityEngine::Update() {
 }
 
 bool EntityEngine::AllEntitiesAreDead() const {
-	return !entities.empty() || !destroyedEntities.empty();
+	return entities.empty() && destroyedEntities.empty();
 }
 
 void EntityEngine::HandleMessages() {
@@ -81,6 +81,4 @@ void EntityEngine::DestroyEntity(BaseEntity* entity) {
 			return;
 		}
 	}
-
-	throw std::runtime_error("Can't destroy entity that is not submitted!");
 }

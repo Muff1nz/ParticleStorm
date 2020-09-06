@@ -68,7 +68,7 @@ void Window::SetSize(int windowWidth, int windowHeight) {
 	if (fullscreen)
 		return;
 	
-	glfwSetWindowSize(window, windowWidth, windowWidth);
+	glfwSetWindowSize(window, windowWidth, windowHeight);
 }
 
 int Window::GetHeight() const {
