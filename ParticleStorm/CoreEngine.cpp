@@ -27,10 +27,10 @@ void CoreEngine::BootParticleStorm() {
 			BootSandbox();
 			break;
 		case '2':
-			BootPhysBench();
+			//BootPhysBench();
 			break;
 		case '3':
-			BootGraphBench();
+			//BootGraphBench();
 			break;
 		case 'X':
 			break;
@@ -41,9 +41,6 @@ void CoreEngine::BootParticleStorm() {
 	} while (std::toupper(userInput) != 'X' && shouldRun);
 
 	StopEngine();
-
-	//To check if things stop correctly
-	std::cin.get();
 }
 
 void CoreEngine::StartEngine() {
@@ -68,6 +65,8 @@ void CoreEngine::StartEngine() {
 }
 
 void CoreEngine::StopEngine() {
+	messageSystem->PS_BroadcastMessage(Message(SYSTEM_CoreEngine, MT_ShutDown));
+	
 	renderEngine->Join();
 	physicsEngine->Join();
 	workerThreadPool->CloseWorkerThreads();
@@ -87,8 +86,8 @@ void CoreEngine::PrintMenu() const {
 	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 	std::cout << "ParticleStorm Main Menu:\n";
 	std::cout << "Sandbox(1):\n";
-	std::cout << "Physics Benchmark(2)\n";
-	std::cout << "Graphics Benchmark(3)\n";
+	std::cout << "Physics Benchmark(2) (Out of order)\n";
+	std::cout << "Graphics Benchmark(3) (Out of order)\n";
 	std::cout << "Quit(X)\n";
 }
 
@@ -131,8 +130,9 @@ void CoreEngine::BootSandbox() {
 	}
 
 	entityEngine->DestroyAllEntities();
-
-
+	while (!entityEngine->AllEntitiesAreDead()) {
+		entityEngine->Update();
+	}
 	
 	sandboxSession.Complete();
 }

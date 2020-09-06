@@ -14,7 +14,6 @@
 
 #include "Timer.h"
 #include "RenderEntityFactory.h"
-#include "ConstStrings.h"
 #include "ParticlesEntity.h"
 #include "DebugQuadTreeEntity.h"
 #include "WorldEntity.h"
@@ -150,10 +149,6 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		createInfoBackground.indexBuffer = quadIndexBuffer;
 		createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
 
-		//RenderTransform* backgroundTransform = new RenderTransform();
-		//backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-		//backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-		//backgroundTransform->objectCount = 1;	
 		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoBackground, worldEntity));
 	}
 
@@ -172,11 +167,6 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		createInfoParticles.indexBuffer = quadIndexBuffer;
 		createInfoParticles.indexCount = static_cast<uint32_t>(QuadIndices.size());
 
-		//RenderTransform* particlesTransform = new RenderTransform();
-		//particlesTransform->pos = environment->particlePos;
-		//particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
-		//particlesTransform->staticScale = true;
-		//particlesTransform->objectCount = environment->particleCount;
 		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoParticles, particlesEntity));
 	}
 
@@ -196,22 +186,6 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 	}
 
 	InvalidateCommandBuffers();
-
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	//RenderEntityCreateInfo createInfoQuadTree;
-	//createInfoQuadTree.vertexShader = "quadVert.spv";
-	//createInfoQuadTree.fragmentShader = "quadFrag.spv";
-	//createInfoQuadTree.renderMode = Lines;
-	//createInfoQuadTree.vertexBuffer = quadVertexBuffer;
-	//createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
-	//createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
-
-	//RenderTransform* quadTreeTransform = new RenderTransform();
-	//quadTreeTransform->pos = environment->quadPos;
-	//quadTreeTransform->scale = environment->quadScale;
-	//quadTreeTransform->objectCount = environment->debugQuadSize;
-	//renderEntities.push_back(factory.CreateRenderEntity("Background", createInfoQuadTree, quadTreeTransform, true));
 }
 
 void RenderEngineVulkan::RemoveRenderEntity(const Message& message) {

@@ -8,8 +8,9 @@ struct DebugQuadTreeEntity : GameEntity {
 		type = ET_QuadTreeDebugEntity;
 
 		id = IdGenerator::GetNewId();
-		count = 400;
+		count = 1000;
 		position = new glm::vec2[count];
 		scale = new glm::vec2[count];
+		uniformScale = false;
 	}
 };
