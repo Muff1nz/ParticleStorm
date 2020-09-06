@@ -16,6 +16,7 @@
 #include "RenderEntityFactory.h"
 #include "ConstStrings.h"
 #include "ParticlesEntity.h"
+#include "DebugQuadTreeEntity.h"
 #include "WorldEntity.h"
 
 
@@ -153,7 +154,7 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		//backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 		//backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
 		//backgroundTransform->objectCount = 1;	
-		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoBackground, worldEntity, false));
+		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoBackground, worldEntity));
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +177,22 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		//particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
 		//particlesTransform->staticScale = true;
 		//particlesTransform->objectCount = environment->particleCount;
-		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoParticles, particlesEntity, false));
+		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoParticles, particlesEntity));
+	}
+
+	if (entity->type == ET_QuadTreeDebugEntity) {
+		auto debugQuadTreeEntity = static_cast<DebugQuadTreeEntity*>(entity);
+		debugQuadTreeEntity->RegisterAsObserver();
+
+		RenderEntityCreateInfo createInfoQuadTree;
+		createInfoQuadTree.vertexShader = "quadVert.spv";
+		createInfoQuadTree.fragmentShader = "quadFrag.spv";
+		createInfoQuadTree.renderMode = Lines;
+		createInfoQuadTree.vertexBuffer = quadVertexBuffer;
+		createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
+		createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
+
+		renderEntities.push_back(factory.CreateRenderEntity(createInfoQuadTree, debugQuadTreeEntity));
 	}
 
 	InvalidateCommandBuffers();
@@ -526,7 +542,7 @@ void RenderEngineVulkan::HandleDestroyedRenderEntities() {
 		RenderEntity* renderEntity = destroyedRenderEntities[i];
 		renderEntity->Dispose();
 		renderEntity->transform->UnregisterAsObserver();
-		delete renderEntity;
+		renderEntity = nullptr;
 	}
 
 	destroyedRenderEntities.clear();

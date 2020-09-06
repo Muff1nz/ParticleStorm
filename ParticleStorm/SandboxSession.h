@@ -1,5 +1,7 @@
 #pragma once
+#include "ParticlesEntity.h"
 #include "SessionManager.h"
+#include "DebugQuadTreeEntity.h"
 
 class SandboxSession : SessionManager {
 public:
@@ -11,6 +13,11 @@ public:
 	void Complete() override;
 	
 private:
+	WorldEntity* world;
+	ParticlesEntity* particles;
+	DebugQuadTreeEntity* debugQuadTree;
+	
+	void HandleEntityDestroyed(BaseEntity* entity);
 	void HandleMessages() override;
 };
 

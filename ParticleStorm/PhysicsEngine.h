@@ -10,6 +10,7 @@
 #include "Stats.h"
 #include "WorldEntity.h"
 #include "QuadTreeHandler.h"
+#include "DebugQuadTreeEntity.h"
 
 class PhysicsEngine {
 public:
@@ -27,6 +28,7 @@ private:
 
 	PhysicsParticlesEntity* particles;
 	WorldEntity* world;
+	DebugQuadTreeEntity* debugQuadTree;
 
 	QuadTreeHandler* quadTreeHandler;
 	std::vector<Range> particleSections;

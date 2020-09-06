@@ -37,15 +37,15 @@ void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads,
 	workerThreads->JoinWorkerThreads();
 }
 
-void QuadTreeHandler::PopulateQuadData() {
-	for (int i = 0; i < particles->debugQuadSize; ++i) {
+void QuadTreeHandler::PopulateQuadData(DebugQuadTreeEntity* quadTreeDebugEntity) {
+	for (int i = 0; i < quadTreeDebugEntity->count; ++i) {
 		if (i < quads.size()) {
 			auto rect = quads[i]->GetRect();
-			particles->quadPos[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
-			particles->quadScale[i] = {rect.halfW, rect.halfH};
+			quadTreeDebugEntity->position[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
+			quadTreeDebugEntity->scale[i] = {rect.halfW, rect.halfH};
 		} else {
-			particles->quadPos[i] = { 0, 0 };
-			particles->quadScale[i] = { 0, 0 };
+			quadTreeDebugEntity->position[i] = { 0, 0 };
+			quadTreeDebugEntity->scale[i] = { 0, 0 };
 		}
 	}
 }

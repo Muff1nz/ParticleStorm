@@ -6,19 +6,18 @@
 #include "Stats.h"
 #include "Timer.h"
 #include "EntityEngine.h"
+#include "Configuration.h"
 
 class SessionManager {
 public:
 	SessionManager(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats);
-	~SessionManager();
+	virtual ~SessionManager();
 
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Complete() = 0;
 
 protected:
-	
-
 	Timer timer;
 
 	Configuration* config;
@@ -30,9 +29,12 @@ protected:
 
 	virtual void HandleMessages() = 0;
 
+	void DeployEntity(BaseEntity* entity) const;
+	void RemoveEntity(BaseEntity* entity) const;
+
 	static char* FileTime();
 	void OutputSessionToFile(const std::string& sessionString, std::string shortTitle, std::string statsOutputDir, std::vector<std::string> graphScripts);
-	std::string SessionToString(const std::vector<std::string>& perSecondStats, std::string longTitle) const;
+	std::string SessionToString(const std::vector<std::string>& perSecondStats, std::string longTitle, int particleCount, int particleRadius) const;
 private:
 	//const std::string shorTitle = "Graphics Bench";
 	//const std::string longTitle = "Graphics Bench";

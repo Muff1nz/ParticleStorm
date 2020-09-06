@@ -121,9 +121,6 @@ void CoreEngine::BootSandbox() {
 			case MT_Shutdown_Session:
 				shouldRunSession = false;
 				break;
-			case MT_Config:
-				entityEngine->ApplyConfiguration(static_cast<Configuration*>(message.payload));
-				break;
 			default:
 				break;
 			}
@@ -134,6 +131,9 @@ void CoreEngine::BootSandbox() {
 	}
 
 	entityEngine->DestroyAllEntities();
+
+
+	
 	sandboxSession.Complete();
 }
 

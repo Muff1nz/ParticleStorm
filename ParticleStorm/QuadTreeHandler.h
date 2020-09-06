@@ -8,7 +8,7 @@
 #include "WorkerThreadPool.h"
 #include "Stats.h"
 #include "WorldEntity.h"
-
+#include "DebugQuadTreeEntity.h"
 
 class QuadTreeHandler {
 public:
@@ -17,7 +17,7 @@ public:
 
 	void Init(PhysicsParticlesEntity* particles, WorldEntity* world);
 	void BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections);
-	void PopulateQuadData();
+	void PopulateQuadData(DebugQuadTreeEntity* quadTreeDebugEntity);
 
 private:
 	PhysicsParticlesEntity* particles;

@@ -11,7 +11,7 @@ public:
 	RenderEntityFactory(VulkanContext* vulkanContext, VulkanAllocator* vulkanAllocator);
 	~RenderEntityFactory();
 	
-	 RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform, bool debugEntity);
+	 RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform);
 	 void RecreateGraphicsPipeline(RenderEntity* renderEntity);
 private:
 	VulkanContext* renderDataVulkanContext;

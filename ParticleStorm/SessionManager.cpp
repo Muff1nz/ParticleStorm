@@ -50,10 +50,10 @@ void SessionManager::OutputSessionToFile(const std::string& sessionString, std::
 	}
 }
 
-std::string SessionManager::SessionToString(const std::vector<std::string>& perSecondStats, std::string longTitle) const {
+std::string SessionManager::SessionToString(const std::vector<std::string>& perSecondStats, std::string longTitle, int particleCount, int particleRadius) const {
 	std::string sessionString;
 	sessionString += "Title: " + longTitle + "\n";
-	sessionString += "Simulated " + std::to_string(config->particleCount) + " particles with a raidus of: " + std::to_string(config->particleRadius) + "\n";
+	sessionString += "Simulated " + std::to_string(particleCount) + " particles with a raidus of: " + std::to_string(particleRadius) + "\n";
 	sessionString += "Worker threads: " + std::to_string(config->workerThreadCount) + "\n";
 	sessionString += "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	sessionString += "[\n";
@@ -68,6 +68,14 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 	return sessionString;
 }
 
+
+void SessionManager::DeployEntity(BaseEntity* entity) const {
+	messageQueue->PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_EntityEngine, MT_Entity_Submit_Request, entity));
+}
+
+void SessionManager::RemoveEntity(BaseEntity* entity) const {
+	messageQueue->PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_EntityEngine, MT_Entity_Destroy_Request, entity));
+}
 
 //
 //

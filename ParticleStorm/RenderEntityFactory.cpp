@@ -17,7 +17,7 @@ RenderEntityFactory::RenderEntityFactory(VulkanContext* vulkanContext, VulkanAll
 
 RenderEntityFactory::~RenderEntityFactory() = default;
 
-RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform, bool debugEntity) {
+RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform) {
 	RenderDataCore* renderDataCore = new RenderDataCore();
 	renderDataCore->renderMode = createInfo.renderMode;
 	renderDataCore->vertexBuffer = createInfo.vertexBuffer;
@@ -68,7 +68,7 @@ RenderEntity* RenderEntityFactory::CreateRenderEntity(RenderEntityCreateInfo& cr
 		CreateDescriptorSets(renderDataUniform);
 	}
 
-	return new RenderEntity(transform, renderDataVulkanContext, renderDataCore, renderDataUniform, renderDataInstanced, renderEntityMeta, debugEntity);
+	return new RenderEntity(transform, renderDataVulkanContext, renderDataCore, renderDataUniform, renderDataInstanced, renderEntityMeta);
 }
 
 void RenderEntityFactory::RecreateGraphicsPipeline(RenderEntity* renderEntity) {

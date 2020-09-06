@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "ParticlesEntity.h"
+
 SandboxSession::SandboxSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats) : SessionManager(messageQueue, eventEngine, camera, stats) { }
 
 SandboxSession::~SandboxSession() = default;;
@@ -16,11 +18,16 @@ void SandboxSession::Init() {
 	config->screenHeight = 1200;
 	config->screenWidth = 2800;
 
-	config->worldWidth = 9000;
-	config->worldHeight = 3780;
+	world = new WorldEntity(9000, 3780);
+	
+	particles = new ParticlesEntity(1000, 30);
+	particles->Initialize(config->seed, world->width, world->height);
 
-	config->particleCount = 20000;
-	config->particleRadius = 10;
+	world->RegisterAsObserver();
+	particles->RegisterAsObserver();
+	
+	DeployEntity(world);
+	DeployEntity(particles);
 
 	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(config)));
 }
@@ -39,7 +46,15 @@ void SandboxSession::Update() {
 	}
 
 	if (eventEngine->GetKeyDown(GLFW_KEY_Q)) {
-		messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_DebugModeToggle));
+		if (debugQuadTree == nullptr) {
+			debugQuadTree = new DebugQuadTreeEntity();
+			debugQuadTree->RegisterAsObserver();
+			DeployEntity(debugQuadTree);
+		} else {
+			RemoveEntity(debugQuadTree);
+			debugQuadTree->UnregisterAsObserver();
+			debugQuadTree = nullptr;
+		}		
 	}
 
 	if (eventEngine->GetKeyDown(GLFW_KEY_F)) {
@@ -54,10 +69,32 @@ void SandboxSession::Complete() {
 	std::cout << stats->CompleteSessionToStringConsole();
 }
 
+void SandboxSession::HandleEntityDestroyed(BaseEntity* entity) {
+	if (entity->type == ET_Particles) {
+		particles->UnregisterAsObserver();
+		particles = nullptr;
+	}
+
+	if (entity->type == ET_World) {
+		world->UnregisterAsObserver();
+		world = nullptr;
+	}
+
+	if (entity->type == ET_QuadTreeDebugEntity && debugQuadTree != nullptr) {
+		if (debugQuadTree->id == entity->id) {
+			
+			debugQuadTree->UnregisterAsObserver();
+			debugQuadTree = nullptr;
+		}
+	}		
+}
+
 void SandboxSession::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_SessionManager);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
+		case MT_Entity_Destroyed:
+			HandleEntityDestroyed(static_cast<BaseEntity*>(message.payload));
 		default:
 			break;
 		}

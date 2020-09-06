@@ -194,6 +194,15 @@ void PhysicsEngine::AddEntity(Message message) {
 		world = worldEntity;
 	}
 
+	if (entity->type == ET_QuadTreeDebugEntity) {
+		DebugQuadTreeEntity* debugQuadTreeEntity = static_cast<DebugQuadTreeEntity*>(message.payload);
+		if (debugQuadTree != nullptr)
+			throw std::runtime_error("Cannot add quadTreeDebugEntity to physics engine, quadTreeDebugEntity already present");
+
+		debugQuadTreeEntity->RegisterAsObserver();
+		debugQuadTree = debugQuadTreeEntity;
+	}
+
 	if (world != nullptr && particles != nullptr) {
 		quadTreeHandler->Init(particles, world);
 	}
@@ -218,8 +227,17 @@ void PhysicsEngine::RemoveEntity(Message message) {
 		if (world != nullptr && world->id != worldEntity->id)
 			throw std::runtime_error("Cannot remove world from physics engine! Existing world don't match world to remove!");
 
-		worldEntity->UnregisterAsObserver();
+		world->UnregisterAsObserver();
 		world = nullptr;
+	}
+
+	if (entity->type == ET_QuadTreeDebugEntity) {
+		DebugQuadTreeEntity* quadTreeDebugEntity = static_cast<DebugQuadTreeEntity*>(message.payload);
+		if (debugQuadTree != nullptr && debugQuadTree->id != quadTreeDebugEntity->id)
+			throw std::runtime_error("Cannot remove quadTreeDebugEntity from physics engine! Existing world don't match world to remove!");
+
+		debugQuadTree->UnregisterAsObserver();
+		debugQuadTree = nullptr;
 	}
 }
 
@@ -279,8 +297,8 @@ void PhysicsEngine::LeadThreadRun() {
 		timer.Stop();
 		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
 
-		if (debugMode)
-			quadTreeHandler->PopulateQuadData();
+		if (debugQuadTree != nullptr)
+			quadTreeHandler->PopulateQuadData(debugQuadTree);
 
 		//PARTICLE COLLISIONS
 		timer.Restart();

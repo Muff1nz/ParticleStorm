@@ -15,6 +15,9 @@ enum MessageType {
 	MT_FullScreenToggle,
 
 	//Engine events
+	MT_Entity_Submit_Request,
+	MT_Entity_Destroy_Request,
+	
 	MT_Entity_Submitted,
 	MT_Entity_Destroyed
 };

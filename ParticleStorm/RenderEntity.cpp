@@ -2,14 +2,13 @@
 #include <ext/matrix_transform.inl>
 #include "Camera.h"
 
-RenderEntity::RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity) {
+RenderEntity::RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta) {
 	this->transform = transform;
 	this->renderEntityMeta = renderEntityMeta;
 	this->renderDataVulkanContext = renderDataVulkanContext;
 	this->renderDataCore = renderDataCore;
 	this->renderDataUniform = renderDataSingular;
 	this->renderDataInstanced = renderDataInstanced;
-	this->debugEntity = debugEntity;
 
 	isDisposed = false;
 }
@@ -70,10 +69,6 @@ void RenderEntity::DisposePipeline() const {
 		vkDestroyPipeline(renderDataVulkanContext->device, renderDataCore->pipeline, nullptr);
 		vkDestroyPipelineLayout(renderDataVulkanContext->device, renderDataCore->pipelineLayout, nullptr);
 	}
-}
-
-bool RenderEntity::IsDebugEntity() const {
-	return debugEntity;
 }
 
 void RenderEntity::UpdateBuffers(uint32_t imageIndex, Camera* camera) const {

@@ -12,18 +12,16 @@ public:
 
 	TransformEntity* transform;
 
-	RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
+	RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta);
 	~RenderEntity();
 
 	void Dispose();
 
 	void UpdateBuffers(uint32_t imageIndex, Camera* camera) const;
 	void BindToCommandPool(std::vector<VkCommandBuffer>& commandBuffers, int index) const;
-	bool IsDebugEntity() const;
 
 private:
 	bool isDisposed = false;
-	bool debugEntity = false;
 
 	VulkanContext* renderDataVulkanContext;
 	RenderEntityMeta* renderEntityMeta;
