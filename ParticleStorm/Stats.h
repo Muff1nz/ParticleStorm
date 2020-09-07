@@ -82,6 +82,39 @@ public:
 	}
 
 
+	void ClearData() {
+		physicsUpdateTotal = 0;
+		renderUpdateTotal = 0;
+		explosionTotal = 0;
+		physicsTimeRatioTotal = 0;
+		puEventsTotal = 0;
+		puPositionUpdatesTotal = 0;
+		puQuadTreeUpdateTotal = 0;
+		puCollisionUpdateTotal = 0;
+		physicsUpdateAverage = 0;
+		renderUpdateAverage = 0;
+		explosionAverage = 0;
+		physicsTimeRatioAverage = 0;
+		puEventsAverage = 0;
+		puPositionUpdatesAverage = 0;
+		puQuadTreeUpdateAverage = 0;
+		puCollisionUpdateAverage = 0;
+		physicsUpdateTotalLastSecond = 0;
+		renderUpdateTotalLastSecond = 0;
+		explosionTotalLastSecond = 0;
+		physicsTimeRatioTotalLastSecond = 0;
+		puEventsTotalLastSecond = 0;
+		puPositionUpdatesTotalLastSecond = 0;
+		puQuadTreeUpdateTotalLastSecond = 0;
+		puCollisionUpdateTotalLastSecond = 0;
+		physicsTimeRatioAverageLastSecond = 0;
+		puEventsAverageLastSecond = 0;
+		puPositionUpdatesAverageLastSecond = 0;
+		puQuadTreeUpdateAverageLastSecond = 0;
+		puCollisionUpdateAverageLastSecond = 0;
+	}
+
+
 	std::string LastSecondToStringConsole() const {
 		std::string str;
 		str += "===============================================================\n";

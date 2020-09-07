@@ -7,7 +7,10 @@ NumberGenerator::NumberGenerator() {
 }
 
 NumberGenerator::NumberGenerator(const int seed) {
-	generator.seed(seed);
+	if (seed != -1)
+		generator.seed(seed);
+	else 
+		generator.seed(int(time(nullptr)));
 }
 
 

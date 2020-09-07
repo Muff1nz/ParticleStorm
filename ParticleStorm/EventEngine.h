@@ -6,10 +6,11 @@
 #include <vector>
 #include "Queue.h"
 #include <vec2.hpp>
+#include "MessageSystem.h"
 
 class EventEngine {
 public:
-	EventEngine();
+	EventEngine(MessageSystem* messageQueue);
 	~EventEngine();
 
 	void Init(GLFWwindow* window);
@@ -27,7 +28,9 @@ public:
 	int GetMouseScrollDelta() const;	
 	
 	void Update();
-private:	
+private:
+	MessageSystem* messageQueue;
+
 	GLFWwindow* window;
 	
 	std::map<int, int> keyStatesGhost;

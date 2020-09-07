@@ -82,25 +82,22 @@
     <Filter Include="Source Files\TextureGen">
       <UniqueIdentifier>{fc8e200f-8577-43e1-b8f2-5afaf1876fd4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Input">
-      <UniqueIdentifier>{c3379b48-76d9-45f1-bbe7-5a1cda674f79}</UniqueIdentifier>
+    <Filter Include="Header Files\Entities">
+      <UniqueIdentifier>{0fb1408b-402e-4029-968f-518f8cee100d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Input">
-      <UniqueIdentifier>{bdbb1bc2-c2ed-4ccb-856f-7663d1832420}</UniqueIdentifier>
+    <Filter Include="Source Files\SessionManagers">
+      <UniqueIdentifier>{51cdc30e-0b39-4927-b329-a1739b45801d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SessionManagers">
+      <UniqueIdentifier>{01d8e6a4-9c44-4f4a-b8b4-95ac75eab7b9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Environment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="SessionManager.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Source Files\Utils</Filter>
@@ -144,9 +141,6 @@
     <ClCompile Include="VulkanAllocator.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="MessageQueue.cpp">
-      <Filter>Source Files\MessageSystem</Filter>
-    </ClCompile>
     <ClCompile Include="ConstStrings.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
@@ -165,16 +159,34 @@
     <ClCompile Include="EventEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CoreEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageSystem.cpp">
+      <Filter>Source Files\MessageSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="SandBoxSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="IdGenerator.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsBenchmarkSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsBenchmarkSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Environment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="SessionManager.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Header Files\Utils</Filter>
@@ -245,9 +257,6 @@
     <ClInclude Include="RenderDataInstanced.h">
       <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTransform.h">
-      <Filter>Header Files\Graphics\RenderEntity\Data</Filter>
-    </ClInclude>
     <ClInclude Include="RenderEngineVulkanBackend.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -262,9 +271,6 @@
     </ClInclude>
     <ClInclude Include="VulkanAllocator.h">
       <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="MessageQueue.h">
-      <Filter>Header Files\MessageSystem</Filter>
     </ClInclude>
     <ClInclude Include="SystemComponent.h">
       <Filter>Header Files\MessageSystem</Filter>
@@ -318,6 +324,60 @@
       <Filter>Header Files\Graphics\TextureGen</Filter>
     </ClInclude>
     <ClInclude Include="EventEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageSystem.h">
+      <Filter>Header Files\MessageSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigurationData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticlesEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsParticlesEntity.h">
+      <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityType.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="SandBoxSession.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="IdGenerator.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugQuadTreeEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsBenchmarkSession.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsBenchmarkSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

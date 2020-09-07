@@ -4,13 +4,14 @@
 #include "VulkanAllocator.h"
 #include "RenderEntityCreateInfo.h"
 #include "ImageFactory.h"
+#include "TransformEntity.h"
 
 class RenderEntityFactory {
 public:
 	RenderEntityFactory(VulkanContext* vulkanContext, VulkanAllocator* vulkanAllocator);
 	~RenderEntityFactory();
 	
-	 RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, RenderTransform* transform, bool debugEntity);
+	 RenderEntity* CreateRenderEntity(RenderEntityCreateInfo& createInfo, TransformEntity* transform);
 	 void RecreateGraphicsPipeline(RenderEntity* renderEntity);
 private:
 	VulkanContext* renderDataVulkanContext;

@@ -3,18 +3,8 @@
 #include <ext/matrix_clip_space.inl>
 
 
-Camera::Camera() {
-	zoom = 0;
-}
-
-Camera::Camera(EventEngine* eventEngine, Window* window, int worldHeight, int worldWidth) {
-	this->eventEngine = eventEngine;
+Camera::Camera(Window* window) {
 	this->window = window;
-
-	this->worldHeight = worldHeight;
-	this->worldWidth = worldWidth;
-	
-	zoom = 0;
 	pos = { 0, 0 };
 	ResetCamera();
 }
@@ -59,8 +49,8 @@ glm::vec2 Camera::GetViewPos(glm::vec2 screenPos) {
 }
 
 float Camera::GetPixelToWorld() const {
-	const float hRatio = float(worldHeight) / window->GetHeight();
-	const float wRatio = float(worldWidth) / window->GetWidth();
+	const float hRatio = float(GetWorldHeight()) / window->GetHeight();
+	const float wRatio = float(GetWorldWidth()) / window->GetWidth();
 	return hRatio > wRatio ? hRatio : wRatio;
 }
 
@@ -73,6 +63,8 @@ int Camera::GetOrthoWidth() const {
 }
 
 void Camera::Update(float deltaTime) {
+	
+	
 	float cameraZoomSpeed = pow(zoom + 1, 2) * 30.0f * deltaTime;
 	
 	if (eventEngine->GetMouseButton(GLFW_MOUSE_BUTTON_RIGHT)) {
@@ -92,10 +84,24 @@ void Camera::Update(float deltaTime) {
 		ResetCamera();
 }
 
+void Camera::SetEventEngine(EventEngine* eventEngine) {
+	this->eventEngine = eventEngine;
+}
+
+void Camera::SetWorld(WorldEntity* world) {
+	this->world = world;
+	ResetCamera();
+}
 
 void Camera::ResetCamera() {
 	zoom = 0;
-	pos = { -worldWidth / 2, -worldHeight / 2 }; 
+	pos = { -GetWorldWidth() / 2, -GetWorldHeight() / 2 };
 }
 
+int Camera::GetWorldHeight() const {
+	return world != nullptr ? world->height : window->GetHeight();
+}
 
+int Camera::GetWorldWidth() const {
+	return world != nullptr ? world->width : window->GetWidth();
+}

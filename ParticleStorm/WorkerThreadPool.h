@@ -11,17 +11,18 @@
 
 class WorkerThreadPool {
 public:
-	WorkerThreadPool();
 	WorkerThreadPool(int threadCount);
 	~WorkerThreadPool();
 
-	void Init(int threadCount);
+	void SetThreadCount(int threadCount);
 
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);
 	void CloseWorkerThreads();
 	void PartitionForWorkers(int size, std::vector<Range>& range, int threads = 0) const;
 	std::string StateString();
+
+	int GetThreadCount() const;
 private:
 	bool isInitialized{};
 	bool done = false;

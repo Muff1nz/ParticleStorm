@@ -3,7 +3,10 @@
 
 Queue<double> EventEngine::scrollEvents{};
 
-EventEngine::EventEngine(): window(nullptr) {}
+EventEngine::EventEngine(MessageSystem* messageQueue) {
+	window = nullptr;
+	this->messageQueue = messageQueue;
+}
 
 EventEngine::~EventEngine() = default;
 
@@ -51,6 +54,15 @@ int EventEngine::GetMouseScrollDelta() const {
 }
 
 void EventEngine::Update() {
+	glfwPollEvents();
+	if (glfwWindowShouldClose(window)) {
+		messageQueue->PS_BroadcastMessage(Message(SYSTEM_EventEngine, MT_ShutDown));
+		return;
+	}
+
+	if (GetKeyDown(GLFW_KEY_ESCAPE))
+		messageQueue->PS_BroadcastMessage(Message(SYSTEM_EventEngine, MT_Shutdown_Session));
+
 	for (auto key : keyHooks) {
 		keyStatesGhost[key] = keyStates[key];
 		keyStates[key] = glfwGetKey(window, key);

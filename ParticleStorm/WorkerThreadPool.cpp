@@ -1,19 +1,15 @@
 #include "WorkerThreadPool.h"
 #include <string>
 
-
-WorkerThreadPool::WorkerThreadPool() {
-	isInitialized = false;
-}
-
-
 WorkerThreadPool::WorkerThreadPool(int threadCount) {
-	Init(threadCount);
+	SetThreadCount(threadCount);
 }
 
-void WorkerThreadPool::Init(int threadCount) {
+void WorkerThreadPool::SetThreadCount(int threadCount) {
 	if (isInitialized) {
-		throw std::runtime_error("ThreadPool is already Initialized!!");
+		CloseWorkerThreads();
+		workerThreads.clear();
+		done = false;
 	}
 	
 	for (int i = 0; i < threadCount; ++i) {
@@ -67,6 +63,10 @@ void WorkerThreadPool::PartitionForWorkers(const int size, std::vector<Range>& r
 std::string WorkerThreadPool::StateString() {
 	std::unique_lock<std::mutex> lock(mutex);
 	return "Busy threads: " + std::to_string(busyThreads) + " Work units in queue: " + std::to_string(work.Size());
+}
+
+int WorkerThreadPool::GetThreadCount() const {
+	return workerThreads.size();
 }
 
 void WorkerThreadPool::WorkerThreadRun() {

@@ -12,7 +12,7 @@ TextureGenerator::TextureGenerator() = default;
 
 TextureGenerator::~TextureGenerator() = default;
 
-std::string TextureGenerator::GetBackgroungTexture(Environment* environment, int width, int height) const {
+std::string TextureGenerator::GetBackgroungTexture(int width, int height) const {
 	std::string fileName = "Textures/Background.png";
 
 	const int resFactor = 10;

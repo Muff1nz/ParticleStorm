@@ -2,34 +2,49 @@
 
 #include <thread>
 
-#include "Environment.h"
-#include "NumberGenerator.h"
 #include "LinearQuad.h"
 #include "CollisionChecker.h"
-#include "MessageQueue.h"
+#include "MessageSystem.h"
+#include "PhysicsParticlesEntity.h"
+#include "WorkerThreadPool.h"
+#include "Stats.h"
+#include "WorldEntity.h"
+#include "QuadTreeHandler.h"
+#include "DebugQuadTreeEntity.h"
 
 class PhysicsEngine {
 public:
-	PhysicsEngine(Environment* environment, MessageQueue* messageQueue);
+	PhysicsEngine(MessageSystem* messageQueue, WorkerThreadPool* workerThreads, Stats* stats);
 	~PhysicsEngine();
 
-	void Init();
 	void Start();
 	void Join();
+
 private:
 	const float maxPhysicsDeltaTime = 1.0f / 60.0f; //Which gives a minimum of 450 physics updates per "second" (maybe scale with particle radius)
 	const float minPhysicsDeltaTime = 1.0f / 1000.0f; 
 	const glm::vec2 gravity = glm::vec2(0, -400);
 	const float friction = 0.99f;
 
-	NumberGenerator rng;
+	PhysicsParticlesEntity* particles;
+	WorldEntity* world;
+	DebugQuadTreeEntity* debugQuadTree;
 
-	Environment* environment;
-	MessageQueue* messageQueue;
-	bool debugMode;
+	QuadTreeHandler* quadTreeHandler;
+	std::vector<Range> particleSections;
 
-	std::thread LeadThread;
-	CollisionChecker collisionChecker;	
+	WorkerThreadPool* workerThreads;
+	Stats* stats;
+
+	MessageSystem* messageQueue;
+
+	bool shouldRun;
+
+	std::thread LeadPhysicsThread;
+	CollisionChecker collisionChecker;
+	
+	void AddEntity(Message message);
+	void RemoveEntity(Message message);
 
 	void HandleMessages();
 	void HandleExplosion(Message message) const;	

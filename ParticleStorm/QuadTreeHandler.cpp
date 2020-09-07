@@ -1,43 +1,51 @@
 #include "QuadTreeHandler.h"
 #include "LinearQuad.h"
 
-QuadTreeHandler::QuadTreeHandler(Environment* environment) {
-	this->environment = environment;
-	tree = new QuadTree(nullptr, Rect(0, 0, environment->worldWidth, environment->worldHeight));
-	for (int i = 0; i < environment->particleCount; ++i) {
-		tree->AddParticle(i);
-	}
-
-	collisionChecker = CollisionChecker(environment->particleRadius);
+QuadTreeHandler::QuadTreeHandler(WorkerThreadPool* workerThreads, Stats* stats) {
+	this->workerThreads = workerThreads;
+	this->stats = stats;
 }
-
 
 QuadTreeHandler::~QuadTreeHandler() {
 	delete tree;
+}
+
+void QuadTreeHandler::Init(PhysicsParticlesEntity* particles, WorldEntity* world) {
+	delete tree;
+
+	this->particles = particles;
+	this->world = world;
+
+	tree = new QuadTree(nullptr, Rect(0, 0, world->width, world->height));
+	for (int i = 0; i < particles->count; ++i) {
+		tree->AddParticle(i);
+	}
+
+	collisionChecker = CollisionChecker(particles->radius);
 }
 
 
 void QuadTreeHandler::BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections) {
 	//TODO: Solve linearQuads using "Function Injection" and return like in RenderEngineVulkanBackend
 	BuildQuadTree();
-	environment->workerThreads.JoinWorkerThreads();
+	workerThreads->JoinWorkerThreads();
 	
-	environment->workerThreads.PartitionForWorkers(quads.size(), quadSections);
+	workerThreads->PartitionForWorkers(quads.size(), quadSections);
 	ResizeLinearQuads(linearQuads);
 	for (auto quadSection : quadSections)
-		environment->workerThreads.AddWork([=] { CalculateLinearQuads(linearQuads, quadSection.lower, quadSection.upper); });
-	environment->workerThreads.JoinWorkerThreads();
+		workerThreads->AddWork([=] { CalculateLinearQuads(linearQuads, quadSection.lower, quadSection.upper); });
+	workerThreads->JoinWorkerThreads();
 }
 
-void QuadTreeHandler::PopulateQuadData() {
-	for (int i = 0; i < environment->debugQuadSize; ++i) {
+void QuadTreeHandler::PopulateQuadData(DebugQuadTreeEntity* quadTreeDebugEntity) {
+	for (int i = 0; i < quadTreeDebugEntity->count; ++i) {
 		if (i < quads.size()) {
 			auto rect = quads[i]->GetRect();
-			environment->quadPos[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
-			environment->quadScale[i] = {rect.halfW, rect.halfH};
+			quadTreeDebugEntity->position[i] = { rect.x + rect.halfW, rect.y + rect.halfH };
+			quadTreeDebugEntity->scale[i] = {rect.halfW, rect.halfH};
 		} else {
-			environment->quadPos[i] = { 0, 0 };
-			environment->quadScale[i] = { 0, 0 };
+			quadTreeDebugEntity->position[i] = { 0, 0 };
+			quadTreeDebugEntity->scale[i] = { 0, 0 };
 		}
 	}
 }
@@ -63,11 +71,11 @@ void QuadTreeHandler::CalculateLinearQuads(std::vector<LinearQuad*>* linearQuads
 		linearQuad->Clear();
 		for (int j = 0; j < quad->Size(); ++j) {
 			const int globalParticle = quad->GetParticle(j);
-			if (environment->particleQuadCount[globalParticle] > 1) {
+			if (particles->particleQuadCount[globalParticle] > 1) {
 				linearQuad->externalParticle.push_back(globalParticle);
 			} else {
 				linearQuad->internalParticle.push_back(globalParticle);
-				linearQuad->internalParticlePos.push_back(environment->particlePos[globalParticle]);
+				linearQuad->internalParticlePos.push_back(particles->position[globalParticle]);
 			}
 		}
 	}
@@ -116,33 +124,33 @@ void QuadTreeHandler::PopulateSubTreesNotThreaded(QuadTree* tree) {
 
 void QuadTreeHandler::PopulateSubTreesThreaded(QuadTree* tree) {
 	for (int i = 0; i < 4; ++i) {
-		environment->workerThreads.AddWork([=] { Build(tree->GetSubTree(i)); });
+		workerThreads->AddWork([=] { Build(tree->GetSubTree(i)); });
 	}
 }
 
 
 void QuadTreeHandler::PopulateBigSubTreesThreaded(QuadTree* tree) {
 	int threads = tree->Size() / particlesPerThreadLevel2;
-	if (threads > environment->workerThreadCount)
-		threads = environment->workerThreadCount;
+	if (threads > workerThreads->GetThreadCount())
+		threads = workerThreads->GetThreadCount();
 	if (threads < 2)
 		threads = 2;
 
 	std::vector<Range> partitions;
-	environment->workerThreads.PartitionForWorkers(tree->Size(), partitions, threads);
+	workerThreads->PartitionForWorkers(tree->Size(), partitions, threads);
 
 	tree->ResetSubTrees(threads);
 
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < partitions.size(); ++j) {
-			environment->workerThreads.AddWork([=] { BuildThreaded(tree->GetSubTree(i), partitions[j].lower, partitions[j].upper, threads, j); });
+			workerThreads->AddWork([=] { BuildThreaded(tree->GetSubTree(i), partitions[j].lower, partitions[j].upper, threads, j); });
 		}
 	}
 }
 
 void QuadTreeHandler::PopulateQuadTreeWithParticles(QuadTree* tree) const {
 	const int size = tree->GetParent()->Size();
-	const auto allParticles = environment->particlePos;
+	const auto allParticles = particles->position;
 
 	tree->ClearContent();
 	QuadTree* parent = tree->GetParent();
@@ -155,7 +163,7 @@ void QuadTreeHandler::PopulateQuadTreeWithParticles(QuadTree* tree) const {
 }
 
 void QuadTreeHandler::PopulateQuadTreeWithParticlesThreaded(QuadTree* tree, const int start, const int end,	const int threadNumber) const {
-	const auto allParticles = environment->particlePos;
+	const auto allParticles = particles->position;
 	QuadTree* parent = tree->GetParent();
 
 	for (int i = start; i < end; i++) {
@@ -173,7 +181,7 @@ void QuadTreeHandler::HandleSubTrees(QuadTree* const tree) {
 		tree->RemoveChildren();
 		quads.push_back(tree);
 		for (int i = 0; i < tree->Size(); ++i) {
-			++environment->particleQuadCount[tree->GetParticle(i)];
+			++particles->particleQuadCount[tree->GetParticle(i)];
 		}
 	}
 }

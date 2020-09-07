@@ -23,11 +23,11 @@ void Window::InitWindow(int height, int width) {
 		window = glfwCreateWindow(mode->width, mode->height, "Particle Storm", glfwGetPrimaryMonitor(), nullptr);
 		glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
-		this->height = mode->height;
-		this->width = mode->width;
+		this->windowHeight = mode->height;
+		this->windowWidth = mode->width;
 	} else {
-		this->height = height;
-		this->width = width;
+		this->windowHeight = height;
+		this->windowWidth = width;
 		window = glfwCreateWindow(width, height, "Particle Storm", nullptr, nullptr);
 	}
 
@@ -48,7 +48,7 @@ void Window::Dispose() {
 
 void Window::UpdateMetaData() {
 	if (!fullscreen) {
-		glfwGetFramebufferSize(window, &width, &height);
+		glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 		glfwGetWindowPos(window, &posX, &posy);
 	}
 }
@@ -58,15 +58,25 @@ void Window::ToggleFullscreen() {
 	if (fullscreen)
 		glfwSetWindowMonitor(window, monitor, 0, 0, screenWidth, screenHeight, refreshRate);
 	else
-		glfwSetWindowMonitor(window, nullptr, posX, posy, width, height, refreshRate);
+		glfwSetWindowMonitor(window, nullptr, posX, posy, windowWidth, windowHeight, refreshRate);
+}
+
+void Window::SetSize(int windowWidth, int windowHeight) {
+	this->windowWidth = windowWidth;
+	this->windowHeight = windowHeight;
+	
+	if (fullscreen)
+		return;
+	
+	glfwSetWindowSize(window, windowWidth, windowHeight);
 }
 
 int Window::GetHeight() const {
-	return fullscreen ? screenHeight : height;
+	return fullscreen ? screenHeight : windowHeight;
 }
 
 int Window::GetWidth() const {
-	return fullscreen ? screenWidth : width;
+	return fullscreen ? screenWidth : windowWidth;
 }
 
 bool Window::IsFullscreen() const {

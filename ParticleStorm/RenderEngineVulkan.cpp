@@ -11,11 +11,12 @@
 
 #include <limits>
 #include <fstream>
-#include <gtc/matrix_transform.hpp>
 
 #include "Timer.h"
 #include "RenderEntityFactory.h"
-#include "ConstStrings.h"
+#include "ParticlesEntity.h"
+#include "DebugQuadTreeEntity.h"
+#include "WorldEntity.h"
 
 
 //     _____                _                   _                   __  _____            _                   _             
@@ -27,9 +28,9 @@
 //                                                                                                                         
 //                                                                                                                         
 
-RenderEngineVulkan::RenderEngineVulkan(Environment* environment, MessageQueue* messageQueue) {
-	this->environment = environment;
+RenderEngineVulkan::RenderEngineVulkan(MessageSystem* messageQueue, Stats* stats) {
 	this->messageQueue = messageQueue;
+	this->stats = stats;
 }
 
 RenderEngineVulkan::~RenderEngineVulkan() {
@@ -127,64 +128,86 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 	vkFreeMemory(vulkanContext->device, stagingBufferMemory, nullptr);
 }
 
-void RenderEngineVulkan::CreateRenderEntities() {
+void RenderEngineVulkan::CreateRenderEntity(Message message) {
 	RenderEntityFactory factory(vulkanContext, vulkanAllocator);
 
-	RenderEntityCreateInfo createInfoBackground;
-	createInfoBackground.vertexShader = "backgroundVert.spv";
-	createInfoBackground.fragmentShader = "backgroundFrag.spv";
-	createInfoBackground.texturePath = textureGenerator->GetBackgroungTexture(environment, environment->worldWidth, environment->worldHeight);
-	createInfoBackground.renderMode = Triangles;
-	createInfoBackground.vertexBuffer = quadVertexBuffer;
-	createInfoBackground.indexBuffer = quadIndexBuffer;
-	createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
+	auto entity = static_cast<GameEntity*>(message.payload);
 
-	RenderTransform* backgroundTransform = new RenderTransform();
-	backgroundTransform->pos = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->scale = new glm::vec2(environment->worldWidth / 2, environment->worldHeight / 2);
-	backgroundTransform->objectCount = 1;	
-	renderEntities.push_back(factory.CreateRenderEntity(createInfoBackground, backgroundTransform, false));
+
+	if (entity->type == ET_World) {
+		WorldEntity* worldEntity = static_cast<WorldEntity*>(entity);
+		worldEntity->RegisterAsObserver();
+
+		camera->SetWorld(worldEntity);
+
+		RenderEntityCreateInfo createInfoBackground;
+		createInfoBackground.vertexShader = "backgroundVert.spv";
+		createInfoBackground.fragmentShader = "backgroundFrag.spv";
+		createInfoBackground.texturePath = worldEntity->texturePath;
+		createInfoBackground.renderMode = Triangles;
+		createInfoBackground.vertexBuffer = quadVertexBuffer;
+		createInfoBackground.indexBuffer = quadIndexBuffer;
+		createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
+
+		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoBackground, worldEntity));
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	if (entity->type == ET_Particles) {
+		auto particlesEntity = static_cast<ParticlesEntity*>(entity);
+		particlesEntity->RegisterAsObserver();
 
-	RenderEntityCreateInfo createInfoParticles;
-	createInfoParticles.vertexShader = "particleVert.spv";
-	createInfoParticles.fragmentShader = "particleFrag.spv";
-	createInfoParticles.texturePath = textureGenerator->GetParticleTexture();
-	createInfoParticles.renderMode = Triangles;
-	createInfoParticles.vertexBuffer = quadVertexBuffer;
-	createInfoParticles.indexBuffer = quadIndexBuffer;
-	createInfoParticles.indexCount = static_cast<uint32_t>(QuadIndices.size());
+		RenderEntityCreateInfo createInfoParticles;
+		createInfoParticles.vertexShader = "particleVert.spv";
+		createInfoParticles.fragmentShader = "particleFrag.spv";
+		createInfoParticles.texturePath = particlesEntity->texturePath;
+		createInfoParticles.renderMode = Triangles;
+		createInfoParticles.vertexBuffer = quadVertexBuffer;
+		createInfoParticles.indexBuffer = quadIndexBuffer;
+		createInfoParticles.indexCount = static_cast<uint32_t>(QuadIndices.size());
 
-	RenderTransform* particlesTransform = new RenderTransform();
-	particlesTransform->pos = environment->particlePos;
-	particlesTransform->scale = new glm::vec2(environment->particleRadius, environment->particleRadius);
-	particlesTransform->staticScale = true;
-	particlesTransform->objectCount = environment->particleCount;
-	renderEntities.push_back(factory.CreateRenderEntity(createInfoParticles, particlesTransform, false));
+		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoParticles, particlesEntity));
+	}
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (entity->type == ET_QuadTreeDebugEntity) {
+		auto debugQuadTreeEntity = static_cast<DebugQuadTreeEntity*>(entity);
+		debugQuadTreeEntity->RegisterAsObserver();
 
-	RenderEntityCreateInfo createInfoQuadTree;
-	createInfoQuadTree.vertexShader = "quadVert.spv";
-	createInfoQuadTree.fragmentShader = "quadFrag.spv";
-	createInfoQuadTree.renderMode = Lines;
-	createInfoQuadTree.vertexBuffer = quadVertexBuffer;
-	createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
-	createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
+		RenderEntityCreateInfo createInfoQuadTree;
+		createInfoQuadTree.vertexShader = "quadVert.spv";
+		createInfoQuadTree.fragmentShader = "quadFrag.spv";
+		createInfoQuadTree.renderMode = Lines;
+		createInfoQuadTree.vertexBuffer = quadVertexBuffer;
+		createInfoQuadTree.indexBuffer = quadLineIndexBuffer;
+		createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
 
-	RenderTransform* quadTreeTransform = new RenderTransform();
-	quadTreeTransform->pos = environment->quadPos;
-	quadTreeTransform->scale = environment->quadScale;
-	quadTreeTransform->objectCount = environment->debugQuadSize;
-	renderEntities.push_back(factory.CreateRenderEntity(createInfoQuadTree, quadTreeTransform, true));
+		renderEntities.push_back(factory.CreateRenderEntity(createInfoQuadTree, debugQuadTreeEntity));
+	}
+
+	InvalidateCommandBuffers();
+}
+
+void RenderEngineVulkan::RemoveRenderEntity(const Message& message) {
+	auto entity = static_cast<BaseEntity*>(message.payload);
+	for (int i = 0; i < renderEntities.size(); ++i) {
+		RenderEntity* renderEntity = renderEntities[i];
+		if (renderEntity->transform->id == entity->id) {
+			renderEntities.erase(renderEntities.begin() + i);
+			i--;
+			destroyedRenderEntities.emplace_back(renderEntity);
+			if (entity->type == ET_World)
+				camera->SetWorld(nullptr);
+		}
+	}
+
+	InvalidateCommandBuffers();
 }
 
 void RenderEngineVulkan::InitVulkan() {
 	CreateVertexBuffer();
 	CreateIndexBuffer(QuadIndices, quadIndexBuffer, quadIndexBufferMemory);
 	CreateIndexBuffer(LineQuadIndices, quadLineIndexBuffer, quadLineIndexBufferMemory);
-	CreateRenderEntities();
 	CreateCommandBuffers();
 	CreateSyncObjects();
 }
@@ -212,6 +235,8 @@ void RenderEngineVulkan::Init() {
 	vulkanAllocator = new VulkanAllocator(vulkanContext);
 
 	textureGenerator = new TextureGenerator();
+
+	camera = new Camera(window);
 
 	InitVulkan();
 }
@@ -280,6 +305,14 @@ Window* RenderEngineVulkan::GetComplexWindow() const {
 	return window;
 }
 
+Camera* RenderEngineVulkan::GetCamera() const {
+	return camera;
+}
+
+void RenderEngineVulkan::ApplyConfiguration(Configuration* config) const {
+	window->SetSize(config->screenWidth, config->screenHeight);
+}
+
 
 //    _______ _                        _ _             
 //   |__   __| |                      | (_)            
@@ -322,8 +355,7 @@ void RenderEngineVulkan::UpdateCommandBuffer(int imageIndex) {
 	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	for (auto renderEntity : renderEntities)
-		if (!renderEntity->IsDebugEntity() || debugMode)
-			renderEntity->BindToCommandPool(commandBuffers, imageIndex);
+		renderEntity->BindToCommandPool(commandBuffers, imageIndex);
 
 	vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
@@ -389,8 +421,7 @@ void RenderEngineVulkan::DrawFrame() {
 		UpdateCommandBuffer(imageIndex);
 
 	for (auto renderEntity : renderEntities) {
-		if (!renderEntity->IsDebugEntity() || debugMode)
-			renderEntity->UpdateBuffers(imageIndex, &environment->camera);
+		renderEntity->UpdateBuffers(imageIndex, camera);
 	}
 
 	VkSubmitInfo submitInfo = {};
@@ -431,34 +462,74 @@ void RenderEngineVulkan::DrawFrame() {
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-	++environment->stats.renderUpdateTotalLastSecond;
+	++stats->renderUpdateTotalLastSecond;
+}
+
+void RenderEngineVulkan::InvalidateCommandBuffers() {
+	for (int i = 0; i < commandBuffersValidState.size(); ++i) {
+		commandBuffersValidState[i] = false;
+	}
 }
 
 void RenderEngineVulkan::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
+		case MT_ShutDown:
+			shouldRun = false;
+			break;
 		case MT_DebugModeToggle:
 			debugMode = !debugMode;
-			for (int i = 0; i < commandBuffersValidState.size(); ++i) {
-				commandBuffersValidState[i] = false;
-			}
+			InvalidateCommandBuffers();
 			break;
 		case MT_FullScreenToggle:
 			window->ToggleFullscreen();
 			break;
-		default:;
+		case MT_Entity_Submitted:
+			CreateRenderEntity(message);
+			break;
+		case MT_Entity_Destroyed:
+			RemoveRenderEntity(message);
+			break;
+		case MT_Config:
+			ApplyConfiguration(static_cast<Configuration*>(message.payload));
+			break;
+		default:
+			break;
 		}
 		message = messageQueue->PS_GetMessage(SYSTEM_RenderEngine);
 	}
 }
 
+bool RenderEngineVulkan::CommandBuffersAreValid() {	
+	for (auto&& bufferValidState : commandBuffersValidState) {
+		if (!bufferValidState)
+			return false;
+	}
+	return true;
+}
+
+void RenderEngineVulkan::HandleDestroyedRenderEntities() {
+	if (!CommandBuffersAreValid())
+		return;
+	for (int i = 0; i < destroyedRenderEntities.size(); i++) {
+		RenderEntity* renderEntity = destroyedRenderEntities[i];
+		renderEntity->Dispose();
+		renderEntity->transform->UnregisterAsObserver();
+		renderEntity = nullptr;
+	}
+
+	destroyedRenderEntities.clear();
+}
+
 void RenderEngineVulkan::RenderThreadRun() {
+	shouldRun = true;
 	Timer timer(99999.0f, 1.0f/144.0f);
-	while (!environment->done) {
+	while (shouldRun) {
 		timer.DeltaTime();
 		HandleMessages();
 		window->UpdateMetaData();
 		DrawFrame();
+		HandleDestroyedRenderEntities();
 	}
 }

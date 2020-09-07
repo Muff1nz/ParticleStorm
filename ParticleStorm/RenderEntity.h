@@ -3,28 +3,27 @@
 #include "RenderDataUniform.h"
 #include "RenderDataInstanced.h"
 #include "VulkanContext.h"
-#include "Environment.h"
+#include "Camera.h"
 #include "RenderEntityMeta.h"
 
 class RenderEntity {
 public:
 	friend class RenderEntityFactory;
 
-	RenderEntity(VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta, bool debugEntity);
+	TransformEntity* transform;
+
+	RenderEntity(TransformEntity* transform, VulkanContext* renderDataVulkanContext, RenderDataCore* renderDataCore, RenderDataUniform* renderDataSingular, RenderDataInstanced* renderDataInstanced, RenderEntityMeta* renderEntityMeta);
 	~RenderEntity();
 
 	void Dispose();
 
 	void UpdateBuffers(uint32_t imageIndex, Camera* camera) const;
 	void BindToCommandPool(std::vector<VkCommandBuffer>& commandBuffers, int index) const;
-	bool IsDebugEntity() const;
 
 private:
 	bool isDisposed = false;
-	bool debugEntity = false;
 
 	VulkanContext* renderDataVulkanContext;
-
 	RenderEntityMeta* renderEntityMeta;
 	RenderDataCore* renderDataCore;
 	RenderDataUniform* renderDataUniform;
