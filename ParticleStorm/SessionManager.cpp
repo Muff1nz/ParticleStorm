@@ -17,9 +17,7 @@ SessionManager::SessionManager(MessageSystem* messageQueue, EventEngine* eventEn
 	this->stats = stats;
 }
 
-SessionManager::~SessionManager() {
-	delete config;
-};
+SessionManager::~SessionManager() = default;
 
 char* SessionManager::FileTime() {
 	char name[20];
@@ -31,9 +29,8 @@ char* SessionManager::FileTime() {
 }
 
 void SessionManager::OutputSessionToFile(const std::string& sessionString, std::string shortTitle, std::string statsOutputDir, std::vector<std::string> graphScripts) {
-	const std::string fileLeadText = "GraphBench_";
-	const std::string statsOutputFolder = statsOutputDir + fileLeadText + shortTitle + "_" + FileTime();
-	const std::string statsOutputFilePath = statsOutputFolder + "/" + fileLeadText + shortTitle + "_" + FileTime() + ".txt";
+	const std::string statsOutputFolder = statsOutputDir + shortTitle + "_" + FileTime();
+	const std::string statsOutputFilePath = statsOutputFolder + "/" + shortTitle + "_" + FileTime() + ".txt";
 
 	std::cout << "Results are saved to: " + statsOutputFolder + "\n";
 	CreateDirectory(statsOutputFolder.c_str(), nullptr);
@@ -54,7 +51,7 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 	std::string sessionString;
 	sessionString += "Title: " + longTitle + "\n";
 	sessionString += "Simulated " + std::to_string(particleCount) + " particles with a raidus of: " + std::to_string(particleRadius) + "\n";
-	sessionString += "Worker threads: " + std::to_string(config->workerThreadCount) + "\n";
+	sessionString += "Worker threads: " + std::to_string(config.workerThreadCount) + "\n";
 	sessionString += "Duration: " + std::to_string(perSecondStats.size()) + " seconds\n";
 	sessionString += "[\n";
 	sessionString += stats->CompleteSessionToString();
@@ -76,101 +73,3 @@ void SessionManager::DeployEntity(BaseEntity* entity) const {
 void SessionManager::RemoveEntity(BaseEntity* entity) const {
 	messageQueue->PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_EntityEngine, MT_Entity_Destroy_Request, entity));
 }
-
-//
-//
-//
-//std::string SessionManager::Benchmark(int count, int radius, int threadCount) const {
-//	Timer::unhinged = true;
-//
-//
-//
-//	std::vector<std::string> perSecondStats;
-//
-//	int explosionIndex = 0;
-//	const int explosionPointCount = 4;
-//	glm::vec2 explosionPoints[explosionPointCount];
-//	for (int i = 0; i < explosionPointCount; ++i) {
-//		explosionPoints[i] = { particles.worldWidth * (float(i) / (explosionPointCount - 1)) , particles.worldHeight };
-//	}
-//
-//	Timer sessionTimer;
-//	sessionTimer.Start();
-//
-//	Timer timer;
-//	timer.Start();
-//
-//	Timer explosionTimer;
-//	explosionTimer.Start();
-//
-//	const int benchmarkDuration = 10;
-//
-//	while (perSecondStats.size() < benchmarkDuration) {
-//		std::this_thread::sleep_for(std::chrono::microseconds(10));
-//
-//		if (timer.ElapsedSeconds() >= 1) {
-//			timer.Restart();
-//			particles.stats.CompleteLastSecond();
-//			std::cout << particles.stats.LastSecondToStringConsole();
-//			perSecondStats.push_back(particles.stats.LastSecondToString());
-//
-//			std::cout << "\nBenchmark is " + std::to_string(perSecondStats.size() / float(benchmarkDuration) * 100) + "% complete\n";
-//		}
-//
-//		if (explosionTimer.ElapsedSeconds() >= 1.0f) {
-//			explosionTimer.Restart();
-//			const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
-//			messageQueue.PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_PhysicsEngine, MT_Explosion, new glm::vec2(impact.x, particles.worldHeight - impact.y)));
-//		}
-//
-//		glfwPollEvents();
-//	}
-//	particles.done = true;
-//
-//	particles.stats.CompleteSession();
-//	std::cout << particles.stats.CompleteSessionToStringConsole();
-//
-//	physicsEngine.Join();
-//	renderEngine.Join();
-//
-//	renderEngine.Dispose();
-//
-//	Timer::unhinged = false;
-//
-//	return SessionToString(perSecondStats, particles);
-//}
-//
-//void SessionManager::PhysicsBenchmark() const {
-//	const int threadRuns = 4;
-//	const int particleRuns = 3;
-//	int threadCounts[] = { 2, 4, 8, 14 };
-//	int particleCounts[] = { 20000, 40000, 80000 };
-//	int particleRadiuses[] = { 16, 12, 10 };
-//
-//	std::string sessionString = "";
-//
-//	for (int i = 0; i < particleRuns; ++i) {
-//		for (int j = 0; j < threadRuns; ++j) {
-//			sessionString += "<\n";
-//			sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCounts[j]);
-//			sessionString += ">\n";
-//		}
-//	}
-//	OutputPhysBenchRunToFile(sessionString);
-//}
-////
-////void SessionManager::GraphicsBenchmark() const {
-////	const int particleRuns = 3;
-////	int threadCount = 6;
-////	int particleCounts[] = { 20000, 40000, 80000 };
-////	int particleRadiuses[] = { 16, 12, 10 };
-////
-////	std::string sessionString = "";
-////
-////	for (int i = 0; i < particleRuns; ++i) {
-////		sessionString += "<\n";
-////		sessionString += Benchmark(particleCounts[i], particleRadiuses[i], threadCount);
-////		sessionString += ">\n";		
-////	}
-////	OutputGraphBenchRunToFile(sessionString);
-////}

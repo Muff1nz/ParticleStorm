@@ -26,9 +26,6 @@ private:
 	void StopEngine();
 
 	void PrintMenu() const;
-
-	void BootSandbox();
-	void BootPhysicsBenchmark();
-	void BootGraphicsBenchmark();
+	void BootSession(SessionManager& sessionManager);
 };
 

@@ -180,6 +180,9 @@
     <ClCompile Include="GraphicsBenchmarkSession.cpp">
       <Filter>Source Files\SessionManagers</Filter>
     </ClCompile>
+    <ClCompile Include="PhysicsBenchmarkSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h">
@@ -373,6 +376,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsBenchmarkSession.h">
       <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsBenchmarkSession.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,7 @@
 #include "SessionManager.h"
 #include "DebugQuadTreeEntity.h"
 
-class SandboxSession : SessionManager {
+class SandboxSession : public SessionManager {
 public:
 	SandboxSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats);
 	~SandboxSession();
@@ -13,9 +13,9 @@ public:
 	void Complete() override;
 	
 private:
-	WorldEntity* world;
-	ParticlesEntity* particles;
-	DebugQuadTreeEntity* debugQuadTree;
+	WorldEntity* world = nullptr;
+	ParticlesEntity* particles = nullptr;
+	DebugQuadTreeEntity* debugQuadTree = nullptr;
 	
 	void HandleEntityDestroyed(BaseEntity* entity);
 	void HandleMessages() override;

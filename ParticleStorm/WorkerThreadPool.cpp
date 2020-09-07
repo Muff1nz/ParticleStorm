@@ -2,12 +2,14 @@
 #include <string>
 
 WorkerThreadPool::WorkerThreadPool(int threadCount) {
-	Init(threadCount);
+	SetThreadCount(threadCount);
 }
 
-void WorkerThreadPool::Init(int threadCount) {
+void WorkerThreadPool::SetThreadCount(int threadCount) {
 	if (isInitialized) {
-		throw std::runtime_error("ThreadPool is already Initialized!!");
+		CloseWorkerThreads();
+		workerThreads.clear();
+		done = false;
 	}
 	
 	for (int i = 0; i < threadCount; ++i) {

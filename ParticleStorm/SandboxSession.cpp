@@ -6,22 +6,21 @@
 
 SandboxSession::SandboxSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats) : SessionManager(messageQueue, eventEngine, camera, stats) { }
 
-SandboxSession::~SandboxSession() = default;;
+SandboxSession::~SandboxSession() = default;
 
 void SandboxSession::Init() {
 	stats->ClearData();
 	timer.Restart();
 
-	config = new Configuration();
-	config->workerThreadCount = 14;
-	config->screenHeight = 1200;
-	config->screenWidth = 2800;
-	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(config)));
+	config.workerThreadCount = 14;
+	config.screenHeight = 1200;
+	config.screenWidth = 2800;
+	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(&config)));
 
 	world = new WorldEntity(9000, 3780);
 	
 	particles = new ParticlesEntity(1000, 30);
-	particles->Initialize(config->seed, world->width, world->height);
+	particles->Initialize(config.seed, world->width, world->height);
 
 	world->RegisterAsObserver();
 	particles->RegisterAsObserver();

@@ -37,13 +37,12 @@ private:
 	Stats* stats;
 
 	MessageSystem* messageQueue;
-	bool debugMode;
 
 	bool shouldRun;
 
 	std::thread LeadPhysicsThread;
 	CollisionChecker collisionChecker;
-
+	
 	void AddEntity(Message message);
 	void RemoveEntity(Message message);
 

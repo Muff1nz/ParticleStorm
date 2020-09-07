@@ -251,9 +251,6 @@ void PhysicsEngine::HandleMessages() {
 		case MT_Explosion:
 			HandleExplosion(message);
 			break;
-		case MT_DebugModeToggle:
-			debugMode = !debugMode;
-			break;
 		case MT_Entity_Submitted:
 			AddEntity(message);
 			break;

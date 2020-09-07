@@ -2,7 +2,7 @@
 #include "SessionManager.h"
 #include "ParticlesEntity.h"
 
-class GraphicsBenchmarkSession : SessionManager {
+class GraphicsBenchmarkSession : public SessionManager {
 public:
 	GraphicsBenchmarkSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats);
 	~GraphicsBenchmarkSession();
@@ -17,8 +17,8 @@ private:
 	const std::string statsOutputDir = "C:/C++ Projects/ParticleStorm_Stats/";
 	const std::string graphicsBenchGrapherDir = "C:/Python Projects/ParticleStorm_Tools/GraphicsBenchGrapher.py";
 
-	WorldEntity* world;
-	ParticlesEntity* particles;
+	WorldEntity* world = nullptr;
+	ParticlesEntity* particles = nullptr;
 	
 	const int phaseDuration = 10; //Number of one second stats per phase
 	int phases = 3;

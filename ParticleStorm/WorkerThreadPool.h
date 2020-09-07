@@ -14,7 +14,7 @@ public:
 	WorkerThreadPool(int threadCount);
 	~WorkerThreadPool();
 
-	void Init(int threadCount);
+	void SetThreadCount(int threadCount);
 
 	void JoinWorkerThreads();
 	void AddWork(std::function<void()> workUnit);

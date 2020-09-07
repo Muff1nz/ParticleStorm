@@ -1,24 +1,23 @@
-#include "GraphicsBenchmarkSession.h"
+#include "PhysicsBenchmarkSession.h"
 
 #include <iostream>
 
 
-GraphicsBenchmarkSession::GraphicsBenchmarkSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats) : SessionManager(messageQueue, eventEngine, camera, stats) { }
+PhysicsBenchmarkSession::PhysicsBenchmarkSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats) : SessionManager(messageQueue, eventEngine, camera, stats) { }
 
-GraphicsBenchmarkSession::~GraphicsBenchmarkSession() = default;;
+PhysicsBenchmarkSession::~PhysicsBenchmarkSession() = default;
 
-void GraphicsBenchmarkSession::Init() {
+void PhysicsBenchmarkSession::Init() {
 	stats->ClearData();
 
 	Timer::unhinged = true;
-	currentPhase = -1;
+	currentParticlePhase = 0;
+	currentThreadPhase = -1;
 	perSecondStats.clear();
 	benchmarkString = "";
 
-	config.workerThreadCount = threadCount;
 	config.screenHeight = 1200;
 	config.screenWidth = 2800;
-	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(&config)));
 
 	world = new WorldEntity(10000, 5450);
 	world->RegisterAsObserver();
@@ -26,14 +25,14 @@ void GraphicsBenchmarkSession::Init() {
 
 	explosionIndex = 0;
 	for (int i = 0; i < explosionPointCount; ++i) {
-		explosionPoints[i] = { world->width * (float(i) / (explosionPointCount - 1)) , world->height};
-	}	
+		explosionPoints[i] = { world->width * (float(i) / (explosionPointCount - 1)) , world->height };
+	}
 }
 
-void GraphicsBenchmarkSession::Update() {
+void PhysicsBenchmarkSession::Update() {
 	HandleMessages();
-	
-	if (currentPhase == phases) //Phase handling
+
+	if (currentParticlePhase == particlePhases) //Phase handling
 		return;
 
 	if (timer.ElapsedSeconds() >= 1) {
@@ -44,39 +43,49 @@ void GraphicsBenchmarkSession::Update() {
 
 		std::cout << "\nBenchmark is " + std::to_string(perSecondStats.size() / float(phaseDuration) * 100) + "% complete\n";
 	}
-	
+
 	//Phase handling
-	if (currentPhase == -1 || perSecondStats.size() == phaseDuration) { //Phase handling
+	if (currentThreadPhase == -1 || perSecondStats.size() == phaseDuration) { //Phase handling
+		currentThreadPhase++;	
+		
+				
 		if (particles != nullptr) {
 			particles->UnregisterAsObserver();
 			RemoveEntity(particles);
 			particles = nullptr;
-		}		
-		
+		}
+
 		if (perSecondStats.size() == phaseDuration) {
 			benchmarkString += "<\n";
-			benchmarkString += SessionToString(perSecondStats, longTitle, particleCounts[currentPhase], particleRadiuses[currentPhase]);
+			benchmarkString += SessionToString(perSecondStats, longTitle, particleCounts[currentParticlePhase], particleRadiuses[currentParticlePhase]);
 			benchmarkString += ">\n";
 			perSecondStats.clear();
 			stats->ClearData();
+
+			if (currentThreadPhase == threadPhases) {
+				currentThreadPhase = 0;
+				currentParticlePhase++;
+			}
 		}
 
-		currentPhase++;
 		timer.Restart();
-		
-		if (currentPhase == phases) {
-			OutputSessionToFile(benchmarkString, shorTitle, statsOutputDir, { graphicsBenchGrapherDir });
+
+		if (currentParticlePhase == particlePhases) {
+			OutputSessionToFile(benchmarkString, shorTitle, statsOutputDir, { multiStatsGrapherDir, physicsDetailedGrapherDir });
 			messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Shutdown_Session));
 			return;
-		}		
+		}
 
-		particles = new ParticlesEntity(particleCounts[currentPhase], particleRadiuses[currentPhase]);
+		config.workerThreadCount = threadCounts[currentThreadPhase];		
+		messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Config, static_cast<void*>(&config)));
+		
+		particles = new ParticlesEntity(particleCounts[currentParticlePhase], particleRadiuses[currentParticlePhase]);
 		particles->Initialize(1337, world->width, world->height);
 		particles->RegisterAsObserver();
 		DeployEntity(particles);
 
 		explosionIndex = 0;
-		explosionTimer.Restart();		
+		explosionTimer.Restart();
 	}
 
 	if (explosionTimer.ElapsedSeconds() >= 1.0f) {
@@ -86,11 +95,11 @@ void GraphicsBenchmarkSession::Update() {
 	}
 }
 
-void GraphicsBenchmarkSession::Complete() {
+void PhysicsBenchmarkSession::Complete() {
 	Timer::unhinged = false;
 }
 
-void GraphicsBenchmarkSession::HandleEntityDestroyed(BaseEntity* entity) {
+void PhysicsBenchmarkSession::HandleEntityDestroyed(BaseEntity * entity) {
 	if (entity->type == ET_Particles && particles != nullptr && entity->id == particles->id) {
 		particles->UnregisterAsObserver();
 		particles = nullptr;
@@ -102,7 +111,7 @@ void GraphicsBenchmarkSession::HandleEntityDestroyed(BaseEntity* entity) {
 	}
 }
 
-void GraphicsBenchmarkSession::HandleMessages() {
+void PhysicsBenchmarkSession::HandleMessages() {
 	Message message = messageQueue->PS_GetMessage(SYSTEM_SessionManager);
 	while (!message.IsEmpty()) {
 		switch (message.messageType) {
