@@ -1,10 +1,9 @@
 #pragma once
-#include <string>
-#include "TransformEntity.h"
 
-struct GameEntity : TransformEntity {
+#include "GraphicsEntity.h"
+
+struct GameEntity : GraphicsEntity {
 	GameEntity() {
-		texturePath = "";
 		velocity = nullptr;
 	}
 
@@ -12,6 +11,5 @@ struct GameEntity : TransformEntity {
 		delete velocity;
 	}
 
-	std::string texturePath;
 	glm::vec2* velocity{};
 };

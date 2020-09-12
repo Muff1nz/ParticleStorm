@@ -91,6 +91,15 @@
     <Filter Include="Header Files\SessionManagers">
       <UniqueIdentifier>{01d8e6a4-9c44-4f4a-b8b4-95ac75eab7b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Entities\GUI">
+      <UniqueIdentifier>{69a6fcc4-e975-47f8-b971-e41038799fcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Entities\Game">
+      <UniqueIdentifier>{c1127aef-41c4-4e67-be5c-a11351b84b3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Entities\Base">
+      <UniqueIdentifier>{d10ba295-1db0-4a88-b470-d890b9a79ce5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -182,6 +191,12 @@
     </ClCompile>
     <ClCompile Include="PhysicsBenchmarkSession.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenuSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -338,26 +353,8 @@
     <ClInclude Include="EntityEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParticlesEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="WorldEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="GameEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="PhysicsParticlesEntity.h">
       <Filter>Header Files\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="EntityType.h">
-      <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Configuration.h">
       <Filter>Header Files</Filter>
@@ -371,14 +368,47 @@
     <ClInclude Include="IdGenerator.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="DebugQuadTreeEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsBenchmarkSession.h">
       <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsBenchmarkSession.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntity.h">
+      <Filter>Header Files\Entities\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticlesEntity.h">
+      <Filter>Header Files\Entities\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugQuadTreeEntity.h">
+      <Filter>Header Files\Entities\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformEntity.h">
+      <Filter>Header Files\Entities\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsEntity.h">
+      <Filter>Header Files\Entities\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEntity.h">
+      <Filter>Header Files\Entities\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityType.h">
+      <Filter>Header Files\Entities\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseEntity.h">
+      <Filter>Header Files\Entities\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageButtonEntity.h">
+      <Filter>Header Files\Entities\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainMenuSession.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionResult.h">
+      <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

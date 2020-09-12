@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+
+#include "ImageButtonEntity.h"
 #include "ParticlesEntity.h"
 
 SandboxSession::SandboxSession(MessageSystem* messageQueue, EventEngine* eventEngine, Camera* camera, Stats* stats) : SessionManager(messageQueue, eventEngine, camera, stats) { }
@@ -11,6 +13,8 @@ SandboxSession::~SandboxSession() = default;
 void SandboxSession::Init() {
 	stats->ClearData();
 	timer.Restart();
+
+	camera->SetStatic(false);
 
 	config.workerThreadCount = 14;
 	config.screenHeight = 1200;
@@ -27,7 +31,6 @@ void SandboxSession::Init() {
 	
 	DeployEntity(world);
 	DeployEntity(particles);
-
 }
 
 void SandboxSession::Update() {
@@ -62,9 +65,11 @@ void SandboxSession::Update() {
 	HandleMessages();
 }
 
-void SandboxSession::Complete() {
+SessionResult SandboxSession::Complete() {
 	stats->CompleteSession();
 	std::cout << stats->CompleteSessionToStringConsole();
+
+	return SR_NONE;
 }
 
 void SandboxSession::HandleEntityDestroyed(BaseEntity* entity) {

@@ -22,6 +22,7 @@ public:
 
 	void SetEventEngine(EventEngine* eventEngine);
 	void SetWorld(WorldEntity* world);
+	void SetStatic(bool isStatic);
 
 private:	
 	EventEngine* eventEngine;
@@ -35,6 +36,8 @@ private:
 	float maxZoom = 1.25f;
 	
 	glm::vec2 oldMousePos{};
+	
+	bool isStatic;
 
 	float GetPixelToWorld() const;
 	int GetOrthoHeight() const;

@@ -10,6 +10,8 @@ PhysicsBenchmarkSession::~PhysicsBenchmarkSession() = default;
 void PhysicsBenchmarkSession::Init() {
 	stats->ClearData();
 
+	camera->SetStatic(true);
+
 	Timer::unhinged = true;
 	currentParticlePhase = 0;
 	currentThreadPhase = -1;
@@ -95,8 +97,10 @@ void PhysicsBenchmarkSession::Update() {
 	}
 }
 
-void PhysicsBenchmarkSession::Complete() {
+SessionResult PhysicsBenchmarkSession::Complete() {
+	camera->SetStatic(false);
 	Timer::unhinged = false;
+	return SR_NONE;
 }
 
 void PhysicsBenchmarkSession::HandleEntityDestroyed(BaseEntity * entity) {

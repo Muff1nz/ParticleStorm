@@ -9,7 +9,7 @@ public:
 	
 	void Init() override;
 	void Update() override;
-	void Complete() override;
+	SessionResult Complete() override;
 private:
 	const std::string shorTitle = "Physics Bench";
 	const std::string longTitle = "Physics Bench";

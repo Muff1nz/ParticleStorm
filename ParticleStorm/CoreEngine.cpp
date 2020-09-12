@@ -1,10 +1,10 @@
 #include "CoreEngine.h"
 #include <iostream>
-#include <cctype>
 #include "WorkerThreadPool.h"
 #include "Timer.h"
 #include "EntityEngine.h"
 #include "GraphicsBenchmarkSession.h"
+#include "MainMenuSession.h"
 #include "PhysicsBenchmarkSession.h"
 #include "SandboxSession.h"
 
@@ -15,32 +15,26 @@ CoreEngine::~CoreEngine() = default;
 
 
 void CoreEngine::BootParticleStorm() {
-	shouldRun = true;
-
 	StartEngine();
 
-	char userInput;
+	SessionResult result;
 	do {
-		PrintMenu();
-		userInput = getchar();
-		std::cin.ignore();
-		switch (std::toupper(userInput)) {
-		case '1':
+		result = BootSession(MainMenuSession(messageSystem, eventEngine, renderEngine->GetCamera(), stats));
+			
+		switch (result) {
+		case SR_START_SANDBOX:
 			BootSession(SandboxSession(messageSystem, eventEngine, renderEngine->GetCamera(), stats));
 			break;
-		case '2':
+		case SR_START_PHYSICS_BENCHMARK:
 			BootSession(PhysicsBenchmarkSession(messageSystem, eventEngine, renderEngine->GetCamera(), stats));
 			break;
-		case '3':
+		case SR_START_GRAPHICS_BENCHMARK:
 			BootSession(GraphicsBenchmarkSession(messageSystem, eventEngine, renderEngine->GetCamera(), stats));
 			break;
-		case 'X':
-			break;
 		default:
-			std::cout << "\nInvalid option!\n";
 			break;
 		}
-	} while (std::toupper(userInput) != 'X' && shouldRun);
+	} while (result != SR_EXIT_GAME);
 
 	StopEngine();
 }
@@ -51,14 +45,17 @@ void CoreEngine::StartEngine() {
 
 	stats = new Stats();
 
-	renderEngine = new RenderEngineVulkan(messageSystem, stats);
-	physicsEngine = new  PhysicsEngine(messageSystem, workerThreadPool, stats);
 	eventEngine = new EventEngine(messageSystem);
 	entityEngine = new EntityEngine(messageSystem);
+	
+	renderEngine = new RenderEngineVulkan(messageSystem, stats);
+	guiEngine = new GuiEngine(eventEngine, messageSystem);
+	physicsEngine = new  PhysicsEngine(messageSystem, workerThreadPool, stats);
 
 	renderEngine->Init();
+	guiEngine->Init(renderEngine->GetCamera());
 	eventEngine->Init(renderEngine->GetWindow());
-
+	
 	auto camera = renderEngine->GetCamera();
 	camera->SetEventEngine(eventEngine);
 
@@ -75,25 +72,19 @@ void CoreEngine::StopEngine() {
 
 	renderEngine->Dispose();
 			
-	delete physicsEngine;
-	delete renderEngine;
 	delete eventEngine;
 	delete entityEngine;
-	delete stats;
+
+	delete renderEngine;
+	delete guiEngine;
+	delete physicsEngine;
+
+	delete stats;	
 	delete workerThreadPool;
 	delete messageSystem;
 }
 
-void CoreEngine::PrintMenu() const {
-	std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-	std::cout << "ParticleStorm Main Menu:\n";
-	std::cout << "Sandbox(1):\n";
-	std::cout << "Physics Benchmark(2)\n";
-	std::cout << "Graphics Benchmark(3)\n";
-	std::cout << "Quit(X)\n";
-}
-
-void CoreEngine::BootSession(SessionManager& sessionManager) {
+SessionResult CoreEngine::BootSession(SessionManager& sessionManager) const {
 	auto camera = renderEngine->GetCamera();
 
 	bool shouldRunSession = true;
@@ -103,37 +94,37 @@ void CoreEngine::BootSession(SessionManager& sessionManager) {
 
 	sessionManager.Init();
 
-	while (shouldRunSession && shouldRun) {
+	while (shouldRunSession) {
 		auto deltaTime = timer.DeltaTime();
-
-		eventEngine->Update();
-		entityEngine->Update();
-		camera->Update(deltaTime);
-		sessionManager.Update();
 
 		Message message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
 		while (!message.IsEmpty()) {
 			switch (message.messageType) {
 			case MT_ShutDown:
-				shouldRun = false;
-				break;
+				return SR_EXIT_GAME;
 			case MT_Shutdown_Session:
 				shouldRunSession = false;
 				break;
 			case MT_Config:
-				{
-					auto config = static_cast<Configuration*>(message.payload);
-					if (config->workerThreadCount != workerThreadPool->GetThreadCount()) {
-						workerThreadPool->SetThreadCount(config->workerThreadCount);
-					}
+			{
+				auto config = static_cast<Configuration*>(message.payload);
+				if (config->workerThreadCount != workerThreadPool->GetThreadCount()) {
+					workerThreadPool->SetThreadCount(config->workerThreadCount);
 				}
-				break;
+			}
+			break;
 			default:
 				break;
 			}
 			message = messageSystem->PS_GetMessage(SYSTEM_CoreEngine);
 		}
 
+		eventEngine->Update();
+		entityEngine->Update();
+		guiEngine->Update();
+		camera->Update(deltaTime);
+		sessionManager.Update();
+		
 		std::this_thread::sleep_for(std::chrono::microseconds(20));
 	}
 
@@ -141,7 +132,8 @@ void CoreEngine::BootSession(SessionManager& sessionManager) {
 	while (!entityEngine->AllEntitiesAreDead()) {
 		sessionManager.Update();
 		entityEngine->Update();
+		guiEngine->Update();
 	}
 
-	sessionManager.Complete();
+	return sessionManager.Complete();
 }

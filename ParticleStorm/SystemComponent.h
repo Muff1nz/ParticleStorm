@@ -7,5 +7,6 @@ enum SystemComponent {
 	SYSTEM_RenderEngine = 1 << 3,
 	SYSTEM_EventEngine = 1 << 4,
 	SYSTEM_EntityEngine = 1 << 5,
-	SYSTEM_CoreEngine = 1 << 6
+	SYSTEM_CoreEngine = 1 << 6,
+	SYSTEM_GuiEngine = 1 << 7
 };

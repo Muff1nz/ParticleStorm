@@ -5,15 +5,17 @@
 
 struct WorldEntity : GameEntity {
 	WorldEntity() {
+		type = ET_World;
+		id = IdGenerator::GetNewId();
+		
 		height = 100;
 		width = 100;
-		type = ET_World;
 	}
 
 	WorldEntity(int width, int height) {
+		id = IdGenerator::GetNewId();
 		type = ET_World;
 		
-		id = IdGenerator::GetNewId();
 		this->width = width;
 		this->height = height;
 		position = new glm::vec2(width / 2, height / 2);

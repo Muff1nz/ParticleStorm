@@ -6,14 +6,16 @@
 
 struct ParticlesEntity : GameEntity {
 	ParticlesEntity() {
-		radius = 1;
+		id = IdGenerator::GetNewId();
 		type = ET_Particles;
+		
+		radius = 1;
 	}
 
 	ParticlesEntity(int count, int radius) {
+		id = IdGenerator::GetNewId();
 		type = ET_Particles;
 
-		id = IdGenerator::GetNewId();
 		this->count = count;
 		this->radius = radius;
 		position = new glm::vec2[count];

@@ -3,6 +3,7 @@
 #include "RenderEngineVulkan.h"
 #include "SessionManager.h"
 #include "EntityEngine.h"
+#include "GuiEngine.h"
 
 class CoreEngine {
 public:
@@ -11,7 +12,6 @@ public:
 
 	void BootParticleStorm();
 private:
-	bool shouldRun;
 
 	MessageSystem* messageSystem{};
 	WorkerThreadPool* workerThreadPool{};
@@ -21,11 +21,12 @@ private:
 	RenderEngineVulkan* renderEngine{};
 	EventEngine* eventEngine{};
 	EntityEngine* entityEngine{};
+	GuiEngine* guiEngine;
 
 	void StartEngine();
 	void StopEngine();
 
-	void PrintMenu() const;
-	void BootSession(SessionManager& sessionManager);
+	void HandleMessages(bool& shouldRunSession);
+	SessionResult BootSession(SessionManager& sessionManager) const;
 };
 
