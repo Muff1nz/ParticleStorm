@@ -16,6 +16,7 @@
 #include "RenderEntityFactory.h"
 #include "ParticlesEntity.h"
 #include "DebugQuadTreeEntity.h"
+#include "ImageButtonEntity.h"
 #include "WorldEntity.h"
 
 
@@ -131,7 +132,7 @@ void RenderEngineVulkan::CreateIndexBuffer(const std::vector<uint16_t>& indices,
 void RenderEngineVulkan::CreateRenderEntity(Message message) {
 	RenderEntityFactory factory(vulkanContext, vulkanAllocator);
 
-	auto entity = static_cast<GameEntity*>(message.payload);
+	auto entity = static_cast<GraphicsEntity*>(message.payload);
 
 
 	if (entity->type == ET_World) {
@@ -141,8 +142,8 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		camera->SetWorld(worldEntity);
 
 		RenderEntityCreateInfo createInfoBackground;
-		createInfoBackground.vertexShader = "backgroundVert.spv";
-		createInfoBackground.fragmentShader = "backgroundFrag.spv";
+		createInfoBackground.vertexShader = "simpleTextureVert.spv";
+		createInfoBackground.fragmentShader = "simpleTextureFrag.spv";
 		createInfoBackground.texturePath = worldEntity->texturePath;
 		createInfoBackground.renderMode = Triangles;
 		createInfoBackground.vertexBuffer = quadVertexBuffer;
@@ -183,6 +184,22 @@ void RenderEngineVulkan::CreateRenderEntity(Message message) {
 		createInfoQuadTree.indexCount = static_cast<uint32_t>(LineQuadIndices.size());
 
 		renderEntities.push_back(factory.CreateRenderEntity(createInfoQuadTree, debugQuadTreeEntity));
+	}
+
+	if (entity->type == ET_ImageButton) {
+		auto imageButtonEntity = static_cast<ImageButtonEntity*>(entity);
+		imageButtonEntity->RegisterAsObserver();
+
+		RenderEntityCreateInfo createInfoBackground;
+		createInfoBackground.vertexShader = "simpleTextureVert.spv";
+		createInfoBackground.fragmentShader = "simpleTextureFrag.spv";
+		createInfoBackground.texturePath = imageButtonEntity->texturePath;
+		createInfoBackground.renderMode = Triangles;
+		createInfoBackground.vertexBuffer = quadVertexBuffer;
+		createInfoBackground.indexBuffer = quadIndexBuffer;
+		createInfoBackground.indexCount = static_cast<uint32_t>(QuadIndices.size());
+
+		renderEntities.emplace_back(factory.CreateRenderEntity(createInfoBackground, imageButtonEntity));
 	}
 
 	InvalidateCommandBuffers();
@@ -477,10 +494,6 @@ void RenderEngineVulkan::HandleMessages() {
 		switch (message.messageType) {
 		case MT_ShutDown:
 			shouldRun = false;
-			break;
-		case MT_DebugModeToggle:
-			debugMode = !debugMode;
-			InvalidateCommandBuffers();
 			break;
 		case MT_FullScreenToggle:
 			window->ToggleFullscreen();

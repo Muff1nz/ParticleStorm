@@ -1,6 +1,5 @@
 #include "CollisionChecker.h"
 #include <detail/func_geometric.inl>
-#include <iostream>
 
 
 CollisionChecker::CollisionChecker() {
@@ -41,4 +40,13 @@ bool CollisionChecker::CircleRectCollision(const glm::vec2 &center, const Rect &
 		pow(circleDistance.y - rect.halfH, 2);
 
 	return cornerDistanceSq <= radiusSquared;
+}
+
+bool CollisionChecker::PointInsideRect(const glm::vec2& point, const Rect& rect) {
+
+	if (point.x > rect.x && point.x < (rect.w + rect.x) 
+		&& point.y > rect.y && point.y < (rect.h + rect.y))
+		return true;
+
+	return false;
 }

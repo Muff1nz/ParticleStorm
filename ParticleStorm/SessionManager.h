@@ -7,6 +7,7 @@
 #include "Timer.h"
 #include "EntityEngine.h"
 #include "Configuration.h"
+#include "SessionResult.h"
 
 class SessionManager {
 public:
@@ -15,7 +16,7 @@ public:
 
 	virtual void Init() = 0;
 	virtual void Update() = 0;
-	virtual void Complete() = 0;
+	virtual SessionResult Complete() = 0;
 
 protected:
 	Timer timer;
@@ -28,6 +29,8 @@ protected:
 	Stats* stats;
 
 	virtual void HandleMessages() = 0;
+
+	void ShutDownSession() const;
 
 	void DeployEntity(BaseEntity* entity) const;
 	void RemoveEntity(BaseEntity* entity) const;

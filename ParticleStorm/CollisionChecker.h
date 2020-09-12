@@ -11,6 +11,7 @@ public:
 	bool CircleCircleCollision(const glm::vec2 &centerOne, const glm::vec2 &centerTwo) const;
 	bool CircleCircleCollision(const glm::vec2 &centerOne, const glm::vec2 &centerTwo, float &dist) const;
 	bool CircleRectCollision(const glm::vec2& center, const Rect& rect) const;
+	static bool PointInsideRect(const glm::vec2& point, const Rect& rect);
 
 private:
 	float radius;

@@ -10,6 +10,8 @@ GraphicsBenchmarkSession::~GraphicsBenchmarkSession() = default;;
 void GraphicsBenchmarkSession::Init() {
 	stats->ClearData();
 
+	camera->SetStatic(true);
+
 	Timer::unhinged = true;
 	currentPhase = -1;
 	perSecondStats.clear();
@@ -86,8 +88,10 @@ void GraphicsBenchmarkSession::Update() {
 	}
 }
 
-void GraphicsBenchmarkSession::Complete() {
+SessionResult GraphicsBenchmarkSession::Complete() {
+	camera->SetStatic(false);
 	Timer::unhinged = false;
+	return SR_NONE;
 }
 
 void GraphicsBenchmarkSession::HandleEntityDestroyed(BaseEntity* entity) {

@@ -39,7 +39,7 @@ public:
 private:
 	MessageSystem* messageQueue;
 	Stats* stats;
-	bool debugMode;
+
 	bool shouldRun;
 
 	Camera* camera;

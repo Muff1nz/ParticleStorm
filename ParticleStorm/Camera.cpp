@@ -19,7 +19,7 @@ glm::mat4 Camera::GetView() {
 glm::mat4 Camera::GetProj() {
 	float wZoom = float(GetOrthoWidth()) * zoom;
 	float hZoom = float(GetOrthoHeight()) * zoom;
-	return glm::ortho(float(GetOrthoWidth()) + wZoom , -wZoom, float(GetOrthoHeight()) + hZoom, -hZoom);
+	return glm::ortho(-wZoom, float(GetOrthoWidth()) + wZoom,  float(GetOrthoHeight()) + hZoom, -hZoom);
 }
 
 glm::vec2 Camera::GetWorldPos(glm::vec2 screenPos) {
@@ -63,7 +63,8 @@ int Camera::GetOrthoWidth() const {
 }
 
 void Camera::Update(float deltaTime) {
-	
+	if (isStatic)
+		return;
 	
 	float cameraZoomSpeed = pow(zoom + 1, 2) * 30.0f * deltaTime;
 	
@@ -91,6 +92,10 @@ void Camera::SetEventEngine(EventEngine* eventEngine) {
 void Camera::SetWorld(WorldEntity* world) {
 	this->world = world;
 	ResetCamera();
+}
+
+void Camera::SetStatic(bool isStatic) {
+	this->isStatic = isStatic;
 }
 
 void Camera::ResetCamera() {

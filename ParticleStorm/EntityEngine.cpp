@@ -1,4 +1,7 @@
 #include "EntityEngine.h"
+
+#include <iostream>
+
 #include "ParticlesEntity.h"
 
 
@@ -45,8 +48,10 @@ void EntityEngine::HandleMessages() {
 
 void EntityEngine::DestroyAllEntities() {
 	for (BaseEntity* registeredEntity : entities) {
-		DestroyEntity(registeredEntity);
-	}
+		destroyedEntities.emplace_back(registeredEntity);
+		messageSystem->PS_BroadcastMessage(Message(SYSTEM_EntityEngine, MT_Entity_Destroyed, registeredEntity));
+	}	
+	entities.clear();
 }
 
 void EntityEngine::DestroyDeadObjects() {
@@ -65,7 +70,6 @@ void EntityEngine::SubmitEntity(BaseEntity* entity) {
 		if (registeredEntity->id == entity->id)
 			throw std::runtime_error("Entity already submitted!");
 	}
-
 	entities.emplace_back(entity);
 	messageSystem->PS_BroadcastMessage(Message(SYSTEM_EntityEngine, MT_Entity_Submitted, entity));
 }

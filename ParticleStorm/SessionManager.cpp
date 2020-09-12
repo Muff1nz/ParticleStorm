@@ -66,6 +66,10 @@ std::string SessionManager::SessionToString(const std::vector<std::string>& perS
 }
 
 
+void SessionManager::ShutDownSession() const {
+	messageQueue->PS_BroadcastMessage(Message(SYSTEM_SessionManager, MT_Shutdown_Session));
+}
+
 void SessionManager::DeployEntity(BaseEntity* entity) const {
 	messageQueue->PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_EntityEngine, MT_Entity_Submit_Request, entity));
 }

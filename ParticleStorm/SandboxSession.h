@@ -10,7 +10,7 @@ public:
 	
 	void Init() override;
 	void Update() override;
-	void Complete() override;
+	SessionResult Complete() override;
 	
 private:
 	WorldEntity* world = nullptr;
