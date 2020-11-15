@@ -9,6 +9,7 @@
 #include "Stats.h"
 #include "WorldEntity.h"
 #include "DebugQuadTreeEntity.h"
+#include "PhysicsHyperParameters.h"
 
 class QuadTreeHandler {
 public:
@@ -19,6 +20,7 @@ public:
 	void BuildLinearQuadTree(std::vector<LinearQuad*>* linearQuads, std::vector<Range>& quadSections);
 	void PopulateQuadData(DebugQuadTreeEntity* quadTreeDebugEntity);
 
+	PhysicsHyperParameters physicsHyperParameters;
 private:
 	PhysicsParticlesEntity* particles;
 	WorldEntity* world;
@@ -29,11 +31,6 @@ private:
 	QuadTree* tree;
 	ConcurrentVector<QuadTree*> quads;
 
-	const int maxParticles = 100;
-	const int maxDepth = 10;
-	const int particlesPerThreadLevel1 = 800;
-	const int particlesPerThreadLevel2 = particlesPerThreadLevel1 * 4;
-	const int particlesPerThreadLevel3 = particlesPerThreadLevel2 * 4;
 	CollisionChecker collisionChecker;
 
 	void ResizeLinearQuads(std::vector<LinearQuad*>* linearQuads);

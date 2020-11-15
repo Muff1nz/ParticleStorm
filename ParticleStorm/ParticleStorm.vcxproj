@@ -177,6 +177,7 @@
     <ClInclude Include="ParticlesEntity.h" />
     <ClInclude Include="DebugQuadTreeEntity.h" />
     <ClInclude Include="PhysicsBenchmarkSession.h" />
+    <ClInclude Include="PhysicsHyperParameters.h" />
     <ClInclude Include="SandboxSession.h" />
     <ClInclude Include="SessionResult.h" />
     <ClInclude Include="TransformEntity.h" />

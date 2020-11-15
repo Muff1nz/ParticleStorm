@@ -13,10 +13,12 @@ NumberGenerator::NumberGenerator(const int seed) {
 		generator.seed(int(time(nullptr)));
 }
 
-
 NumberGenerator::~NumberGenerator() = default;
-
 
 float NumberGenerator::GenerateFloat(const float min, const float max) {
 	return distribution(generator) * (max - min) + min;
+}
+
+int NumberGenerator::GenerateInt(int min, int max) {
+	return static_cast<int>(GenerateFloat(min, max));
 }

@@ -108,9 +108,9 @@ void QuadTreeHandler::BuildThreaded(QuadTree* tree, const int start, const int e
 }
 
 void QuadTreeHandler::PopulateSubTrees(QuadTree* tree) {
-	if (tree->Size() >= particlesPerThreadLevel3)
+	if (tree->Size() >= physicsHyperParameters.particlesPerThreadLevel3)
 		PopulateBigSubTreesThreaded(tree);
-	else if (tree->Size() >= particlesPerThreadLevel2)
+	else if (tree->Size() >= physicsHyperParameters.particlesPerThreadLevel2)
 		PopulateSubTreesThreaded(tree);
 	else
 		PopulateSubTreesNotThreaded(tree);
@@ -130,7 +130,7 @@ void QuadTreeHandler::PopulateSubTreesThreaded(QuadTree* tree) {
 
 
 void QuadTreeHandler::PopulateBigSubTreesThreaded(QuadTree* tree) {
-	int threads = tree->Size() / particlesPerThreadLevel2;
+	int threads = tree->Size() / physicsHyperParameters.particlesPerThreadLevel2;
 	if (threads > workerThreads->GetThreadCount())
 		threads = workerThreads->GetThreadCount();
 	if (threads < 2)
@@ -187,5 +187,5 @@ void QuadTreeHandler::HandleSubTrees(QuadTree* const tree) {
 }
 
 bool QuadTreeHandler::QuadLimitReached(QuadTree* tree) const {
-	return tree->Size() >= maxParticles && tree->GetDepth() <= maxDepth;
+	return tree->Size() >= physicsHyperParameters.maxParticles && tree->GetDepth() <= physicsHyperParameters.maxDepth;
 }

@@ -13,13 +13,15 @@ public:
 	void Start();
 	void Stop();
 	void Restart();
-	float ElapsedSeconds();
+	double ElapsedSeconds();
 	int ElapsedMilliseconds();
 	int ElapsedMicroseconds();
+	int ElapsedNanoseconds();
 
-	private:
+private:
 	static int SecondsToMicroseconds(float seconds);
-	static float NowSeconds() noexcept;
+	static int SecondsToNanoseconds(float seconds);
+	static double NowSeconds() noexcept;
 
 	const float maxDeltaTime;
 	const float minDeltaTime;

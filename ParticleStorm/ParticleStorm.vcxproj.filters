@@ -410,6 +410,9 @@
     <ClInclude Include="SessionResult.h">
       <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsHyperParameters.h">
+      <Filter>Header Files\Physics\QuadTree</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="background.vert">

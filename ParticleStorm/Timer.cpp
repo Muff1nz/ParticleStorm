@@ -50,7 +50,7 @@ void Timer::Restart() {
 	last = now;
 }
 
-float Timer::ElapsedSeconds() {
+double Timer::ElapsedSeconds() {
 	if (stopWatchRunning)
 		now = NowSeconds();
 	return now - last;
@@ -68,17 +68,28 @@ int Timer::ElapsedMicroseconds() {
 	return SecondsToMicroseconds(now - last);
 }
 
+int Timer::ElapsedNanoseconds() {
+	if (stopWatchRunning)
+		now = NowSeconds();
+	return SecondsToNanoseconds(now - last);
+}
+
 
 int Timer::SecondsToMicroseconds(float seconds) {
 	const float factor = 1000 * 1000;
 	return int(seconds * factor);
 }
 
+int Timer::SecondsToNanoseconds(float seconds) {
+	const float factor = 1000 * 1000 * 1000;
+	return int(seconds * factor);
+}
 
-float Timer::NowSeconds() noexcept {
+
+double Timer::NowSeconds() noexcept {
 	LARGE_INTEGER ticks, frequency;
 	if (QueryPerformanceCounter(&ticks) && QueryPerformanceFrequency(&frequency))
-		return float(ticks.QuadPart) / float(frequency.QuadPart);
+		return double(ticks.QuadPart) / double(frequency.QuadPart);
 	return 1.0f;
 }
 

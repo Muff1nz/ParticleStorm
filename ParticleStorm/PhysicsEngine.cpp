@@ -1,5 +1,7 @@
 #include "PhysicsEngine.h"
 
+
+#include <iostream>
 #include <detail/func_geometric.inl>
 
 #include "Timer.h"
@@ -267,12 +269,29 @@ void PhysicsEngine::HandleMessages() {
 void PhysicsEngine::LeadThreadRun() {
 
 	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
+
+	Timer scoreTimer;
 	
 	auto linearQuads = new std::vector<LinearQuad*>();
+
+	const int updatesPerHyperParameter = 10;
+	const int hyperParameterGenerationAmount = 10;
+	const int hyperParameterTotalUpdateCount = updatesPerHyperParameter * hyperParameterGenerationAmount;
+
+	int hyperParamaterUpdateCounter = 0;
+
+	PhysicsHyperParameters hyperParameters[hyperParameterGenerationAmount];
+	for (auto hyperParameter : hyperParameters) {
+		hyperParameters->Mutate();
+	}
+
+	NumberGenerator numberGenerator;
 
 	shouldRun = true;
 	while (shouldRun) {
 
+		int currentHyperParameter = hyperParamaterUpdateCounter % hyperParameterGenerationAmount;
+		
 		float deltaTime = timer.DeltaTime();
 		stats->physicsTimeRatioTotalLastSecond += timer.RealTimeDifference();
 
@@ -287,20 +306,23 @@ void PhysicsEngine::LeadThreadRun() {
 			continue;
 		}
 
+		scoreTimer.Restart();
+
 		//QUADTREE
 		timer.Restart();
 		std::vector<Range> quadSections;
+		quadTreeHandler->physicsHyperParameters = hyperParameters[currentHyperParameter];
 		quadTreeHandler->BuildLinearQuadTree(linearQuads, quadSections);
 		timer.Stop();
 		stats->puQuadTreeUpdateTotalLastSecond += timer.ElapsedMicroseconds();
-
+		
 		if (debugQuadTree != nullptr)
 			quadTreeHandler->PopulateQuadData(debugQuadTree);
 
 		//PARTICLE COLLISIONS
 		timer.Restart();
 		for (auto quadSection : quadSections)
-			workerThreads->AddWork([=] { LinearQuadParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });
+			workerThreads->AddWork([=] { LinearQuadParticleCollisions(linearQuads, quadSection.lower, quadSection.upper); });		
 		workerThreads->JoinWorkerThreads();
 		timer.Stop();
 		stats->puCollisionUpdateTotalLastSecond += timer.ElapsedMicroseconds();
@@ -314,6 +336,38 @@ void PhysicsEngine::LeadThreadRun() {
 		stats->puPositionUpdatesTotalLastSecond += timer.ElapsedMicroseconds();
 
 		++stats->physicsUpdateTotalLastSecond;
+
+		scoreTimer.Stop();
+		hyperParameters[currentHyperParameter].score += scoreTimer.ElapsedSeconds();
+		hyperParamaterUpdateCounter++;
+		if (hyperParamaterUpdateCounter == hyperParameterTotalUpdateCount) {
+			for (int i = 0; i < hyperParameterGenerationAmount; ++i) {
+				hyperParameters[i].score = hyperParameters[i].score / updatesPerHyperParameter;
+			}
+
+			std::sort(std::begin(hyperParameters), std::end(hyperParameters), PhysicsHyperParameters::SortByScore);
+			PhysicsHyperParameters newGenerationHyperParameters[hyperParameterGenerationAmount];
+			//std::string generation = "\n\n";
+			for (int i = 0; i < 10; ++i) {
+				//generation += std::to_string(i) + ": " + std::to_string(hyperParameters[i].score) + ", ";
+
+				int mom = numberGenerator.GenerateInt(0, hyperParameterGenerationAmount / 2);
+				int dad;
+				do {
+					dad = numberGenerator.GenerateInt(0, hyperParameterGenerationAmount / 2);
+				} while (dad == mom);
+				newGenerationHyperParameters[i] = newGenerationHyperParameters[mom].MakeChildGeneSplicing(newGenerationHyperParameters[dad]);
+				newGenerationHyperParameters[i].Mutate();
+				newGenerationHyperParameters[i].score = 0;
+			}
+			//std::cout << generation + "\n\n";
+
+			for (int i = 0; i < hyperParameterGenerationAmount; ++i) {
+				hyperParameters[i] = newGenerationHyperParameters[i];
+			}
+
+			hyperParamaterUpdateCounter = 0;
+		}
 	}
 
 	for (int i = 0; i < linearQuads->size(); i++)

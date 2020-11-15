@@ -81,7 +81,7 @@ void GraphicsBenchmarkSession::Update() {
 		explosionTimer.Restart();		
 	}
 
-	if (explosionTimer.ElapsedSeconds() >= 1.0f) {
+	if (explosionTimer.ElapsedSeconds() >= 1.0) {
 		explosionTimer.Restart();
 		const auto impact = explosionPoints[explosionIndex++ % explosionPointCount];
 		messageQueue->PS_SendMessage(Message(SYSTEM_SessionManager, SYSTEM_PhysicsEngine, MT_Explosion, new glm::vec2(impact.x, world->height - impact.y)));
