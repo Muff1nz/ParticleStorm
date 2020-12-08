@@ -537,7 +537,7 @@ void RenderEngineVulkan::HandleDestroyedRenderEntities() {
 
 void RenderEngineVulkan::RenderThreadRun() {
 	shouldRun = true;
-	Timer timer(99999.0f, 1.0f/144.0f);
+	Timer timer;
 	while (shouldRun) {
 		timer.DeltaTime();
 		HandleMessages();

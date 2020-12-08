@@ -32,6 +32,7 @@ void PhysicsEngine::WorldBoundsCheck(const int particle) const {
 	const auto circlePos = particles->position;
 	const auto circleVel = particles->velocity;
 
+	//Potential micro optimization: Find a way to do this without IF's
 	if (circlePos[particle].y < particles->radius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
 		circlePos[particle].y = particles->radius;
@@ -266,7 +267,7 @@ void PhysicsEngine::HandleMessages() {
 
 void PhysicsEngine::LeadThreadRun() {
 
-	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
+	Timer timer(maxPhysicsDeltaTime);
 	
 	auto linearQuads = new std::vector<LinearQuad*>();
 
