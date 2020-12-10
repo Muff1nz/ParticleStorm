@@ -189,13 +189,13 @@
     <ClCompile Include="GraphicsBenchmarkSession.cpp">
       <Filter>Source Files\SessionManagers</Filter>
     </ClCompile>
-    <ClCompile Include="PhysicsBenchmarkSession.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GuiEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MainMenuSession.cpp">
+      <Filter>Source Files\SessionManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsBenchmarkSession.cpp">
       <Filter>Source Files\SessionManagers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -371,9 +371,6 @@
     <ClInclude Include="GraphicsBenchmarkSession.h">
       <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsBenchmarkSession.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WorldEntity.h">
       <Filter>Header Files\Entities\Game</Filter>
     </ClInclude>
@@ -408,6 +405,9 @@
       <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
     <ClInclude Include="SessionResult.h">
+      <Filter>Header Files\SessionManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsBenchmarkSession.h">
       <Filter>Header Files\SessionManagers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,9 @@
 #include "WorkerThreadPool.h"
 #include <string>
 
+//#include <windows.h> for SET Affinity
+//#undef max
+
 WorkerThreadPool::WorkerThreadPool(int threadCount) {
 	SetThreadCount(threadCount);
 }
@@ -70,6 +73,17 @@ int WorkerThreadPool::GetThreadCount() const {
 }
 
 void WorkerThreadPool::WorkerThreadRun() {
+	//auto mask = (static_cast<DWORD_PTR>(1) << 0);//Sets affinity to core 0
+	//auto ret = SetThreadAffinityMask(GetCurrentThread(), mask);
+
+	//Sets affinity to core 2->15
+	//auto mask = (static_cast<DWORD_PTR>(1) << 2);
+	//for (int i = 3; i < 16; i++)
+	//{
+	//	mask = mask << i;
+	//}
+	//auto ret = SetThreadAffinityMask(GetCurrentThread(), mask);
+
 	std::unique_lock<std::mutex> lock(mutex);
 	++busyThreads;
 	lock.unlock();

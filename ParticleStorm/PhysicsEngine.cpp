@@ -32,6 +32,7 @@ void PhysicsEngine::WorldBoundsCheck(const int particle) const {
 	const auto circlePos = particles->position;
 	const auto circleVel = particles->velocity;
 
+	//Potential micro optimization: Find a way to do this without IF's
 	if (circlePos[particle].y < particles->radius) {
 		circleVel[particle].y = -circleVel[particle].y * friction;
 		circlePos[particle].y = particles->radius;
@@ -63,10 +64,11 @@ void PhysicsEngine::ResolveCollision(const int particle1, const int particle2, c
 	particlePos[particle2] += -displacement;
 	positionDelta = particlePos[particle1] - particlePos[particle2];
 
-	const glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+	const float deltaLenght = length(positionDelta);
+	const glm::vec2 newVel1 = particleVel[particle1] - dot(particleVel[particle1] - particleVel[particle2], positionDelta) / (deltaLenght * deltaLenght) * positionDelta;
 
-	positionDelta = -positionDelta;
-	const glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / pow(length(positionDelta), 2) * positionDelta;
+	const float negativeDeltaLength = length(-positionDelta);
+	const glm::vec2 newVel2 = particleVel[particle2] - dot(particleVel[particle2] - particleVel[particle1], positionDelta) / (negativeDeltaLength * negativeDeltaLength) * positionDelta;
 
 	particleVel[particle1] = newVel1 * friction;
 	particleVel[particle2] = newVel2 * friction;
@@ -266,7 +268,7 @@ void PhysicsEngine::HandleMessages() {
 
 void PhysicsEngine::LeadThreadRun() {
 
-	Timer timer(maxPhysicsDeltaTime, minPhysicsDeltaTime);
+	Timer timer(maxPhysicsDeltaTime);
 	
 	auto linearQuads = new std::vector<LinearQuad*>();
 

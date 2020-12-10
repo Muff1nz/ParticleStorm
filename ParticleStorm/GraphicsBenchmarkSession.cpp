@@ -12,7 +12,6 @@ void GraphicsBenchmarkSession::Init() {
 
 	camera->SetStatic(true);
 
-	Timer::unhinged = true;
 	currentPhase = -1;
 	perSecondStats.clear();
 	benchmarkString = "";
@@ -90,7 +89,6 @@ void GraphicsBenchmarkSession::Update() {
 
 SessionResult GraphicsBenchmarkSession::Complete() {
 	camera->SetStatic(false);
-	Timer::unhinged = false;
 	return SR_NONE;
 }
 

@@ -2,34 +2,32 @@
 
 class Timer {
 public:
-	Timer(float maxDeltaTime = 99999999.0f, float minDeltaTime = 0);
+	Timer(double maxDeltaTime = 99999999.0);
 	~Timer();
 
-	static bool unhinged;
-
-	float DeltaTime();
-	float RealTimeDifference() const;
+	double DeltaTime();
+	double RealTimeDifference() const;
 
 	void Start();
 	void Stop();
 	void Restart();
-	float ElapsedSeconds();
-	int ElapsedMilliseconds();
-	int ElapsedMicroseconds();
 
-	private:
-	static int SecondsToMicroseconds(float seconds);
-	static float NowSeconds() noexcept;
+	double ElapsedSeconds();
+	double ElapsedMilliseconds();
+	double ElapsedMicroseconds();
 
-	const float maxDeltaTime;
-	const float minDeltaTime;
-	float realTimeDifference;
+private:
+	static double SecondsToMicroseconds(double seconds);
+	static double NowSeconds() noexcept;
 
-	float nowDeltaTime;
-	float lastDeltaTime;
+	const double maxDeltaTime;
+	double realTimeDifference;
 
-	float now;
-	float last;
+	double nowDeltaTime;
+	double lastDeltaTime;
+
+	double now;
+	double last;
 
 	bool stopWatchRunning;
 };

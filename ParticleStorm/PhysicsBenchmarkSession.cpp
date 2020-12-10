@@ -12,7 +12,6 @@ void PhysicsBenchmarkSession::Init() {
 
 	camera->SetStatic(true);
 
-	Timer::unhinged = true;
 	currentParticlePhase = 0;
 	currentThreadPhase = -1;
 	perSecondStats.clear();
@@ -99,7 +98,6 @@ void PhysicsBenchmarkSession::Update() {
 
 SessionResult PhysicsBenchmarkSession::Complete() {
 	camera->SetStatic(false);
-	Timer::unhinged = false;
 	return SR_NONE;
 }
 

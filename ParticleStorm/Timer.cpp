@@ -2,9 +2,7 @@
 #include <thread>
 #include <windows.h>
 
-bool Timer::unhinged = false;
-
-Timer::Timer(float maxDeltaTime, float minDeltaTime) : maxDeltaTime(maxDeltaTime), minDeltaTime(minDeltaTime) {
+Timer::Timer(double maxDeltaTime) : maxDeltaTime(maxDeltaTime) {
 	nowDeltaTime = NowSeconds();
 	now = NowSeconds();
 
@@ -17,20 +15,16 @@ Timer::Timer(float maxDeltaTime, float minDeltaTime) : maxDeltaTime(maxDeltaTime
 
 Timer::~Timer() = default;
 
-float Timer::DeltaTime() {
+double Timer::DeltaTime() {
 	lastDeltaTime = nowDeltaTime;
 	nowDeltaTime = NowSeconds();
-	const float deltaTime = nowDeltaTime - lastDeltaTime;
-	float result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
-	if (!unhinged && deltaTime < minDeltaTime) {
-		std::this_thread::sleep_for(std::chrono::microseconds(SecondsToMicroseconds(minDeltaTime - deltaTime)));
-		result = minDeltaTime;
-	}
+	const double deltaTime = nowDeltaTime - lastDeltaTime;
+	double result = deltaTime < maxDeltaTime ? deltaTime : maxDeltaTime;
 	realTimeDifference = result / deltaTime * 100;
 	return result;
 }
 
-float Timer::RealTimeDifference() const {
+double Timer::RealTimeDifference() const {
 	return realTimeDifference >= 0.0f && realTimeDifference <= 100 ? realTimeDifference : 100.0f;
 }
 
@@ -50,35 +44,35 @@ void Timer::Restart() {
 	last = now;
 }
 
-float Timer::ElapsedSeconds() {
+double Timer::ElapsedSeconds() {
 	if (stopWatchRunning)
 		now = NowSeconds();
 	return now - last;
 }
 
-int Timer::ElapsedMilliseconds() {
+double Timer::ElapsedMilliseconds() {
 	if (stopWatchRunning)
 		now = NowSeconds();
-	return int((now - last) * 1000);
+	return (now - last) * 1000.0;
 }
 
-int Timer::ElapsedMicroseconds() {
+double Timer::ElapsedMicroseconds() {
 	if (stopWatchRunning)
 		now = NowSeconds();
 	return SecondsToMicroseconds(now - last);
 }
 
 
-int Timer::SecondsToMicroseconds(float seconds) {
-	const float factor = 1000 * 1000;
-	return int(seconds * factor);
+double Timer::SecondsToMicroseconds(double seconds) {
+	const double factor = 1000000;
+	return seconds * factor;
 }
 
 
-float Timer::NowSeconds() noexcept {
+double Timer::NowSeconds() noexcept {
 	LARGE_INTEGER ticks, frequency;
 	if (QueryPerformanceCounter(&ticks) && QueryPerformanceFrequency(&frequency))
-		return float(ticks.QuadPart) / float(frequency.QuadPart);
+		return double(ticks.QuadPart) / double(frequency.QuadPart);
 	return 1.0f;
 }
 
